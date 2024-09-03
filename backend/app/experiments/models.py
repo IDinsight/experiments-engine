@@ -41,6 +41,10 @@ class ArmDB(Base):
     alpha_prior: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     beta_prior: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
+    experiment: Mapped[ExperimentDB] = relationship(
+        "ExperimentDB", back_populates="arms", lazy="joined"
+    )
+
 
 async def save_experiment_to_db(experiment: Experiment, asession: AsyncSession):
     """
