@@ -1,0 +1,609 @@
+{
+  ".class": "MypyFile",
+  "_fullname": "backend.app.experiments.models",
+  "future_import_flags": [],
+  "is_partial_stub_package": false,
+  "is_stub": false,
+  "names": {
+    ".class": "SymbolTable",
+    "ArmDB": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "TypeInfo",
+        "_promote": [],
+        "abstract_attributes": [],
+        "alt_promote": null,
+        "bases": ["backend.app.models.Base"],
+        "dataclass_transform_spec": null,
+        "declared_metaclass": null,
+        "defn": {
+          ".class": "ClassDef",
+          "fullname": "backend.app.experiments.models.ArmDB",
+          "name": "ArmDB",
+          "type_vars": []
+        },
+        "deletable_attributes": [],
+        "flags": ["fallback_to_any"],
+        "fullname": "backend.app.experiments.models.ArmDB",
+        "has_param_spec_type": false,
+        "metaclass_type": null,
+        "metadata": {},
+        "module_name": "backend.app.experiments.models",
+        "mro": [
+          "backend.app.experiments.models.ArmDB",
+          "backend.app.models.Base",
+          "builtins.object"
+        ],
+        "names": {
+          ".class": "SymbolTable",
+          "__tablename__": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": [
+                "is_initialized_in_class",
+                "is_ready",
+                "is_inferred",
+                "has_explicit_value"
+              ],
+              "fullname": "backend.app.experiments.models.ArmDB.__tablename__",
+              "name": "__tablename__",
+              "type": "builtins.str"
+            }
+          },
+          "alpha_prior": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready", "has_explicit_value"],
+              "fullname": "backend.app.experiments.models.ArmDB.alpha_prior",
+              "name": "alpha_prior",
+              "type": {
+                ".class": "AnyType",
+                "missing_import_name": "backend.app.experiments.models.Mapped",
+                "source_any": null,
+                "type_of_any": 3
+              }
+            }
+          },
+          "arm_id": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready", "has_explicit_value"],
+              "fullname": "backend.app.experiments.models.ArmDB.arm_id",
+              "name": "arm_id",
+              "type": {
+                ".class": "AnyType",
+                "missing_import_name": "backend.app.experiments.models.Mapped",
+                "source_any": null,
+                "type_of_any": 3
+              }
+            }
+          },
+          "beta_prior": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready", "has_explicit_value"],
+              "fullname": "backend.app.experiments.models.ArmDB.beta_prior",
+              "name": "beta_prior",
+              "type": {
+                ".class": "AnyType",
+                "missing_import_name": "backend.app.experiments.models.Mapped",
+                "source_any": null,
+                "type_of_any": 3
+              }
+            }
+          },
+          "description": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready", "has_explicit_value"],
+              "fullname": "backend.app.experiments.models.ArmDB.description",
+              "name": "description",
+              "type": {
+                ".class": "AnyType",
+                "missing_import_name": "backend.app.experiments.models.Mapped",
+                "source_any": null,
+                "type_of_any": 3
+              }
+            }
+          },
+          "experiment_id": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready", "has_explicit_value"],
+              "fullname": "backend.app.experiments.models.ArmDB.experiment_id",
+              "name": "experiment_id",
+              "type": {
+                ".class": "AnyType",
+                "missing_import_name": "backend.app.experiments.models.Mapped",
+                "source_any": null,
+                "type_of_any": 3
+              }
+            }
+          },
+          "name": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready", "has_explicit_value"],
+              "fullname": "backend.app.experiments.models.ArmDB.name",
+              "name": "name",
+              "type": {
+                ".class": "AnyType",
+                "missing_import_name": "backend.app.experiments.models.Mapped",
+                "source_any": null,
+                "type_of_any": 3
+              }
+            }
+          }
+        },
+        "self_type": {
+          ".class": "TypeVarType",
+          "default": {
+            ".class": "AnyType",
+            "missing_import_name": null,
+            "source_any": null,
+            "type_of_any": 4
+          },
+          "fullname": "backend.app.experiments.models.ArmDB.Self",
+          "id": 0,
+          "name": "Self",
+          "namespace": "",
+          "upper_bound": "backend.app.experiments.models.ArmDB",
+          "values": [],
+          "variance": 0
+        },
+        "slots": null,
+        "tuple_type": null,
+        "type_vars": [],
+        "typeddict_type": null
+      }
+    },
+    "AsyncSession": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_suppressed_import", "is_ready", "is_inferred"],
+        "fullname": "backend.app.experiments.models.AsyncSession",
+        "name": "AsyncSession",
+        "type": {
+          ".class": "AnyType",
+          "missing_import_name": "backend.app.experiments.models.AsyncSession",
+          "source_any": null,
+          "type_of_any": 3
+        }
+      }
+    },
+    "Base": {
+      ".class": "SymbolTableNode",
+      "cross_ref": "backend.app.models.Base",
+      "kind": "Gdef"
+    },
+    "Boolean": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_suppressed_import", "is_ready", "is_inferred"],
+        "fullname": "backend.app.experiments.models.Boolean",
+        "name": "Boolean",
+        "type": {
+          ".class": "AnyType",
+          "missing_import_name": "backend.app.experiments.models.Boolean",
+          "source_any": null,
+          "type_of_any": 3
+        }
+      }
+    },
+    "Experiment": {
+      ".class": "SymbolTableNode",
+      "cross_ref": "backend.app.experiments.schemas.Experiment",
+      "kind": "Gdef"
+    },
+    "ExperimentDB": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "TypeInfo",
+        "_promote": [],
+        "abstract_attributes": [],
+        "alt_promote": null,
+        "bases": ["backend.app.models.Base"],
+        "dataclass_transform_spec": null,
+        "declared_metaclass": null,
+        "defn": {
+          ".class": "ClassDef",
+          "fullname": "backend.app.experiments.models.ExperimentDB",
+          "name": "ExperimentDB",
+          "type_vars": []
+        },
+        "deletable_attributes": [],
+        "flags": ["fallback_to_any"],
+        "fullname": "backend.app.experiments.models.ExperimentDB",
+        "has_param_spec_type": false,
+        "metaclass_type": null,
+        "metadata": {},
+        "module_name": "backend.app.experiments.models",
+        "mro": [
+          "backend.app.experiments.models.ExperimentDB",
+          "backend.app.models.Base",
+          "builtins.object"
+        ],
+        "names": {
+          ".class": "SymbolTable",
+          "__tablename__": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": [
+                "is_initialized_in_class",
+                "is_ready",
+                "is_inferred",
+                "has_explicit_value"
+              ],
+              "fullname": "backend.app.experiments.models.ExperimentDB.__tablename__",
+              "name": "__tablename__",
+              "type": "builtins.str"
+            }
+          },
+          "arms": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready", "has_explicit_value"],
+              "fullname": "backend.app.experiments.models.ExperimentDB.arms",
+              "name": "arms",
+              "type": {
+                ".class": "AnyType",
+                "missing_import_name": "backend.app.experiments.models.Mapped",
+                "source_any": null,
+                "type_of_any": 3
+              }
+            }
+          },
+          "description": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready", "has_explicit_value"],
+              "fullname": "backend.app.experiments.models.ExperimentDB.description",
+              "name": "description",
+              "type": {
+                ".class": "AnyType",
+                "missing_import_name": "backend.app.experiments.models.Mapped",
+                "source_any": null,
+                "type_of_any": 3
+              }
+            }
+          },
+          "experiment_id": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready", "has_explicit_value"],
+              "fullname": "backend.app.experiments.models.ExperimentDB.experiment_id",
+              "name": "experiment_id",
+              "type": {
+                ".class": "AnyType",
+                "missing_import_name": "backend.app.experiments.models.Mapped",
+                "source_any": null,
+                "type_of_any": 3
+              }
+            }
+          },
+          "is_active": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready", "has_explicit_value"],
+              "fullname": "backend.app.experiments.models.ExperimentDB.is_active",
+              "name": "is_active",
+              "type": {
+                ".class": "AnyType",
+                "missing_import_name": "backend.app.experiments.models.Mapped",
+                "source_any": null,
+                "type_of_any": 3
+              }
+            }
+          },
+          "name": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready", "has_explicit_value"],
+              "fullname": "backend.app.experiments.models.ExperimentDB.name",
+              "name": "name",
+              "type": {
+                ".class": "AnyType",
+                "missing_import_name": "backend.app.experiments.models.Mapped",
+                "source_any": null,
+                "type_of_any": 3
+              }
+            }
+          }
+        },
+        "self_type": {
+          ".class": "TypeVarType",
+          "default": {
+            ".class": "AnyType",
+            "missing_import_name": null,
+            "source_any": null,
+            "type_of_any": 4
+          },
+          "fullname": "backend.app.experiments.models.ExperimentDB.Self",
+          "id": 0,
+          "name": "Self",
+          "namespace": "",
+          "upper_bound": "backend.app.experiments.models.ExperimentDB",
+          "values": [],
+          "variance": 0
+        },
+        "slots": null,
+        "tuple_type": null,
+        "type_vars": [],
+        "typeddict_type": null
+      }
+    },
+    "ForeignKey": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_suppressed_import", "is_ready", "is_inferred"],
+        "fullname": "backend.app.experiments.models.ForeignKey",
+        "name": "ForeignKey",
+        "type": {
+          ".class": "AnyType",
+          "missing_import_name": "backend.app.experiments.models.ForeignKey",
+          "source_any": null,
+          "type_of_any": 3
+        }
+      }
+    },
+    "Integer": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_suppressed_import", "is_ready", "is_inferred"],
+        "fullname": "backend.app.experiments.models.Integer",
+        "name": "Integer",
+        "type": {
+          ".class": "AnyType",
+          "missing_import_name": "backend.app.experiments.models.Integer",
+          "source_any": null,
+          "type_of_any": 3
+        }
+      }
+    },
+    "Mapped": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_suppressed_import", "is_ready", "is_inferred"],
+        "fullname": "backend.app.experiments.models.Mapped",
+        "name": "Mapped",
+        "type": {
+          ".class": "AnyType",
+          "missing_import_name": "backend.app.experiments.models.Mapped",
+          "source_any": null,
+          "type_of_any": 3
+        }
+      }
+    },
+    "String": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_suppressed_import", "is_ready", "is_inferred"],
+        "fullname": "backend.app.experiments.models.String",
+        "name": "String",
+        "type": {
+          ".class": "AnyType",
+          "missing_import_name": "backend.app.experiments.models.String",
+          "source_any": null,
+          "type_of_any": 3
+        }
+      }
+    },
+    "__annotations__": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_ready"],
+        "fullname": "backend.app.experiments.models.__annotations__",
+        "name": "__annotations__",
+        "type": {
+          ".class": "Instance",
+          "args": [
+            "builtins.str",
+            {
+              ".class": "AnyType",
+              "missing_import_name": null,
+              "source_any": null,
+              "type_of_any": 6
+            }
+          ],
+          "extra_attrs": null,
+          "type_ref": "builtins.dict"
+        }
+      }
+    },
+    "__doc__": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_ready"],
+        "fullname": "backend.app.experiments.models.__doc__",
+        "name": "__doc__",
+        "type": "builtins.str"
+      }
+    },
+    "__file__": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_ready"],
+        "fullname": "backend.app.experiments.models.__file__",
+        "name": "__file__",
+        "type": "builtins.str"
+      }
+    },
+    "__name__": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_ready"],
+        "fullname": "backend.app.experiments.models.__name__",
+        "name": "__name__",
+        "type": "builtins.str"
+      }
+    },
+    "__package__": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_ready"],
+        "fullname": "backend.app.experiments.models.__package__",
+        "name": "__package__",
+        "type": "builtins.str"
+      }
+    },
+    "__spec__": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_ready"],
+        "fullname": "backend.app.experiments.models.__spec__",
+        "name": "__spec__",
+        "type": "importlib.machinery.ModuleSpec"
+      }
+    },
+    "mapped_column": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_suppressed_import", "is_ready", "is_inferred"],
+        "fullname": "backend.app.experiments.models.mapped_column",
+        "name": "mapped_column",
+        "type": {
+          ".class": "AnyType",
+          "missing_import_name": "backend.app.experiments.models.mapped_column",
+          "source_any": null,
+          "type_of_any": 3
+        }
+      }
+    },
+    "relationship": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_suppressed_import", "is_ready", "is_inferred"],
+        "fullname": "backend.app.experiments.models.relationship",
+        "name": "relationship",
+        "type": {
+          ".class": "AnyType",
+          "missing_import_name": "backend.app.experiments.models.relationship",
+          "source_any": null,
+          "type_of_any": 3
+        }
+      }
+    },
+    "save_experiment_to_db": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "FuncDef",
+        "abstract_status": 0,
+        "arg_kinds": [0, 0],
+        "arg_names": ["experiment", "asession"],
+        "dataclass_transform_spec": null,
+        "flags": ["is_coroutine"],
+        "fullname": "backend.app.experiments.models.save_experiment_to_db",
+        "name": "save_experiment_to_db",
+        "type": {
+          ".class": "CallableType",
+          "arg_kinds": [0, 0],
+          "arg_names": ["experiment", "asession"],
+          "arg_types": [
+            "backend.app.experiments.schemas.Experiment",
+            {
+              ".class": "AnyType",
+              "missing_import_name": "backend.app.experiments.models.AsyncSession",
+              "source_any": null,
+              "type_of_any": 3
+            }
+          ],
+          "bound_args": [],
+          "def_extras": { "first_arg": null },
+          "fallback": "builtins.function",
+          "from_concatenate": false,
+          "implicit": false,
+          "imprecise_arg_kinds": false,
+          "is_ellipsis_args": false,
+          "name": "save_experiment_to_db",
+          "ret_type": {
+            ".class": "Instance",
+            "args": [
+              {
+                ".class": "AnyType",
+                "missing_import_name": null,
+                "source_any": null,
+                "type_of_any": 6
+              },
+              {
+                ".class": "AnyType",
+                "missing_import_name": null,
+                "source_any": null,
+                "type_of_any": 6
+              },
+              {
+                ".class": "AnyType",
+                "missing_import_name": null,
+                "source_any": null,
+                "type_of_any": 1
+              }
+            ],
+            "extra_attrs": null,
+            "type_ref": "typing.Coroutine"
+          },
+          "type_guard": null,
+          "type_is": null,
+          "unpack_kwargs": false,
+          "variables": []
+        }
+      }
+    }
+  },
+  "path": "backend/app/experiments/models.py"
+}

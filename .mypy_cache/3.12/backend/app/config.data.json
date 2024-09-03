@@ -1,0 +1,161 @@
+{
+  ".class": "MypyFile",
+  "_fullname": "backend.app.config",
+  "future_import_flags": [],
+  "is_partial_stub_package": false,
+  "is_stub": false,
+  "names": {
+    ".class": "SymbolTable",
+    "DB_POOL_SIZE": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_inferred", "has_explicit_value"],
+        "fullname": "backend.app.config.DB_POOL_SIZE",
+        "name": "DB_POOL_SIZE",
+        "type": {
+          ".class": "UnionType",
+          "items": ["builtins.str", "builtins.int"],
+          "uses_pep604_syntax": false
+        }
+      }
+    },
+    "POSTGRES_DB": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_inferred", "has_explicit_value"],
+        "fullname": "backend.app.config.POSTGRES_DB",
+        "name": "POSTGRES_DB",
+        "type": "builtins.str"
+      }
+    },
+    "POSTGRES_HOST": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_inferred", "has_explicit_value"],
+        "fullname": "backend.app.config.POSTGRES_HOST",
+        "name": "POSTGRES_HOST",
+        "type": "builtins.str"
+      }
+    },
+    "POSTGRES_PASSWORD": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_inferred", "has_explicit_value"],
+        "fullname": "backend.app.config.POSTGRES_PASSWORD",
+        "name": "POSTGRES_PASSWORD",
+        "type": "builtins.str"
+      }
+    },
+    "POSTGRES_PORT": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_inferred", "has_explicit_value"],
+        "fullname": "backend.app.config.POSTGRES_PORT",
+        "name": "POSTGRES_PORT",
+        "type": "builtins.str"
+      }
+    },
+    "POSTGRES_USER": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_inferred", "has_explicit_value"],
+        "fullname": "backend.app.config.POSTGRES_USER",
+        "name": "POSTGRES_USER",
+        "type": "builtins.str"
+      }
+    },
+    "__annotations__": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_ready"],
+        "fullname": "backend.app.config.__annotations__",
+        "name": "__annotations__",
+        "type": {
+          ".class": "Instance",
+          "args": [
+            "builtins.str",
+            {
+              ".class": "AnyType",
+              "missing_import_name": null,
+              "source_any": null,
+              "type_of_any": 6
+            }
+          ],
+          "extra_attrs": null,
+          "type_ref": "builtins.dict"
+        }
+      }
+    },
+    "__doc__": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_ready"],
+        "fullname": "backend.app.config.__doc__",
+        "name": "__doc__",
+        "type": "builtins.str"
+      }
+    },
+    "__file__": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_ready"],
+        "fullname": "backend.app.config.__file__",
+        "name": "__file__",
+        "type": "builtins.str"
+      }
+    },
+    "__name__": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_ready"],
+        "fullname": "backend.app.config.__name__",
+        "name": "__name__",
+        "type": "builtins.str"
+      }
+    },
+    "__package__": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_ready"],
+        "fullname": "backend.app.config.__package__",
+        "name": "__package__",
+        "type": "builtins.str"
+      }
+    },
+    "__spec__": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_ready"],
+        "fullname": "backend.app.config.__spec__",
+        "name": "__spec__",
+        "type": "importlib.machinery.ModuleSpec"
+      }
+    },
+    "os": { ".class": "SymbolTableNode", "cross_ref": "os", "kind": "Gdef" }
+  },
+  "path": "backend/app/config.py"
+}

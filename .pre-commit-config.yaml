@@ -1,0 +1,33 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+      - id: check-yaml
+        args: ["--unsafe"]
+      - id: end-of-file-fixer
+        exclude: ^(\.mypy_cache)
+      - id: trailing-whitespace
+        exclude: ^(\.mypy_cache)
+  - repo: https://github.com/psf/black
+    rev: 24.3.0
+    hooks:
+      - id: black
+        language_version: python3.12
+  - repo: https://github.com/econchick/interrogate
+    rev: 1.7.0
+    hooks:
+      - id: interrogate
+        name: interrogate
+        exclude: ^(backend/migrations|backend/tests)
+        entry: interrogate
+        args: [-v, --fail-under=95, --ignore-module]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.3
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.1 # Use the sha / tag you want to point at
+    hooks:
+      - id: mypy
+        args: [--ignore-missing-imports, --explicit-package-base]

@@ -1,0 +1,395 @@
+{
+  ".class": "MypyFile",
+  "_fullname": "backend.app.experiments.schemas",
+  "future_import_flags": [],
+  "is_partial_stub_package": false,
+  "is_stub": false,
+  "names": {
+    ".class": "SymbolTable",
+    "Arm": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "TypeInfo",
+        "_promote": [],
+        "abstract_attributes": [],
+        "alt_promote": null,
+        "bases": ["builtins.object"],
+        "dataclass_transform_spec": null,
+        "declared_metaclass": null,
+        "defn": {
+          ".class": "ClassDef",
+          "fullname": "backend.app.experiments.schemas.Arm",
+          "name": "Arm",
+          "type_vars": []
+        },
+        "deletable_attributes": [],
+        "flags": ["fallback_to_any"],
+        "fullname": "backend.app.experiments.schemas.Arm",
+        "has_param_spec_type": false,
+        "metaclass_type": null,
+        "metadata": {},
+        "module_name": "backend.app.experiments.schemas",
+        "mro": ["backend.app.experiments.schemas.Arm", "builtins.object"],
+        "names": {
+          ".class": "SymbolTable",
+          "alpha_prior": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready", "has_explicit_value"],
+              "fullname": "backend.app.experiments.schemas.Arm.alpha_prior",
+              "name": "alpha_prior",
+              "type": "builtins.int"
+            }
+          },
+          "beta_prior": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready", "has_explicit_value"],
+              "fullname": "backend.app.experiments.schemas.Arm.beta_prior",
+              "name": "beta_prior",
+              "type": "builtins.int"
+            }
+          },
+          "description": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready", "has_explicit_value"],
+              "fullname": "backend.app.experiments.schemas.Arm.description",
+              "name": "description",
+              "type": "builtins.str"
+            }
+          },
+          "name": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready", "has_explicit_value"],
+              "fullname": "backend.app.experiments.schemas.Arm.name",
+              "name": "name",
+              "type": "builtins.str"
+            }
+          }
+        },
+        "self_type": {
+          ".class": "TypeVarType",
+          "default": {
+            ".class": "AnyType",
+            "missing_import_name": null,
+            "source_any": null,
+            "type_of_any": 4
+          },
+          "fullname": "backend.app.experiments.schemas.Arm.Self",
+          "id": 0,
+          "name": "Self",
+          "namespace": "",
+          "upper_bound": "backend.app.experiments.schemas.Arm",
+          "values": [],
+          "variance": 0
+        },
+        "slots": null,
+        "tuple_type": null,
+        "type_vars": [],
+        "typeddict_type": null
+      }
+    },
+    "BaseModel": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_suppressed_import", "is_ready", "is_inferred"],
+        "fullname": "backend.app.experiments.schemas.BaseModel",
+        "name": "BaseModel",
+        "type": {
+          ".class": "AnyType",
+          "missing_import_name": "backend.app.experiments.schemas.BaseModel",
+          "source_any": null,
+          "type_of_any": 3
+        }
+      }
+    },
+    "Experiment": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "TypeInfo",
+        "_promote": [],
+        "abstract_attributes": [],
+        "alt_promote": null,
+        "bases": ["builtins.object"],
+        "dataclass_transform_spec": null,
+        "declared_metaclass": null,
+        "defn": {
+          ".class": "ClassDef",
+          "fullname": "backend.app.experiments.schemas.Experiment",
+          "name": "Experiment",
+          "type_vars": []
+        },
+        "deletable_attributes": [],
+        "flags": ["fallback_to_any"],
+        "fullname": "backend.app.experiments.schemas.Experiment",
+        "has_param_spec_type": false,
+        "metaclass_type": null,
+        "metadata": {},
+        "module_name": "backend.app.experiments.schemas",
+        "mro": ["backend.app.experiments.schemas.Experiment", "builtins.object"],
+        "names": {
+          ".class": "SymbolTable",
+          "arms": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready"],
+              "fullname": "backend.app.experiments.schemas.Experiment.arms",
+              "name": "arms",
+              "type": {
+                ".class": "Instance",
+                "args": ["backend.app.experiments.schemas.Arm"],
+                "extra_attrs": null,
+                "type_ref": "builtins.list"
+              }
+            }
+          },
+          "description": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready", "has_explicit_value"],
+              "fullname": "backend.app.experiments.schemas.Experiment.description",
+              "name": "description",
+              "type": "builtins.str"
+            }
+          },
+          "is_active": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready", "has_explicit_value"],
+              "fullname": "backend.app.experiments.schemas.Experiment.is_active",
+              "name": "is_active",
+              "type": "builtins.bool"
+            }
+          },
+          "name": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready", "has_explicit_value"],
+              "fullname": "backend.app.experiments.schemas.Experiment.name",
+              "name": "name",
+              "type": "builtins.str"
+            }
+          }
+        },
+        "self_type": {
+          ".class": "TypeVarType",
+          "default": {
+            ".class": "AnyType",
+            "missing_import_name": null,
+            "source_any": null,
+            "type_of_any": 4
+          },
+          "fullname": "backend.app.experiments.schemas.Experiment.Self",
+          "id": 0,
+          "name": "Self",
+          "namespace": "",
+          "upper_bound": "backend.app.experiments.schemas.Experiment",
+          "values": [],
+          "variance": 0
+        },
+        "slots": null,
+        "tuple_type": null,
+        "type_vars": [],
+        "typeddict_type": null
+      }
+    },
+    "ExperimentResponse": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "TypeInfo",
+        "_promote": [],
+        "abstract_attributes": [],
+        "alt_promote": null,
+        "bases": ["builtins.object"],
+        "dataclass_transform_spec": null,
+        "declared_metaclass": null,
+        "defn": {
+          ".class": "ClassDef",
+          "fullname": "backend.app.experiments.schemas.ExperimentResponse",
+          "name": "ExperimentResponse",
+          "type_vars": []
+        },
+        "deletable_attributes": [],
+        "flags": ["fallback_to_any"],
+        "fullname": "backend.app.experiments.schemas.ExperimentResponse",
+        "has_param_spec_type": false,
+        "metaclass_type": null,
+        "metadata": {},
+        "module_name": "backend.app.experiments.schemas",
+        "mro": [
+          "backend.app.experiments.schemas.ExperimentResponse",
+          "builtins.object"
+        ],
+        "names": {
+          ".class": "SymbolTable",
+          "arm_ids": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready"],
+              "fullname": "backend.app.experiments.schemas.ExperimentResponse.arm_ids",
+              "name": "arm_ids",
+              "type": {
+                ".class": "Instance",
+                "args": ["builtins.int"],
+                "extra_attrs": null,
+                "type_ref": "builtins.list"
+              }
+            }
+          },
+          "experiment_id": {
+            ".class": "SymbolTableNode",
+            "kind": "Mdef",
+            "node": {
+              ".class": "Var",
+              "flags": ["is_initialized_in_class", "is_ready"],
+              "fullname": "backend.app.experiments.schemas.ExperimentResponse.experiment_id",
+              "name": "experiment_id",
+              "type": "builtins.int"
+            }
+          }
+        },
+        "self_type": {
+          ".class": "TypeVarType",
+          "default": {
+            ".class": "AnyType",
+            "missing_import_name": null,
+            "source_any": null,
+            "type_of_any": 4
+          },
+          "fullname": "backend.app.experiments.schemas.ExperimentResponse.Self",
+          "id": 0,
+          "name": "Self",
+          "namespace": "",
+          "upper_bound": "backend.app.experiments.schemas.ExperimentResponse",
+          "values": [],
+          "variance": 0
+        },
+        "slots": null,
+        "tuple_type": null,
+        "type_vars": [],
+        "typeddict_type": null
+      }
+    },
+    "Field": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_suppressed_import", "is_ready", "is_inferred"],
+        "fullname": "backend.app.experiments.schemas.Field",
+        "name": "Field",
+        "type": {
+          ".class": "AnyType",
+          "missing_import_name": "backend.app.experiments.schemas.Field",
+          "source_any": null,
+          "type_of_any": 3
+        }
+      }
+    },
+    "__annotations__": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_ready"],
+        "fullname": "backend.app.experiments.schemas.__annotations__",
+        "name": "__annotations__",
+        "type": {
+          ".class": "Instance",
+          "args": [
+            "builtins.str",
+            {
+              ".class": "AnyType",
+              "missing_import_name": null,
+              "source_any": null,
+              "type_of_any": 6
+            }
+          ],
+          "extra_attrs": null,
+          "type_ref": "builtins.dict"
+        }
+      }
+    },
+    "__doc__": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_ready"],
+        "fullname": "backend.app.experiments.schemas.__doc__",
+        "name": "__doc__",
+        "type": "builtins.str"
+      }
+    },
+    "__file__": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_ready"],
+        "fullname": "backend.app.experiments.schemas.__file__",
+        "name": "__file__",
+        "type": "builtins.str"
+      }
+    },
+    "__name__": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_ready"],
+        "fullname": "backend.app.experiments.schemas.__name__",
+        "name": "__name__",
+        "type": "builtins.str"
+      }
+    },
+    "__package__": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_ready"],
+        "fullname": "backend.app.experiments.schemas.__package__",
+        "name": "__package__",
+        "type": "builtins.str"
+      }
+    },
+    "__spec__": {
+      ".class": "SymbolTableNode",
+      "kind": "Gdef",
+      "node": {
+        ".class": "Var",
+        "flags": ["is_ready"],
+        "fullname": "backend.app.experiments.schemas.__spec__",
+        "name": "__spec__",
+        "type": "importlib.machinery.ModuleSpec"
+      }
+    }
+  },
+  "path": "backend/app/experiments/schemas.py"
+}

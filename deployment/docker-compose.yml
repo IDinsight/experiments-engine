@@ -1,0 +1,48 @@
+services:
+  backend:
+    image: idinsight/experiment_engine_backend:latest
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    command: >
+      /bin/sh startup.sh
+    restart: always
+    volumes:
+      - temp:/usr/src/aaq_backend/temp
+    env_file:
+      - .base.env
+      - .core_backend.env
+    depends_on:
+      - relational_db
+    environment:
+      - POSTGRES_HOST=relational_db
+
+  relational_db:
+    image: pgvector/pgvector:pg16
+    restart: always
+    env_file:
+      - .core_backend.env
+    volumes:
+      - db_volume:/var/lib/postgresql/data
+    ports: # Expose the port to port 5434 on the host machine for debugging
+      - 5434:5432
+
+  caddy:
+    image: caddy:2.7.6
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    env_file:
+      - .base.env
+
+volumes:
+  db_volume:
+  caddy_data:
+  caddy_config:
+  temp:
