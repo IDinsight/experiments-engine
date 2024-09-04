@@ -24,7 +24,7 @@ class Arm(BaseModel):
     )
 
 
-class Experiment(BaseModel):
+class MultiArmedBandit(BaseModel):
     """
     Pydantic model for an experiment.
     """
@@ -41,7 +41,7 @@ class Experiment(BaseModel):
     arms: list[Arm]
 
 
-class ExperimentResponse(BaseModel):
+class MultiArmedBanditResponse(BaseModel):
     """
     Pydantic model for an response for experiment creation
     """

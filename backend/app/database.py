@@ -1,6 +1,10 @@
-from sqlalchemy.engine import URL
+import contextlib
+from collections.abc import AsyncGenerator, Generator
+from typing import ContextManager
+
+from sqlalchemy.engine import URL, Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
-from collections.abc import AsyncGenerator
+from sqlalchemy.orm import Session
 
 from .config import (
     DB_POOL_SIZE,
@@ -11,8 +15,13 @@ from .config import (
     POSTGRES_USER,
 )
 
+SYNC_DB_API = "psycopg2"
 ASYNC_DB_API = "asyncpg"
 
+# global so we don't create more than one engine per process
+# outside of being best practice, this is needed so we can properly pool
+# connections and not create a new pool on every request
+_SYNC_ENGINE: Engine | None = None
 _ASYNC_ENGINE: AsyncEngine | None = None
 
 
@@ -37,6 +46,15 @@ def get_connection_url(
     )
 
 
+def get_sqlalchemy_engine() -> Engine:
+    """Return a SQLAlchemy engine."""
+    global _SYNC_ENGINE
+    if _SYNC_ENGINE is None:
+        connection_string = get_connection_url(db_api=SYNC_DB_API)
+        _SYNC_ENGINE = create_engine(connection_string)
+    return _SYNC_ENGINE
+
+
 def get_sqlalchemy_async_engine() -> AsyncEngine:
     """Return a SQLAlchemy async engine generator."""
     global _ASYNC_ENGINE
@@ -44,6 +62,17 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
         connection_string = get_connection_url()
         _ASYNC_ENGINE = create_async_engine(connection_string, pool_size=DB_POOL_SIZE)
     return _ASYNC_ENGINE
+
+
+def get_session_context_manager() -> ContextManager[Session]:
+    """Return a SQLAlchemy session context manager."""
+    return contextlib.contextmanager(get_session)()
+
+
+def get_session() -> Generator[Session, None, None]:
+    """Return a SQLAlchemy session generator."""
+    with Session(get_sqlalchemy_engine(), expire_on_commit=False) as session:
+        yield session
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
