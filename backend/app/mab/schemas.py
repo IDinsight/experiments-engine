@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Arm(BaseModel):
@@ -14,14 +14,24 @@ class Arm(BaseModel):
         max_length=500,
         examples=["This is a description of the arm."],
     )
-    alpha_prior: int = Field(
+    alpha: int = Field(
         description="The alpha parameter of the beta distribution.",
         examples=[1, 10, 100],
     )
-    beta_prior: int = Field(
+    beta: int = Field(
         description="The beta parameter of the beta distribution.",
         examples=[1, 10, 100],
     )
+
+
+class ArmResponse(Arm):
+    """
+    Pydantic model for an response for arm creation
+    """
+
+    arm_id: int
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MultiArmedBandit(BaseModel):
