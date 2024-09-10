@@ -1,9 +1,11 @@
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Integer, String, Boolean, ForeignKey
-from sqlalchemy.orm import relationship
+from typing import Sequence
+
+from sqlalchemy import Boolean, ForeignKey, Integer, String, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from .schemas import MultiArmedBandit
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from ..models import Base
+from .schemas import MultiArmedBandit
 
 
 class MultiArmedBanditDB(Base):
@@ -67,10 +69,19 @@ async def save_mab_to_db(
     return experiment_db
 
 
+async def get_all_mabs(asession: AsyncSession) -> Sequence[MultiArmedBanditDB]:
+    """
+    Get all the experiments from the database.
+    """
+    statement = select(MultiArmedBanditDB).order_by(MultiArmedBanditDB.experiment_id)
+
+    return (await asession.execute(statement)).unique().scalars().all()
+
+
 async def get_mab_by_id(
     experiment_id: int, asession: AsyncSession
-) -> MultiArmedBanditDB:
+) -> MultiArmedBanditDB | None:
     """
     Get the experiment by id.
     """
-    return await asession.get_one(MultiArmedBanditDB, experiment_id)
+    return await asession.get(MultiArmedBanditDB, experiment_id)
