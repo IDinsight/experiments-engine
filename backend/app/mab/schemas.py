@@ -1,4 +1,6 @@
-from pydantic import BaseModel, Field, ConfigDict
+from enum import Enum
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Arm(BaseModel):
@@ -23,6 +25,8 @@ class Arm(BaseModel):
         examples=[1, 10, 100],
     )
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class ArmResponse(Arm):
     """
@@ -34,9 +38,10 @@ class ArmResponse(Arm):
     model_config = ConfigDict(from_attributes=True)
 
 
-class MultiArmedBandit(BaseModel):
+class MultiArmedBanditBase(BaseModel):
     """
-    Pydantic model for an experiment.
+    Pydantic model for an experiment - Base model.
+    Note: Do not use this model directly. Use `MultiArmedBandit` instead.
     """
 
     name: str = Field(
@@ -48,13 +53,36 @@ class MultiArmedBandit(BaseModel):
         examples=["This is a description of the experiment."],
     )
     is_active: bool = True
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MultiArmedBandit(MultiArmedBanditBase):
+    """
+    Pydantic model for an experiment.
+    """
+
     arms: list[Arm]
 
+    model_config = ConfigDict(from_attributes=True)
 
-class MultiArmedBanditResponse(BaseModel):
+
+class MultiArmedBanditResponse(MultiArmedBanditBase):
     """
-    Pydantic model for an response for experiment creation
+    Pydantic model for an response for experiment creation.
+    Returns the id of the experiment and the arms
     """
 
     experiment_id: int
-    arm_ids: list[int]
+    arms: list[ArmResponse]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class Outcome(str, Enum):
+    """
+    Enum for the outcome of a trial.
+    """
+
+    SUCCESS = "success"
+    FAILURE = "failure"

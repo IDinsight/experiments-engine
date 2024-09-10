@@ -1,4 +1,4 @@
-"""add mabs and arms
+"""rename arms columnns
 
 Revision ID: f1ef51f77f05
 Revises: 94f3969b5674
@@ -8,9 +8,8 @@ Create Date: 2024-09-03 21:09:55.904317
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "f1ef51f77f05"
