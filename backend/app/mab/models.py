@@ -40,8 +40,11 @@ class ArmDB(Base):
     name: Mapped[str] = mapped_column(String(length=150), nullable=False)
     description: Mapped[str] = mapped_column(String(length=500), nullable=True)
 
-    alpha: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
-    beta: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    alpha_prior: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    beta_prior: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+
+    successes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    failures: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     experiment: Mapped[MultiArmedBanditDB] = relationship(
         "MultiArmedBanditDB", back_populates="arms", lazy="joined"

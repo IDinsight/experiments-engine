@@ -16,15 +16,24 @@ class Arm(BaseModel):
         max_length=500,
         examples=["This is a description of the arm."],
     )
-    alpha: int = Field(
+    alpha_prior: int = Field(
         description="The alpha parameter of the beta distribution.",
         examples=[1, 10, 100],
     )
-    beta: int = Field(
+    beta_prior: int = Field(
         description="The beta parameter of the beta distribution.",
         examples=[1, 10, 100],
     )
-
+    successes: int = Field(
+        description="The number of successes for the arm.",
+        examples=[0, 10, 100],
+        default=0,
+    )
+    failures: int = Field(
+        description="The number of failures for the arm.",
+        examples=[0, 10, 100],
+        default=0,
+    )
     model_config = ConfigDict(from_attributes=True)
 
 
