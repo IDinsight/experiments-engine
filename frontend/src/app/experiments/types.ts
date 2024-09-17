@@ -19,8 +19,8 @@ interface NewMAB {
 
 interface MAB extends NewMAB {
   experiment_id: number;
-  isActive: boolean;
+  is_active: boolean;
   arms: Arm[];
 }
 
-export type { Arm, MAB };
+export type { Arm, MAB, NewArm, NewMAB };

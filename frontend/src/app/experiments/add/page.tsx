@@ -15,10 +15,12 @@ import { Button } from "@/components/catalyst/button";
 import { PlusIcon } from "@heroicons/react/16/solid";
 import { DividerWithTitle } from "@/components/Dividers";
 import { Heading } from "@/components/catalyst/heading";
-import { Arm, MAB } from "../types";
+import { NewArm, NewMAB } from "../types";
 import { createMABExperiment } from "../api";
+import { a } from "framer-motion/client";
+import { useRouter } from "next/navigation";
 
-const defaultArm: Arm = {
+const defaultArm: NewArm = {
   name: "",
   description: "",
   alpha_prior: 1,
@@ -26,17 +28,19 @@ const defaultArm: Arm = {
 };
 
 export default function NewExperiment() {
+  const router = useRouter();
+
   const [methodType, setMethodType] = useState("MAB");
   const [experimentName, setExperimentName] = useState<string>("");
   const [experimentDescription, setExperimentDescription] =
     useState<string>("");
-  const [arms, setArms] = useState<Arm[]>([
+  const [arms, setArms] = useState<NewArm[]>([
     { ...defaultArm },
     { ...defaultArm },
   ]);
 
   const onSubmit = () => {
-    const mab: MAB = {
+    const mab: NewMAB = {
       name: experimentName,
       description: experimentDescription,
       arms: arms,
@@ -45,6 +49,7 @@ export default function NewExperiment() {
     createMABExperiment({ mab })
       .then((response) => {
         console.log(response);
+        router.push(`/experiments`);
       })
       .catch((error) => {
         console.error(error);
