@@ -48,7 +48,7 @@ const ExperimentCardGrid = ({ experiments }: { experiments: MAB[] }) => {
       className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch"
     >
       {experiments.map((experiment) => (
-        <li key={experiment.experiment_id} className="hfull">
+        <li key={experiment.experiment_id}>
           <ExperimentCard experiment={experiment} />
         </li>
       ))}

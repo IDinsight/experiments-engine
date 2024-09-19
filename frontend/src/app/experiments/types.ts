@@ -23,4 +23,10 @@ interface MAB extends NewMAB {
   arms: Arm[];
 }
 
-export type { Arm, MAB, NewArm, NewMAB };
+interface BetaParams {
+  name: string;
+  alpha: number;
+  beta: number;
+}
+
+export type { Arm, MAB, NewArm, NewMAB, BetaParams };
