@@ -5,6 +5,8 @@ import { getAllMABExperiments } from "./api";
 import { MAB } from "./types";
 import ExperimentCard from "./components/ExperimentCard";
 import Hourglass from "@/components/Hourglass";
+import FloatingAddButton from "./components/FloatingAddButton";
+import { Link } from "@/components/catalyst/link";
 
 export default function Experiments() {
   const [experiments, setExperiments] = React.useState<MAB[]>([]);
@@ -26,7 +28,12 @@ export default function Experiments() {
       </div>
     </div>
   ) : experiments.length > 0 ? (
-    <ExperimentCardGrid experiments={experiments} />
+    <div className="min-h-screen ">
+      <ExperimentCardGrid experiments={experiments} />
+      <Link href="/experiments/add">
+        <FloatingAddButton />
+      </Link>
+    </div>
   ) : (
     <div
       className="grid grow grid-rows-1 items-center justify-items-center sm:p-20 "
