@@ -96,9 +96,9 @@ async def update_arm(
         arm = arms[0]
 
     if outcome == Outcome.SUCCESS:
-        arm.alpha += 1
+        arm.successes += 1
     else:
-        arm.beta += 1
+        arm.failures += 1
 
     await asession.commit()
 
@@ -109,10 +109,10 @@ def thompson_sampling(experiment) -> ArmResponse:
     """
     Perform Thompson sampling on the experiment.
     """
-    num_failures = [arm.beta for arm in experiment.arms]
-    num_successes = [arm.alpha for arm in experiment.arms]
+    alpha_param = [arm.beta_prior + arm.successes for arm in experiment.arms]
+    beta_param = [arm.alpha_prior + arm.failures for arm in experiment.arms]
 
-    samples = beta(num_successes, num_failures)
+    samples = beta(alpha_param, beta_param)
     arm_id = samples.argmax()
 
     return ArmResponse.model_validate(experiment.arms[arm_id])
