@@ -30,7 +30,7 @@ class UserDB(Base):
     SQL Alchemy data model for users
     """
 
-    __tablename__ = "user"
+    __tablename__ = "users"
 
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True)

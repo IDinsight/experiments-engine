@@ -21,7 +21,7 @@ logger = setup_logger()
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin-test")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "12345")
 ADMIN_API_KEY = os.environ.get("ADMIN_API_KEY", "admin-key")
-ADMIN_CONTENT_QUOTA = os.environ.get("ADMIN_CONTENT_QUOTA", None)
+ADMIN_EXPERIMENT_QUOTA = os.environ.get("ADMIN_EXPERIMENT_QUOTA", None)
 ADMIN_API_DAILY_QUOTA = os.environ.get("ADMIN_API_DAILY_QUOTA", None)
 
 
@@ -31,7 +31,7 @@ user_db = UserDB(
     hashed_api_key=get_key_hash(ADMIN_API_KEY),
     api_key_first_characters=ADMIN_API_KEY[:5],
     api_key_updated_datetime_utc=datetime.now(timezone.utc),
-    experiments_quota=ADMIN_CONTENT_QUOTA,
+    experiments_quota=ADMIN_EXPERIMENT_QUOTA,
     api_daily_quota=ADMIN_API_DAILY_QUOTA,
     created_datetime_utc=datetime.now(timezone.utc),
     updated_datetime_utc=datetime.now(timezone.utc),
@@ -46,10 +46,10 @@ async def async_redis_operations(key: str, value: int | None) -> None:
 
     await redis.set(key, encode_api_limit(value))
 
-    await redis.close()
+    await redis.aclose()
 
 
-def run_redis_async_tasks(key: str, value: str) -> None:
+def run_redis_async_tasks(key: str, value: int | str) -> None:
     """
     Run asynchronous Redis operations to set the remaining API calls for a user.
     """
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     except NoResultFound:
         db_session.add(user_db)
         run_redis_async_tasks(
-            f"remaining-calls:{user_db.username}", str(user_db.api_daily_quota)
+            f"remaining-calls:{user_db.username}", user_db.api_daily_quota
         )
         logger.info(f"User with username {user_db.username} added to local database.")
 

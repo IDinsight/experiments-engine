@@ -41,7 +41,7 @@ class ArmDB(Base):
         Integer, ForeignKey("mabs.experiment_id"), nullable=False
     )
     user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("user.user_id"), nullable=False
+        Integer, ForeignKey("users.user_id"), nullable=False
     )
     name: Mapped[str] = mapped_column(String(length=150), nullable=False)
     description: Mapped[str] = mapped_column(String(length=500), nullable=True)
