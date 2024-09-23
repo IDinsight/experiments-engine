@@ -1,0 +1,6 @@
+[tool.mypy]
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ["google.auth.transport", "google.oauth2"]
+ignore_missing_imports = true
