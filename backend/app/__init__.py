@@ -7,6 +7,9 @@ from redis import asyncio as aioredis
 
 from . import auth, mab
 from .config import REDIS_HOST
+from .users.routers import (
+    router as users_router,
+)  # to avoid circular imports
 from .utils import setup_logger
 
 logger = setup_logger()
@@ -14,9 +17,8 @@ logger = setup_logger()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Lifespan events for the FastAPI application.
-
-    :param app: FastAPI application instance.
+    """
+    Lifespan events for the FastAPI application.
     """
 
     logger.info("Application started")
@@ -35,6 +37,7 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Experiments API", lifespan=lifespan)
     app.include_router(mab.router)
     app.include_router(auth.router)
+    app.include_router(users_router)
 
     origins = [
         "http://localhost",

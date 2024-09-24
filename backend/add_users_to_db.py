@@ -18,7 +18,7 @@ from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 logger = setup_logger()
 
 # admin user
-ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin-test")
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin@idinsight.org")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "12345")
 ADMIN_API_KEY = os.environ.get("ADMIN_API_KEY", "admin-key")
 ADMIN_EXPERIMENT_QUOTA = os.environ.get("ADMIN_EXPERIMENT_QUOTA", None)
@@ -53,7 +53,8 @@ def run_redis_async_tasks(key: str, value: int | str) -> None:
     """
     Run asynchronous Redis operations to set the remaining API calls for a user.
     """
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     value_int = int(value) if value is not None else None
     loop.run_until_complete(async_redis_operations(key, value_int))
 

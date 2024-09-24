@@ -41,3 +41,13 @@ class UserRetrieve(BaseModel):
     updated_datetime_utc: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class KeyResponse(BaseModel):
+    """
+    Pydantic model for key response
+    """
+
+    username: str
+    new_api_key: str
+    model_config = ConfigDict(from_attributes=True)
