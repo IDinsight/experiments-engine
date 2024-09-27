@@ -65,7 +65,7 @@ async def save_mab_to_db(
     """
     Save the experiment to the database.
     """
-    arms = [ArmDB(**arm.model_dump()) for arm in experiment.arms]
+    arms = [ArmDB(**arm.model_dump(), user_id=user_id) for arm in experiment.arms]
     experiment_db = MultiArmedBanditDB(
         name=experiment.name,
         description=experiment.description,

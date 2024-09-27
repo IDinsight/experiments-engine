@@ -19,6 +19,7 @@ import { NewArm, NewMAB } from "../types";
 import { createMABExperiment } from "../api";
 import { a } from "framer-motion/client";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/utils/auth";
 
 const defaultArm: NewArm = {
   name: "",
@@ -29,6 +30,7 @@ const defaultArm: NewArm = {
 
 export default function NewExperiment() {
   const router = useRouter();
+  const { token } = useAuth();
 
   const [methodType, setMethodType] = useState("MAB");
   const [experimentName, setExperimentName] = useState<string>("");
@@ -46,7 +48,7 @@ export default function NewExperiment() {
       arms: arms,
     };
 
-    createMABExperiment({ mab })
+    createMABExperiment({ mab, token })
       .then((response) => {
         console.log(response);
         router.push(`/experiments`);

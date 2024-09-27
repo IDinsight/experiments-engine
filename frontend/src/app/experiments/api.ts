@@ -6,7 +6,7 @@ const createMABExperiment = async ({
   token,
 }: {
   mab: NewMAB;
-  token: string;
+  token: string | null;
 }) => {
   try {
     const response = await api.post("/mab/", mab, {
@@ -20,7 +20,7 @@ const createMABExperiment = async ({
   }
 };
 
-const getAllMABExperiments = async (token: string) => {
+const getAllMABExperiments = async (token: string | null) => {
   try {
     const response = await api.get("/mab/", {
       headers: {
