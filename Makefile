@@ -46,3 +46,16 @@ setup-db: guard-POSTGRES_USER guard-POSTGRES_PASSWORD guard-POSTGRES_DB
 teardown-db:
 	@docker stop pg-experiment-local
 	@docker rm pg-experiment-local
+
+setup-redis:
+	-@docker stop redis-experiment-local
+	-@docker rm redis-experiment-local
+	@docker system prune -f
+	@sleep 2
+	@docker run --name redis-experiment-local \
+     -p 6379:6379 \
+     -d redis:6.0-alpine
+
+make teardown-redis:
+	@docker stop redis-experiment-local
+	@docker rm redis-experiment-local

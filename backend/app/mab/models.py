@@ -18,6 +18,9 @@ class MultiArmedBanditDB(Base):
     experiment_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, nullable=False
     )
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.user_id"), nullable=False
+    )
     name: Mapped[str] = mapped_column(String(length=150), nullable=False)
     description: Mapped[str] = mapped_column(String(length=500), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
@@ -37,6 +40,9 @@ class ArmDB(Base):
     experiment_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("mabs.experiment_id"), nullable=False
     )
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.user_id"), nullable=False
+    )
     name: Mapped[str] = mapped_column(String(length=150), nullable=False)
     description: Mapped[str] = mapped_column(String(length=500), nullable=True)
 
@@ -52,15 +58,18 @@ class ArmDB(Base):
 
 
 async def save_mab_to_db(
-    experiment: MultiArmedBandit, asession: AsyncSession
+    experiment: MultiArmedBandit,
+    user_id: int,
+    asession: AsyncSession,
 ) -> MultiArmedBanditDB:
     """
     Save the experiment to the database.
     """
-    arms = [ArmDB(**arm.model_dump()) for arm in experiment.arms]
+    arms = [ArmDB(**arm.model_dump(), user_id=user_id) for arm in experiment.arms]
     experiment_db = MultiArmedBanditDB(
         name=experiment.name,
         description=experiment.description,
+        user_id=user_id,
         is_active=experiment.is_active,
         arms=arms,
     )
@@ -72,19 +81,35 @@ async def save_mab_to_db(
     return experiment_db
 
 
-async def get_all_mabs(asession: AsyncSession) -> Sequence[MultiArmedBanditDB]:
+async def get_all_mabs(
+    user_id: int,
+    asession: AsyncSession,
+) -> Sequence[MultiArmedBanditDB]:
     """
     Get all the experiments from the database.
     """
-    statement = select(MultiArmedBanditDB).order_by(MultiArmedBanditDB.experiment_id)
+    statement = (
+        select(MultiArmedBanditDB)
+        .where(
+            MultiArmedBanditDB.user_id == user_id,
+        )
+        .order_by(MultiArmedBanditDB.experiment_id)
+    )
 
     return (await asession.execute(statement)).unique().scalars().all()
 
 
 async def get_mab_by_id(
-    experiment_id: int, asession: AsyncSession
+    experiment_id: int, user_id: int, asession: AsyncSession
 ) -> MultiArmedBanditDB | None:
     """
     Get the experiment by id.
     """
-    return await asession.get(MultiArmedBanditDB, experiment_id)
+    # return await asession.get(MultiArmedBanditDB, experiment_id)
+    result = await asession.execute(
+        select(MultiArmedBanditDB)
+        .where(MultiArmedBanditDB.user_id == user_id)
+        .where(MultiArmedBanditDB.experiment_id == experiment_id)
+    )
+
+    return result.scalar_one_or_none()

@@ -7,18 +7,21 @@ import ExperimentCard from "./components/ExperimentCard";
 import Hourglass from "@/components/Hourglass";
 import FloatingAddButton from "./components/FloatingAddButton";
 import { Link } from "@/components/catalyst/link";
+import { useAuth } from "@/utils/auth";
 
 export default function Experiments() {
   const [experiments, setExperiments] = React.useState<MAB[]>([]);
   const [loading, setLoading] = React.useState(true);
 
+  const { token } = useAuth();
+
   React.useEffect(() => {
     setLoading(true);
-    getAllMABExperiments().then((data) => {
+    getAllMABExperiments(token!).then((data) => {
       setExperiments(data);
     });
     setLoading(false);
-  }, []);
+  }, [token]);
 
   return loading ? (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">

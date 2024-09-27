@@ -14,8 +14,23 @@ services:
       - .backend.env
     depends_on:
       - relational_db
+      - redis
     environment:
       - POSTGRES_HOST=relational_db
+      - REDIS_HOST=redis://redis:6379
+
+  frontend:
+    image: idinsight/experiment_engine_frontend:latest
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+    command: >
+      node server.js
+    depends_on:
+      - backend
+    restart: always
+    env_file:
+      - .base.env
 
   relational_db:
     image: postgres:16.4
@@ -40,6 +55,12 @@ services:
       - caddy_config:/config
     env_file:
       - .base.env
+
+  redis:
+    image: "redis:6.0-alpine"
+    ports: # Expose the port to port 6380 on the host machine for debugging
+      - "6380:6379"
+    restart: always
 
 volumes:
   db_volume:
