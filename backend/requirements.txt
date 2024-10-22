@@ -10,3 +10,4 @@ google-api-python-client==2.146.0
 pyjwt[crypto]==2.9.0
 redis==5.0.8
 python-multipart==0.0.10
+prometheus-client==0.20.0
