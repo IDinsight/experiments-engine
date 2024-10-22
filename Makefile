@@ -59,3 +59,10 @@ setup-redis:
 make teardown-redis:
 	@docker stop redis-experiment-local
 	@docker rm redis-experiment-local
+
+run:
+	@docker system prune -f
+	@docker compose -f ./deployment/docker-compose/docker-compose.yml -p  exp-engine up --build -d --remove-orphans
+
+stop:
+	@docker compose -f ./deployment/docker-compose/docker-compose.yml -p exp-engine down
