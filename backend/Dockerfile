@@ -1,5 +1,5 @@
 # Stage 1: Build environment
-FROM python:3.12-slim-buster as build
+FROM python:3.11-slim-buster as build
 
 LABEL maintainer="IDinsight"
 
@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc libpq-dev python3-dev dos2unix ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# Set up the home directory and permissions
+# Set up the home directory PromptTokensand permissions
 RUN useradd -ms /bin/bash -d ${HOME_DIR} container_user \
     && mkdir -p ${HOME_DIR} /tmp/prometheus \
     && chown -R container_user: ${HOME_DIR} /tmp/prometheus
@@ -31,7 +31,7 @@ RUN find ${HOME_DIR} -type f -print0 | xargs -0 dos2unix
 RUN chmod +x ${HOME_DIR}/startup.sh
 
 # Stage 2: Final image
-FROM python:3.12-slim-buster
+FROM python:3.11-slim-buster
 
 # Define runtime arguments
 ARG NAME=experiment_engine_backend
@@ -39,7 +39,7 @@ ARG PORT=8000
 ARG HOME_DIR=/usr/src/${NAME}
 
 # Copy the Python packages and other dependencies from the build stage
-COPY --from=build /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.10/site-packages
+COPY --from=build /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=build /usr/local/bin /usr/local/bin
 
 # Copy the application files and directories from the build stage
@@ -55,4 +55,4 @@ WORKDIR ${HOME_DIR}
 EXPOSE ${PORT}
 
 # Define the command to run the application
-CMD ["./startup.sh"]
+CMD ["sh", "./startup.sh"]
