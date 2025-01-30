@@ -30,9 +30,9 @@ setup-db: guard-POSTGRES_USER guard-POSTGRES_PASSWORD guard-POSTGRES_DB
 	@docker system prune -f
 	@sleep 2
 	@docker run --name pg-experiment-local \
-		-e POSTGRES_USER=postgres \
-		-e POSTGRES_PASSWORD=postgres \
-		-e POSTGRES_DB=postgres \
+		-e POSTGRES_USER=$(POSTGRES_USER) \
+		-e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) \
+		-e POSTGRES_DB=$(POSTGRES_DB) \
 		-p 5432:5432 \
 		-d postgres:16.4
 	@sleep 5
@@ -42,6 +42,7 @@ setup-db: guard-POSTGRES_USER guard-POSTGRES_PASSWORD guard-POSTGRES_DB
         set +a && \
 	cd backend && \
 	python -m alembic upgrade head
+	python backend/add_users_to_db.py
 
 teardown-db:
 	@docker stop pg-experiment-local
@@ -56,16 +57,15 @@ setup-redis:
      -p 6379:6379 \
      -d redis:6.0-alpine
 
-make teardown-redis:
+teardown-redis:
 	@docker stop redis-experiment-local
 	@docker rm redis-experiment-local
 
 
-make run-backend:
+run-backend:
 	$(CONDA_ACTIVATE) $(PROJECT_NAME); \
 	make setup-db && make setup-redis && \
-	python backend/add_users_to_db.py && \
 	python backend/main.py
 
-make run-frontend:
+run-frontend:
 	cd frontend && npm run dev
