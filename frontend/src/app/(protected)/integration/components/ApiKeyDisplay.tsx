@@ -13,20 +13,9 @@ import { KeyRound, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/utils/auth";
 import { useEffect } from "react";
-import api from "@/utils/api";
 import Hourglass from "@/components/Hourglass";
+import { getUser, rotateAPIKey } from "../api";
 
-async function generateApiKey() {
-  // Simulate API key generation with a delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  // Generate a random API key (in production, use a more secure method)
-  const key = Array.from(crypto.getRandomValues(new Uint8Array(32)))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-
-  return { key };
-}
 export function ApiKeyDisplay() {
   const { token } = useAuth();
 
@@ -40,16 +29,11 @@ export function ApiKeyDisplay() {
 
   useEffect(() => {
     setIsLoading(true);
-    api
-      .get("/user", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    getUser(token)
+      .then((data) => {
+        setApiKey(data.api_key_first_characters);
       })
-      .then((res) => {
-        setApiKey(res.data.api_key_first_characters);
-      })
-      .catch((error) => {
+      .catch((error: Error) => {
         console.log(error);
       })
       .finally(() => {
@@ -59,21 +43,12 @@ export function ApiKeyDisplay() {
 
   const handleGenerateKey = async () => {
     setIsRefreshing(true);
-    api
-      .put(
-        "/user/rotate-key",
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      )
-      .then((res) => {
-        setNewKey(res.data.new_api_key);
+    rotateAPIKey(token)
+      .then((data) => {
+        setNewKey(data.new_api_key);
         setIsModalOpen(true);
       })
-      .catch((error) => {
+      .catch((error: Error) => {
         console.log(error);
         toast({
           title: "Error",
