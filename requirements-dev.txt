@@ -15,3 +15,4 @@ mkdocs-open-in-new-tab==1.0.3
 pynvim==0.5.0
 jedi-language-server==0.41.4
 google-api-python-client-stubs==1.27.0
+httpx==0.28.1

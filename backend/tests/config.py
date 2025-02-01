@@ -1,0 +1,16 @@
+TEST_ADMIN_USERNAME = "admin"
+TEST_ADMIN_PASSWORD = "admin_password"
+TEST_ADMIN_API_KEY = "admin_api_key"
+TEST_ADMIN_RECOVERY_CODES = ["code1", "code2", "code3", "code4", "code5"]
+
+TEST_USERNAME = "test_username"
+TEST_PASSWORD = "test_password"
+TEST_USER_API_KEY = "test_api_key"
+TEST_EXPERIMENTS_QUOTA = 50
+TEST_API_QUOTA = 2000
+
+TEST_USERNAME_2 = "test_username_2"
+TEST_PASSWORD_2 = "test_password_2"
+TEST_USER_API_KEY_2 = "test_api_key_2"
+TEST_EXPERIMENTS_QUOTA_2 = 50
+TEST_API_QUOTA_2 = 2000

@@ -1,0 +1,113 @@
+from datetime import datetime
+from typing import AsyncGenerator, Generator
+
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.orm import Session
+
+from backend.app import create_app
+from backend.app.database import (
+    get_connection_url,
+    get_session_context_manager,
+)
+from backend.app.users.models import UserDB
+from backend.app.utils import get_key_hash, get_password_salted_hash
+
+from .config import (
+    TEST_ADMIN_API_KEY,
+    TEST_ADMIN_PASSWORD,
+    TEST_ADMIN_USERNAME,
+    TEST_API_QUOTA,
+    TEST_EXPERIMENTS_QUOTA,
+    TEST_PASSWORD,
+    TEST_USER_API_KEY,
+    TEST_USERNAME,
+    TEST_USERNAME_2,
+)
+
+
+@pytest.fixture(scope="session")
+def db_session() -> Generator[Session, None, None]:
+    """Create a test database session."""
+    with get_session_context_manager() as session:
+        yield session
+
+
+# We recreate engine and session to ensure it is in the same
+# event loop as the test. Without this we get "Future attached to different loop" error.
+# See https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html#using-multiple-asyncio-event-loops
+@pytest.fixture(scope="function")
+async def async_engine() -> AsyncGenerator[AsyncEngine, None]:
+    connection_string = get_connection_url()
+    engine = create_async_engine(connection_string, pool_size=20)
+    yield engine
+    await engine.dispose()
+
+
+@pytest.fixture(scope="function")
+async def asession(
+    async_engine: AsyncEngine,
+) -> AsyncGenerator[AsyncSession, None]:
+    async with AsyncSession(async_engine, expire_on_commit=False) as async_session:
+        yield async_session
+
+
+@pytest.fixture(scope="session")
+def client() -> Generator[TestClient, None, None]:
+    app = create_app()
+    with TestClient(app) as c:
+        yield c
+
+
+@pytest.fixture(scope="session", autouse=True)
+def admin_user(client: TestClient, db_session: Session) -> Generator:
+    admin_user = UserDB(
+        username=TEST_ADMIN_USERNAME,
+        hashed_password=get_password_salted_hash(TEST_ADMIN_PASSWORD),
+        hashed_api_key=get_key_hash(TEST_ADMIN_API_KEY),
+        api_key_first_characters=TEST_ADMIN_API_KEY[:5],
+        experiments_quota=None,
+        api_daily_quota=None,
+        created_datetime_utc=datetime.utcnow(),
+        updated_datetime_utc=datetime.utcnow(),
+    )
+
+    db_session.add(admin_user)
+    db_session.commit()
+    yield admin_user.user_id
+
+
+@pytest.fixture(scope="function")
+def regular_user(client: TestClient, db_session: Session, admin_user: int) -> Generator:
+    regular_user = UserDB(
+        username=TEST_USERNAME,
+        hashed_password=get_password_salted_hash(TEST_PASSWORD),
+        hashed_api_key=get_key_hash(TEST_USER_API_KEY),
+        api_key_first_characters=TEST_USER_API_KEY[:5],
+        experiments_quota=TEST_EXPERIMENTS_QUOTA,
+        api_daily_quota=TEST_API_QUOTA,
+        created_datetime_utc=datetime.utcnow(),
+        updated_datetime_utc=datetime.utcnow(),
+    )
+
+    db_session.add(regular_user)
+    db_session.commit()
+    yield regular_user.user_id
+
+
+@pytest.fixture(scope="session")
+def user1(client: TestClient, db_session: Session) -> Generator:
+    stmt = select(UserDB).where(UserDB.username == TEST_USERNAME)
+    result = db_session.execute(stmt)
+    user = result.scalar_one()
+    yield user.user_id
+
+
+@pytest.fixture(scope="session")
+def user2(client: TestClient, db_session: Session) -> Generator:
+    stmt = select(UserDB).where(UserDB.username == TEST_USERNAME_2)
+    result = db_session.execute(stmt)
+    user = result.scalar_one()
+    yield user.user_id

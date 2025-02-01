@@ -4,3 +4,26 @@ disallow_untyped_defs = true
 [[tool.mypy.overrides]]
 module = ["google.auth.transport", "google.oauth2"]
 ignore_missing_imports = true
+
+[tool.ruff]
+lint.select = ["E", "F", "B", "Q", "I"]
+line-length = 88
+lint.ignore = ["B008"]  # Do not perform function calls in argument defaults.
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends","typer.Option"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["backend"]
+
+[tool.isort]
+known_first_party = ["backend"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning"
+]
+markers = [
+    "slow: marks tests that slow."
+]
+asyncio_mode = "auto"
