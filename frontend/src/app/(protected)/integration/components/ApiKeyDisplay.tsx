@@ -1,0 +1,161 @@
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/catalyst/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogDescription,
+  DialogActions,
+  DialogTitle,
+} from "@/components/catalyst/dialog";
+import { KeyRound, Copy } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/utils/auth";
+import { useEffect } from "react";
+import api from "@/utils/api";
+import Hourglass from "@/components/Hourglass";
+
+async function generateApiKey() {
+  // Simulate API key generation with a delay
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
+  // Generate a random API key (in production, use a more secure method)
+  const key = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  return { key };
+}
+export function ApiKeyDisplay() {
+  const { token } = useAuth();
+
+  const [apiKey, setApiKey] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newKey, setNewKey] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { toast } = useToast();
+
+  useEffect(() => {
+    setIsLoading(true);
+    api
+      .get("/user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        setApiKey(res.data.api_key_first_characters);
+      })
+      .catch((error) => {
+        console.log(error);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [token]);
+
+  const handleGenerateKey = async () => {
+    setIsRefreshing(true);
+    api
+      .put(
+        "/user/rotate-key",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+      .then((res) => {
+        setNewKey(res.data.new_api_key);
+        setIsModalOpen(true);
+      })
+      .catch((error) => {
+        console.log(error);
+        toast({
+          title: "Error",
+          description: "Failed to generate new API key",
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setIsRefreshing(false);
+      });
+  };
+
+  const handleCopyKey = async () => {
+    try {
+      await navigator.clipboard.writeText(newKey);
+      toast({
+        title: "Copied!",
+        description: "API key copied to clipboard",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to copy API key",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleConfirm = () => {
+    setApiKey(newKey);
+    setIsModalOpen(false);
+    toast({
+      title: "Success",
+      description: "API key has been updated",
+    });
+  };
+
+  return isLoading ? (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div className="bg-white dark:bg-zinc-950 rounded-lg p-6 sm:p-8 md:p-10 flex flex-col items-center justify-center space-y-4 w-full max-w-sm mx-auto">
+        <Hourglass />
+        <span className="text-primary font-medium text-center">Loading...</span>
+      </div>
+    </div>
+  ) : (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between p-4 border flex-wrap gap-4 rounded-lg bg-muted">
+        <div className="flex items-center gap-2">
+          <KeyRound className="w-4 h-4 text-muted-foreground" />
+          <span className="font-mono">
+            {apiKey.slice(0, 5)}
+            {"•".repeat(27)}
+          </span>
+        </div>
+        <Button onClick={handleGenerateKey} disabled={isRefreshing}>
+          {isRefreshing ? "Generating..." : "Recreate Key"}
+        </Button>
+      </div>
+
+      <Dialog open={isModalOpen} onClose={() => {}}>
+        <DialogBody>
+          <DialogTitle>New API Key Generated</DialogTitle>
+          <DialogDescription>
+            Make sure to copy your new API key. You won&apos;t be able to see it
+            again!
+          </DialogDescription>
+          <div className="space-y-4">
+            <div className="p-4 bg-muted rounded-lg font-mono break-all">
+              {newKey}
+            </div>
+            <DialogActions className="flex justify-between">
+              <Button outline onClick={handleCopyKey}>
+                <Copy className="w-4 h-4 mr-2" />
+                Copy
+              </Button>
+              <Button onClick={handleConfirm}>
+                I&apos;ve saved my API key
+              </Button>
+            </DialogActions>
+          </div>
+        </DialogBody>
+      </Dialog>
+    </div>
+  );
+}

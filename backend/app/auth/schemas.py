@@ -13,7 +13,7 @@ class AuthenticatedUser(BaseModel):
 
     username: str
     access_level: AccessLevel
-
+    api_key_first_characters: str
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -36,6 +36,7 @@ class AuthenticationDetails(BaseModel):
     access_token: str
     token_type: TokenType
     access_level: AccessLevel
+    api_key_first_characters: str
     username: str
 
     model_config = ConfigDict(from_attributes=True)

@@ -3,7 +3,9 @@ from fastapi.requests import Request
 from fastapi.security import OAuth2PasswordRequestForm
 from google.auth.transport import requests
 from google.oauth2 import id_token
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..database import get_async_session
 from .config import NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID
 from .dependencies import (
     authenticate_credentials,
@@ -23,12 +25,15 @@ router = APIRouter(tags=[TAG_METADATA["name"]])
 @router.post("/login")
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
+    asession: AsyncSession = Depends(get_async_session),
 ) -> AuthenticationDetails:
     """
     Login route for users to authenticate and receive a JWT token.
     """
     user = await authenticate_credentials(
-        username=form_data.username, password=form_data.password
+        username=form_data.username,
+        password=form_data.password,
+        asession=asession,
     )
     if not user:
         raise HTTPException(
@@ -38,6 +43,7 @@ async def login(
 
     return AuthenticationDetails(
         access_token=create_access_token(user.username),
+        api_key_first_characters=user.api_key_first_characters,
         token_type="bearer",
         access_level=user.access_level,
         username=user.username,
@@ -46,7 +52,9 @@ async def login(
 
 @router.post("/login-google")
 async def login_google(
-    request: Request, login_data: GoogleLoginData
+    request: Request,
+    login_data: GoogleLoginData,
+    asession: AsyncSession = Depends(get_async_session),
 ) -> AuthenticationDetails:
     """
     Verify google token, check if user exists. If user does not exist, create user
@@ -65,7 +73,7 @@ async def login_google(
         raise HTTPException(status_code=401, detail="Invalid token") from e
 
     user = await authenticate_or_create_google_user(
-        request=request, google_email=idinfo["email"]
+        request=request, google_email=idinfo["email"], asession=asession
     )
     if not user:
         raise HTTPException(
