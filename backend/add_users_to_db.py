@@ -42,7 +42,6 @@ async def async_redis_operations(key: str, value: int | None) -> None:
     """
     Asynchronous Redis operations to set the remaining API calls for a user.
     """
-    print("REDIS_HOST", REDIS_HOST)
     redis = await aioredis.from_url(REDIS_HOST)
 
     await redis.set(key, encode_api_limit(value))

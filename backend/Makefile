@@ -6,7 +6,7 @@ export
 .PHONY : tests
 
 # Main test target
-tests: setup-test-containers run-tests
+tests: setup-test-containers run-tests teardown-test-containers
 
 # Test runner
 # NB: `pytest-alembic` requires the DB engine to point an empty database. Thus, alembic
@@ -16,11 +16,10 @@ guard-%:
 	@if [ -z "$$${*}" ]; then echo "ERROR: environment variable $* not set" && exit 1; fi
 
 run-tests:
-	@set -a && source ./tests/test.env && set +a && \
 	python -m pytest -rPQ -m "not slow" tests
 
 ## Helper targets
-setup-test-containers: setup-test-db setup-redis-test
+setup-test-containers: setup-redis-test setup-test-db
 teardown-test-containers: teardown-test-db teardown-redis-test
 
 setup-test-db: guard-POSTGRES_PASSWORD guard-POSTGRES_USER guard-POSTGRES_DB
@@ -28,7 +27,7 @@ setup-test-db: guard-POSTGRES_PASSWORD guard-POSTGRES_USER guard-POSTGRES_DB
 	-@docker rm testdb
 	@docker system prune -f
 	@sleep 2
-	docker run --name testdb \
+	@docker run --name testdb \
 		-p 5433:5432 \
 		-e POSTGRES_PASSWORD \
 		-e POSTGRES_USER \
@@ -46,7 +45,7 @@ setup-redis-test:
 	@sleep 2
 	@docker run --name redis-test \
 		-p 6381:6379 \
-    -d redis:6.0-alpine
+		-d redis:6.0-alpine
 
 teardown-redis-test:
 	@docker stop redis-test

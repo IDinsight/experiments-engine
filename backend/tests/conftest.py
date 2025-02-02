@@ -16,9 +16,6 @@ from backend.app.users.models import UserDB
 from backend.app.utils import get_key_hash, get_password_salted_hash
 
 from .config import (
-    TEST_ADMIN_API_KEY,
-    TEST_ADMIN_PASSWORD,
-    TEST_ADMIN_USERNAME,
     TEST_API_QUOTA,
     TEST_EXPERIMENTS_QUOTA,
     TEST_PASSWORD,
@@ -61,26 +58,8 @@ def client() -> Generator[TestClient, None, None]:
         yield c
 
 
-@pytest.fixture(scope="session", autouse=True)
-def admin_user(client: TestClient, db_session: Session) -> Generator:
-    admin_user = UserDB(
-        username=TEST_ADMIN_USERNAME,
-        hashed_password=get_password_salted_hash(TEST_ADMIN_PASSWORD),
-        hashed_api_key=get_key_hash(TEST_ADMIN_API_KEY),
-        api_key_first_characters=TEST_ADMIN_API_KEY[:5],
-        experiments_quota=None,
-        api_daily_quota=None,
-        created_datetime_utc=datetime.utcnow(),
-        updated_datetime_utc=datetime.utcnow(),
-    )
-
-    db_session.add(admin_user)
-    db_session.commit()
-    yield admin_user.user_id
-
-
 @pytest.fixture(scope="function")
-def regular_user(client: TestClient, db_session: Session, admin_user: int) -> Generator:
+def regular_user(client: TestClient, db_session: Session) -> Generator:
     regular_user = UserDB(
         username=TEST_USERNAME,
         hashed_password=get_password_salted_hash(TEST_PASSWORD),
@@ -95,6 +74,9 @@ def regular_user(client: TestClient, db_session: Session, admin_user: int) -> Ge
     db_session.add(regular_user)
     db_session.commit()
     yield regular_user.user_id
+
+    db_session.delete(regular_user)
+    db_session.commit()
 
 
 @pytest.fixture(scope="session")
