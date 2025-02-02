@@ -55,15 +55,16 @@ jobs:
           python -m pip install -r backend/requirements.txt
           python -m pip install -r requirements-dev.txt
       - name: Add users
+        env:
+          POSTGRES_HOST: postgres
         run: |
+          python -m alembic upgrade head
           python backend/add_users_to_db.py
       - name: Run Unit Tests
         env:
           PROMETHEUS_MULTIPROC_DIR: /tmp
           REDIS_HOST: ${{ env.REDIS_HOST }}
+          POSTGRES_HOST: postgres
         run: |
           cd backend
-          export POSTGRES_HOST=postgres POSTGRES_USER=$POSTGRES_USER \
-            POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB
-          python -m alembic upgrade head
           python -m pytest -m "not slow" tests
