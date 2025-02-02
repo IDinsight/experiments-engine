@@ -93,7 +93,8 @@ async def update_arm(
     asession: AsyncSession = Depends(get_async_session),
 ) -> ArmResponse | HTTPException:
     """
-    Update the arm with the provided `arm_id` for the given `experiment_id` based on the `outcome`.
+    Update the arm with the provided `arm_id` for the given
+    `experiment_id` based on the `outcome`.
     """
     experiment = await get_mab_by_id(experiment_id, user_db.user_id, asession)
     if experiment is None:
