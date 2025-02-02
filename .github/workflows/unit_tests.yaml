@@ -6,7 +6,7 @@ on:
       - "**"
     paths:
       - "**.py"
-      - ".github/workflows/tests.yaml"
+      - ".github/workflows/unit_tests.yaml"
 env:
   POSTGRES_PASSWORD: postgres-test-pw
   POSTGRES_USER: postgres-test-user
