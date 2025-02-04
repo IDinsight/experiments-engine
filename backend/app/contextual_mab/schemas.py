@@ -1,6 +1,6 @@
 import numpy as np
 from typing import List
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from ..mab.schemas import MultiArmedBandit, MultiArmedBanditResponse
 
 
@@ -18,7 +18,9 @@ class Context(BaseModel):
         examples=["This is a description of the context."],
     )
     values: List[int] = Field(
-        description="List of values the context can take", examples=[[0, 1]], default=[0, 1]
+        description="List of values the context can take",
+        examples=[[0, 1]],
+        default=[0, 1],
     )
     weight: float = Field(
         description="Weight associated with outcome for this context",
@@ -27,6 +29,15 @@ class Context(BaseModel):
     )
 
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="after")
+    def check_values(self) -> "Context":
+        """
+        Check if the values are unique.
+        """
+        if np.unique(self.values).shape != np.shape(self.values):
+            raise ValueError("Values must be unique.")
+        return self
 
 
 class ContextResponse(Context):
@@ -70,6 +81,15 @@ class ContextualArm(BaseModel):
     )
     model_config = ConfigDict(from_attributes=True)
 
+    @model_validator(mode="after")
+    def check_shape(self) -> "ContextualArm":
+        """
+        Check if the successes and failures are the same shape.
+        """
+        if np.array(self.successes).shape != np.array(self.failures).shape:
+            raise ValueError("Successes and failures must have the same shape.")
+        return self
+
 
 class ContextualArmResponse(ContextualArm):
     """
@@ -89,6 +109,24 @@ class ContextualBandit(MultiArmedBandit):
     contexts: list[Context]
 
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="after")
+    def check_experiment_inputs(self) -> "ContextualBandit":
+        """
+        Check if the context of the experiment is valid.
+        """
+        for i, arm in enumerate(self.arms):
+            if np.array(arm.successes).ndim != len(self.contexts):
+                raise ValueError(
+                    f"Dimensions of successes and failures for Arm {i+1} must match number of contexts."
+                )
+
+            for j, context in enumerate(self.contexts):
+                if np.array(arm.successes).shape[j] != len(context.values):
+                    raise ValueError(
+                        f"Dimension {j+1} of Arm {i+1} should match the number of values in context {j+1}."
+                    )
+        return self
 
 
 class ContextualBanditResponse(MultiArmedBanditResponse):

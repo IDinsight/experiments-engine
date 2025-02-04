@@ -18,7 +18,6 @@ from .schemas import (
     ContextualBandit,
     ContextualBanditResponse,
 )
-from .dependencies import check_experiment_inputs
 import numpy as np
 from ..exp_engine_utils.sampling import ts_beta_binomial
 from ..schemas import Outcome
@@ -36,9 +35,6 @@ async def create_contextual_mabs(
     """
     Create a new contextual experiment with different priors for each context.
     """
-    # Check if inputs are correct
-    check_experiment_inputs(experiment)
-
     response = await save_contextual_mab_to_db(experiment, user_db.user_id, asession)
     return ContextualBanditResponse.model_validate(response)
 
