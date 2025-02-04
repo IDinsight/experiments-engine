@@ -18,7 +18,7 @@ class Context(BaseModel):
         examples=["This is a description of the context."],
     )
     values: List[int] = Field(
-        description="List of values the context can", examples=[[0, 1]], default=[0, 1]
+        description="List of values the context can take", examples=[[0, 1]], default=[0, 1]
     )
     weight: float = Field(
         description="Weight associated with outcome for this context",
