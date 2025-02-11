@@ -8,9 +8,8 @@ Create Date: 2024-09-23 16:18:00.227312
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "af0fdaa1e60d"
@@ -27,9 +26,9 @@ def upgrade() -> None:
         sa.Column("username", sa.String(), nullable=False),
         sa.Column("hashed_password", sa.String(length=96), nullable=False),
         sa.Column("hashed_api_key", sa.String(length=96), nullable=True),
-        sa.Column("api_key_first_characters", sa.String(length=5), nullable=True),
+        sa.Column("api_key_first_characters", sa.String(length=5), nullable=False),
         sa.Column(
-            "api_key_updated_datetime_utc", sa.DateTime(timezone=True), nullable=True
+            "api_key_updated_datetime_utc", sa.DateTime(timezone=True), nullable=False
         ),
         sa.Column("experiments_quota", sa.Integer(), nullable=True),
         sa.Column("api_daily_quota", sa.Integer(), nullable=True),

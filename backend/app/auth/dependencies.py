@@ -23,6 +23,7 @@ from ..users.models import (
 )
 from ..users.schemas import UserCreate
 from ..utils import (
+    generate_key,
     setup_logger,
     update_api_limits,
     verify_password_salted_hash,
@@ -103,7 +104,8 @@ async def authenticate_or_create_google_user(
             experiments_quota=DEFAULT_EXPERIMENTS_QUOTA,
             api_daily_quota=DEFAULT_API_QUOTA,
         )
-        user_db = await save_user_to_db(user, asession)
+        api_key = generate_key()
+        user_db = await save_user_to_db(user, api_key, asession)
         await update_api_limits(
             request.app.state.redis, user_db.username, user_db.api_daily_quota
         )

@@ -44,8 +44,10 @@ async def create_user(
         )
 
     try:
+        new_api_key = generate_key()
         user_new = await save_user_to_db(
             user=user,
+            api_key=new_api_key,
             asession=asession,
         )
         await update_api_limits(

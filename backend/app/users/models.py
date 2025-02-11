@@ -35,7 +35,7 @@ class UserDB(Base):
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     hashed_password: Mapped[str] = mapped_column(String(96), nullable=False)
-    hashed_api_key: Mapped[str] = mapped_column(String(96), nullable=True, unique=True)
+    hashed_api_key: Mapped[str] = mapped_column(String(96), nullable=False, unique=True)
     api_key_first_characters: Mapped[str] = mapped_column(String(5), nullable=True)
     api_key_updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=True
@@ -56,6 +56,7 @@ class UserDB(Base):
 
 async def save_user_to_db(
     user: UserCreateWithPassword | UserCreate,
+    api_key: str,
     asession: AsyncSession,
 ) -> UserDB:
     """
@@ -84,6 +85,9 @@ async def save_user_to_db(
         experiments_quota=user.experiments_quota,
         api_daily_quota=user.api_daily_quota,
         hashed_password=hashed_password,
+        hashed_api_key=get_key_hash(api_key),
+        api_key_updated_datetime_utc=datetime.now(timezone.utc),
+        api_key_first_characters=api_key[:5],
         created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
     )

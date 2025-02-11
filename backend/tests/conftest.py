@@ -65,6 +65,7 @@ def regular_user(client: TestClient, db_session: Session) -> Generator:
         hashed_password=get_password_salted_hash(TEST_PASSWORD),
         hashed_api_key=get_key_hash(TEST_USER_API_KEY),
         api_key_first_characters=TEST_USER_API_KEY[:5],
+        api_key_updated_datetime_utc=datetime.utcnow(),
         experiments_quota=TEST_EXPERIMENTS_QUOTA,
         api_daily_quota=TEST_API_QUOTA,
         created_datetime_utc=datetime.utcnow(),
