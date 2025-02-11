@@ -17,7 +17,7 @@ env:
   ADMIN_API_KEY: testkey123
 jobs:
   container-job:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     container: node:20.7-bullseye
     services:
       postgres:
