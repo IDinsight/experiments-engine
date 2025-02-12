@@ -16,7 +16,11 @@ api.interceptors.response.use(
       const currentPath = window.location.pathname;
       const sourcePage = encodeURIComponent(currentPath);
       localStorage.removeItem("token");
-      window.location.href = `/login?sourcePage=${sourcePage}`;
+      if (currentPath.includes("/login")) {
+        return Promise.reject(error);
+      } else {
+        window.location.href = `/login?sourcePage=${sourcePage}`;
+      }
     }
     return Promise.reject(error);
   },

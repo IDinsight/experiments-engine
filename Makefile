@@ -24,6 +24,8 @@ fresh-env :
 		pip install psycopg2-binary==2.9.9; \
 	fi
 
+setup-dev: setup-redis setup-db
+
 setup-db: guard-POSTGRES_USER guard-POSTGRES_PASSWORD guard-POSTGRES_DB
 	-@docker stop pg-experiment-local
 	-@docker rm pg-experiment-local

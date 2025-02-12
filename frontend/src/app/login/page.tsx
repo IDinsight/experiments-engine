@@ -133,11 +133,11 @@ export default function LoginPage() {
                 </Button>
 
                 {/* Render loginError if it exists */}
-                {loginError && (
-                  <FormMessage>
-                    <span className="text-red-500">{loginError}</span>
-                  </FormMessage>
-                )}
+                <FormMessage>
+                  <span className="text-red-500">
+                    {loginError ? loginError : "\u00A0"}
+                  </span>
+                </FormMessage>
               </form>
             </Form>
           </CardContent>
