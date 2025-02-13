@@ -17,7 +17,6 @@ import { DividerWithTitle } from "@/components/Dividers";
 import { Heading } from "@/components/catalyst/heading";
 import { NewArm, NewMAB } from "../types";
 import { createMABExperiment } from "../api";
-import { a } from "framer-motion/client";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/utils/auth";
 
