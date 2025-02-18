@@ -34,7 +34,7 @@ export default function AddBasicInfo({
       <Fieldset aria-label="New MAB Experiment">
         <FieldGroup>
           <Field>
-            <Label style={{ fontWeight: "bold" }}>Experiment Name</Label>
+            <Label>Experiment Name</Label>
             <Input
               name="experiment-name"
               placeholder="Give it a name you'll remember"
