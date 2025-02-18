@@ -21,12 +21,20 @@ export default function AddBasicInfo({
 }) {
   const { experimentState, setExperimentState } = useExperiment();
 
+  const methodSelect = (value: keyof Methods) => {
+    setMethodType(value);
+    setExperimentState({
+      ...experimentState,
+      methodType: value,
+    });
+  };
+
   return (
     <form action="/orders" method="POST">
       <Fieldset aria-label="New MAB Experiment">
         <FieldGroup>
           <Field>
-            <Label>Experiment Name</Label>
+            <Label style={{ fontWeight: "bold" }}>Experiment Name</Label>
             <Input
               name="experiment-name"
               placeholder="Give it a name you'll remember"
@@ -56,7 +64,7 @@ export default function AddBasicInfo({
         <RadioGroup
           name="experiment-method"
           defaultValue="mab"
-          onChange={(value) => setMethodType(value as keyof Methods)}
+          onChange={(value) => methodSelect(value as keyof Methods)}
         >
           <Label>Select experiment type</Label>
           <RadioField>
@@ -67,8 +75,8 @@ export default function AddBasicInfo({
             </Description>
           </RadioField>
           <RadioField>
-            <Radio id="ab-test" value="ab" disabled />
-            <Label htmlFor="ab-test">[Coming soon] A/B Testing</Label>
+            <Radio id="ab-test" value="ab" />
+            <Label htmlFor="ab-test">A/B Testing</Label>
             <Description>
               A method that compares two or more variants against each other.
             </Description>

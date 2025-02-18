@@ -27,7 +27,7 @@ export const ExperimentProvider: React.FC<{ children: React.ReactNode }> = ({
   const [experimentState, setExperimentState] = useState<ExperimentState>({
     name: "",
     description: "",
-    methodType: "MAB",
+    methodType: "mab",
     arms: [
       { name: "", description: "", alpha_prior: 1, beta_prior: 1 },
       { name: "", description: "", alpha_prior: 1, beta_prior: 1 },

@@ -1,4 +1,4 @@
-type MethodType = "MAB" | "AB";
+type MethodType = "mab" | "ab";
 
 interface Step {
   name: string;

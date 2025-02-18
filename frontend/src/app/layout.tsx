@@ -26,14 +26,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={geistSans.variable}>
       <head>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
         <script src="https://accounts.google.com/gsi/client" async></script>
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={"font-sans antialiased"}>
         <Suspense>
           <AuthProvider>{children}</AuthProvider>
         </Suspense>

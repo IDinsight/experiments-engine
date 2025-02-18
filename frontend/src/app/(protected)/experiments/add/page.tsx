@@ -3,6 +3,7 @@ import { useState } from "react";
 import { AllSteps } from "./addExperimentSteps";
 import { ExperimentProvider } from "./components/AddExperimentContext";
 import AddBasicInfo from "./components/basicInfo";
+import { Button } from "@/components/catalyst/button";
 
 export default function NewExperiment() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -32,20 +33,16 @@ export default function NewExperiment() {
         )}
       </div>
       <div className="flex justify-between max-w-4xl mx-auto mt-8">
-        <button
-          className="px-4 py-2 bg-gray-200 rounded"
-          onClick={prevStep}
-          disabled={currentStep === 0}
-        >
+        <Button onClick={prevStep} disabled={currentStep === 0}>
           Previous
-        </button>
-        <button
+        </Button>
+        <Button
           className="px-4 py-2 bg-gray-200 rounded"
           onClick={nextStep}
           disabled={currentStep === steps.length}
         >
           Next
-        </button>
+        </Button>
       </div>
     </ExperimentProvider>
   );
