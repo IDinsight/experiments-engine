@@ -1,7 +1,7 @@
-import { Step } from "../types";
-import AddMABArms from "./components/addMABArms";
-import AddABArms from "./components/addABArms";
-import AddNotifications from "./components/addNotifications";
+import { Step } from "../../types";
+import AddMABArms from "./mabs/addMABArms";
+import AddABArms from "./ab/addABArms";
+import AddNotifications from "./addNotifications";
 
 // --- MAB types and steps ---
 

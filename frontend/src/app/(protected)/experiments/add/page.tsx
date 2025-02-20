@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { AllSteps } from "./addExperimentSteps";
+import { AllSteps } from "./components/addExperimentSteps";
 import { ExperimentProvider } from "./components/AddExperimentContext";
 import AddBasicInfo from "./components/basicInfo";
 import { Button } from "@/components/catalyst/button";
