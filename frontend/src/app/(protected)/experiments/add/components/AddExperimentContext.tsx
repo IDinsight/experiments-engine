@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { createContext, useContext, useState } from "react";
-import { ExperimentState } from "../addExperimentSteps";
+import { ExperimentState } from "../../types";
 
 type ExperimentContextType = {
   experimentState: ExperimentState;

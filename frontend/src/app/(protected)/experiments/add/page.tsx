@@ -23,7 +23,6 @@ export default function NewExperiment() {
   return (
     <ExperimentProvider>
       <div className="max-w-4xl mx-auto">
-        <h1 className="mb-8">Create New Experiment</h1>
         {currentStep === 0 ? (
           <AddBasicInfo
             setMethodType={(method) => setMethod(method as keyof Methods)}

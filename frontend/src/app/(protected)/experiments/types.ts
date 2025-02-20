@@ -92,4 +92,6 @@ export type {
   AB,
   MABArm,
   ABArm,
+  NewMABArm,
+  NewABArm,
 };

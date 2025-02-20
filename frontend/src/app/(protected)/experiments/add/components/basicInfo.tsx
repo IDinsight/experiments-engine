@@ -30,7 +30,8 @@ export default function AddBasicInfo({
   };
 
   return (
-    <form action="/orders" method="POST">
+    <div>
+      <h1 className="mb-8">Create New Experiment</h1>
       <Fieldset aria-label="New MAB Experiment">
         <FieldGroup>
           <Field>
@@ -40,7 +41,10 @@ export default function AddBasicInfo({
               placeholder="Give it a name you'll remember"
               value={experimentState.name}
               onChange={(e) =>
-                setExperimentState({ ...experimentState, name: e.target.value })
+                setExperimentState({
+                  ...experimentState,
+                  name: e.target.value,
+                })
               }
             />
           </Field>
@@ -83,6 +87,6 @@ export default function AddBasicInfo({
           </RadioField>
         </RadioGroup>
       </Fieldset>
-    </form>
+    </div>
   );
 }

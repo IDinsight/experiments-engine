@@ -112,6 +112,14 @@ export default function NewExperiment() {
             <PlusIcon className="w-4 h-4 mr-2" />
             Add Arm
           </Button>
+
+          <Button
+            className="mt-4"
+            onClick={() => setArms([...arms, { ...defaultArm }])}
+          >
+            <PlusIcon className="w-4 h-4 mr-2" />
+            Add Arm
+          </Button>
           {arms.map((arm, index) => (
             <div key={index}>
               <DividerWithTitle title={`Arm ${index + 1}`} />
