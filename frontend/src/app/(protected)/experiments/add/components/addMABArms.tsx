@@ -12,7 +12,7 @@ import { NewMABArm } from "../../types";
 import { PlusIcon } from "@heroicons/react/16/solid";
 import { DividerWithTitle } from "@/components/Dividers";
 import { TrashIcon } from "@heroicons/react/16/solid";
-
+import { Heading } from "@/components/catalyst/heading";
 export default function AddMABArms() {
   const { experimentState, setExperimentState } = useExperiment();
 
@@ -26,36 +26,39 @@ export default function AddMABArms() {
 
   return (
     <div>
-      <h1>Add MAB Arms</h1>
-      <Fieldset aria-label="New Experiment">
-        <Button
-          className="mt-4"
-          onClick={() =>
-            setExperimentState({
-              ...experimentState,
-              arms: [...arms, defaultArm],
-            })
-          }
-        >
-          <PlusIcon className="w-4 h-4 mr-2" />
-          Add Arm
-        </Button>
-
-        <Button
-          className="mt-4 mx-4"
-          disabled={arms.length <= 2}
-          onClick={() =>
-            arms.length > 2 &&
-            setExperimentState({
-              ...experimentState,
-              arms: arms.slice(0, arms.length - 1),
-            })
-          }
-        >
-          <TrashIcon className="w-4 h-4 mr-2" />
-          Delete Arm
-        </Button>
-
+      <div className="flex w-full flex-wrap items-end justify-between gap-4 border-b border-zinc-950/10 pb-6 dark:border-white/10">
+        <Heading>Add MAB Arms</Heading>
+        <div className="flex gap-4">
+          <Button
+            className="mt-4"
+            onClick={() =>
+              setExperimentState({
+                ...experimentState,
+                arms: [...arms, defaultArm],
+              })
+            }
+          >
+            <PlusIcon className="w-4 h-4 mr-2" />
+            Add Arm
+          </Button>
+          <Button
+            className="mt-4 mx-4"
+            disabled={arms.length <= 2}
+            outline
+            onClick={() =>
+              arms.length > 2 &&
+              setExperimentState({
+                ...experimentState,
+                arms: arms.slice(0, arms.length - 1),
+              })
+            }
+          >
+            <TrashIcon className="w-4 h-4 mr-2" />
+            Delete Arm
+          </Button>
+        </div>
+      </div>
+      <Fieldset aria-label="Add MAB Arms">
         {arms.map((arm, index) => (
           <div key={index}>
             <DividerWithTitle title={`Arm ${index + 1}`} />

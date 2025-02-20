@@ -11,6 +11,7 @@ import { Input } from "@/components/catalyst/input";
 import { Textarea } from "@/components/catalyst/textarea";
 import { AllSteps } from "../addExperimentSteps";
 import { useExperiment } from "./AddExperimentContext";
+import { Heading } from "@/components/catalyst/heading";
 
 type Methods = typeof AllSteps;
 
@@ -31,8 +32,10 @@ export default function AddBasicInfo({
 
   return (
     <div>
-      <h1 className="mb-8">Create New Experiment</h1>
-      <Fieldset aria-label="New MAB Experiment">
+      <div className="pt-5 flex w-full flex-wrap items-end justify-between gap-4 border-b border-zinc-950/10 pb-6 dark:border-white/10">
+        <Heading>Start a new experiment</Heading>
+      </div>
+      <Fieldset aria-label="New MAB Experiment" className="pt-6">
         <FieldGroup>
           <Field>
             <Label>Experiment Name</Label>

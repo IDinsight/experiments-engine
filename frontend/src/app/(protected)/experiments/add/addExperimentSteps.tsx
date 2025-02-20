@@ -7,20 +7,20 @@ import AddNotifications from "./components/addNotifications";
 
 const MABsteps: Step[] = [
   {
-    name: "addArms",
+    name: "Add Arms",
     component: AddMABArms,
   },
-  { name: "notifications", component: AddNotifications },
+  { name: "Notifications", component: AddNotifications },
 ];
 
 // --- A/B test types and steps ---
 
 const ABsteps: Step[] = [
   {
-    name: "addArms",
+    name: "Add Arms",
     component: AddABArms,
   },
-  { name: "notifications", component: AddNotifications },
+  { name: "Notifications", component: AddNotifications },
 ];
 
 // --- All steps ---

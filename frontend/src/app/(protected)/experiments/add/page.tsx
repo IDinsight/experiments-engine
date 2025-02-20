@@ -9,6 +9,14 @@ import {
   ChevronRightIcon,
   ChevronLeftIcon,
 } from "@heroicons/react/20/solid";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 export default function NewExperiment() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -28,6 +36,55 @@ export default function NewExperiment() {
   return (
     <ExperimentProvider>
       <div className="max-w-4xl mx-auto">
+        <div className="text-zinc-800 mb-4">
+          <Breadcrumb>
+            <BreadcrumbList>
+              {currentStep === 0 ? (
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Basic Details</BreadcrumbPage>
+                </BreadcrumbItem>
+              ) : (
+                <BreadcrumbItem>
+                  <BreadcrumbLink onClick={() => setCurrentStep(0)}>
+                    Basic Details
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+              )}
+
+              <BreadcrumbSeparator>
+                <ChevronRightIcon className="h-5 w-5 text-zinc-800" />
+              </BreadcrumbSeparator>
+              {steps.slice(0, currentStep).map((step, index) =>
+                index < currentStep - 1 ? (
+                  <>
+                    <BreadcrumbItem key={index}>
+                      <BreadcrumbLink onClick={() => setCurrentStep(index + 1)}>
+                        {step.name}
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+
+                    <BreadcrumbSeparator>
+                      <ChevronRightIcon className="h-5 w-5 text-zinc-800" />
+                    </BreadcrumbSeparator>
+                  </>
+                ) : (
+                  <>
+                    <BreadcrumbItem key={index}>
+                      <BreadcrumbPage className="text-zinc-800 ">
+                        {step.name}
+                      </BreadcrumbPage>
+                    </BreadcrumbItem>
+                    {index < currentStep - 1 && (
+                      <BreadcrumbSeparator>
+                        <ChevronRightIcon className="h-5 w-5 text-zinc-800" />
+                      </BreadcrumbSeparator>
+                    )}
+                  </>
+                ),
+              )}
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
         {currentStep === 0 ? (
           <AddBasicInfo
             setMethodType={(method) => setMethod(method as keyof Methods)}
