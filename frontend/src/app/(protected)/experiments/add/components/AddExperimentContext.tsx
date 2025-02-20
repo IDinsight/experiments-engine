@@ -32,7 +32,14 @@ export const ExperimentProvider: React.FC<{ children: React.ReactNode }> = ({
       { name: "", description: "", alpha_prior: 1, beta_prior: 1 },
       { name: "", description: "", alpha_prior: 1, beta_prior: 1 },
     ],
-    notifications: [],
+    notification: {
+      onTrialCompletion: false,
+      numberOfTrials: 0,
+      onDaysElapsed: false,
+      daysElapsed: 0,
+      onPercentBetter: false,
+      percentBetterThreshold: 0,
+    },
   });
 
   return (

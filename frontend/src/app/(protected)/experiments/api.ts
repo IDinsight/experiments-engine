@@ -1,15 +1,29 @@
 import api from "@/utils/api";
-import { NewMAB } from "./types";
+import { MABExperimentState, ABExperimentState } from "./types";
+import { ExperimentState } from "./types";
 
-const createMABExperiment = async ({
-  mab,
+const createNewExperiment = async ({
+  experimentData,
   token,
 }: {
-  mab: NewMAB;
+  experimentData: ExperimentState;
   token: string | null;
 }) => {
+  let endpoint: string;
+  let newExperimentData: MABExperimentState | ABExperimentState;
+
+  if (experimentData.methodType == "mab") {
+    newExperimentData = experimentData as MABExperimentState;
+    endpoint = "/mab/";
+  } else if (experimentData.methodType == "ab") {
+    newExperimentData = experimentData as MABExperimentState;
+    endpoint = "/ab/";
+  } else {
+    throw new Error("Invalid experiment type");
+  }
+
   try {
-    const response = await api.post("/mab/", mab, {
+    const response = await api.post(endpoint, newExperimentData, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -33,4 +47,4 @@ const getAllMABExperiments = async (token: string | null) => {
   }
 };
 
-export { createMABExperiment, getAllMABExperiments };
+export { createNewExperiment, getAllMABExperiments };

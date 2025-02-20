@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
 import { AllSteps } from "./components/addExperimentSteps";
-import { ExperimentProvider } from "./components/AddExperimentContext";
 import AddBasicInfo from "./components/basicInfo";
+import { useExperiment } from "./components/AddExperimentContext";
 import { Button } from "@/components/catalyst/button";
 import {
   PlusIcon,
@@ -17,9 +17,14 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { useAuth } from "@/utils/auth";
+import { useRouter } from "next/navigation";
+import { createNewExperiment } from "../api";
 
 export default function NewExperiment() {
   const [currentStep, setCurrentStep] = useState(0);
+  const { experimentState } = useExperiment();
+
   type Methods = typeof AllSteps;
   const [method, setMethod] = useState<keyof Methods>("mab");
 
@@ -32,16 +37,30 @@ export default function NewExperiment() {
   const EmptyComponent: React.FC = () => <></>;
   const CurrentStepComponent: React.ComponentType =
     currentStep === 0 ? EmptyComponent : steps[currentStep - 1].component;
+  const { token } = useAuth();
+  const router = useRouter();
 
+  const onSubmit = () => {
+    createNewExperiment({ experimentData: experimentState, token })
+      .then((response) => {
+        console.log("Experiment created", response);
+        router.push("/experiments");
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
   return (
-    <ExperimentProvider>
+    <>
       <div className="max-w-4xl mx-auto">
         <div className="text-zinc-800 mb-4">
           <Breadcrumb>
             <BreadcrumbList>
               {currentStep === 0 ? (
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Basic Details</BreadcrumbPage>
+                  <BreadcrumbPage className="font-semibold">
+                    Basic Details
+                  </BreadcrumbPage>
                 </BreadcrumbItem>
               ) : (
                 <BreadcrumbItem>
@@ -70,7 +89,7 @@ export default function NewExperiment() {
                 ) : (
                   <>
                     <BreadcrumbItem key={index}>
-                      <BreadcrumbPage className="text-zinc-800 ">
+                      <BreadcrumbPage className="text-zinc-800 font-semibold ">
                         {step.name}
                       </BreadcrumbPage>
                     </BreadcrumbItem>
@@ -102,7 +121,7 @@ export default function NewExperiment() {
           <button
             type="button"
             className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            onClick={() => console.log("Create Experiment")}
+            onClick={onSubmit}
           >
             <PlusIcon aria-hidden="true" className="-ml-0.5 mr-1.5 h-5 w-5" />
             Create Experiment
@@ -114,6 +133,6 @@ export default function NewExperiment() {
           </Button>
         )}
       </div>
-    </ExperimentProvider>
+    </>
   );
 }

@@ -5,11 +5,13 @@ interface Step {
   component: React.FC;
 }
 
-type Notification = {
-  notificationTrigger: "sample" | "time" | "event";
-  sampleSize?: number;
-  timeDays?: number;
-  eventName?: string;
+type Notifications = {
+  onTrialCompletion: boolean;
+  numberOfTrials?: number;
+  onDaysElapsed: boolean;
+  daysElapsed?: number;
+  onPercentBetter: boolean;
+  percentBetterThreshold?: number;
 };
 
 interface ExperimentStateBase {
@@ -42,8 +44,9 @@ interface ABArm extends NewABArm {
 }
 
 interface ABExperimentState extends ExperimentStateBase {
+  methodType: "ab";
   arms: NewABArm[];
-  notifications: Notification[];
+  notifications: Notifications;
 }
 
 interface AB extends ABExperimentState {
@@ -66,8 +69,9 @@ interface MABArm extends NewMABArm {
 }
 
 interface MABExperimentState extends ExperimentStateBase {
+  methodType: "mab";
   arms: NewMABArm[];
-  notifications: Notification[];
+  notifications: Notification;
 }
 
 interface MAB extends MABExperimentState {
@@ -80,7 +84,7 @@ type ExperimentState = MABExperimentState | ABExperimentState;
 
 export type {
   Step,
-  Notification,
+  Notifications,
   ExperimentStateBase,
   ArmBase,
   StepComponentProps,

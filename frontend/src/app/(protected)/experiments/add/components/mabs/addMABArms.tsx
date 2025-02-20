@@ -32,9 +32,16 @@ export default function AddMABArms() {
           <Button
             className="mt-4"
             onClick={() =>
-              setExperimentState({
-                ...experimentState,
-                arms: [...arms, defaultArm],
+              setExperimentState((prevState) => {
+                if (prevState.methodType === "mab") {
+                  return {
+                    ...prevState,
+                    arms: [...prevState.arms, defaultArm as NewMABArm],
+                  };
+                } else {
+                  console.error("Method type is not MAB");
+                  throw new Error("Method type is not MAB");
+                }
               })
             }
           >
@@ -45,13 +52,20 @@ export default function AddMABArms() {
             className="mt-4 mx-4"
             disabled={arms.length <= 2}
             outline
-            onClick={() =>
-              arms.length > 2 &&
-              setExperimentState({
-                ...experimentState,
-                arms: arms.slice(0, arms.length - 1),
-              })
-            }
+            onClick={() => {
+              if (experimentState.methodType === "mab") {
+                setExperimentState({
+                  ...experimentState,
+                  arms: experimentState.arms.slice(
+                    0,
+                    experimentState.arms.length - 1,
+                  ) as NewMABArm[],
+                });
+              } else {
+                console.error("Method type is not MAB");
+                throw new Error("Method type is not MAB");
+              }
+            }}
           >
             <TrashIcon className="w-4 h-4 mr-2" />
             Delete Arm

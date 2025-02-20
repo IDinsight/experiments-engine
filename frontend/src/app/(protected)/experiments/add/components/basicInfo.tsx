@@ -9,7 +9,7 @@ import {
 import { Radio, RadioField, RadioGroup } from "@/components/catalyst/radio";
 import { Input } from "@/components/catalyst/input";
 import { Textarea } from "@/components/catalyst/textarea";
-import { AllSteps } from "../addExperimentSteps";
+import { AllSteps } from "./addExperimentSteps";
 import { useExperiment } from "./AddExperimentContext";
 import { Heading } from "@/components/catalyst/heading";
 
