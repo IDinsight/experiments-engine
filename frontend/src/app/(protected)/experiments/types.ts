@@ -71,7 +71,7 @@ interface MABArm extends NewMABArm {
 interface MABExperimentState extends ExperimentStateBase {
   methodType: "mab";
   arms: NewMABArm[];
-  notifications: Notification;
+  notifications: Notifications;
 }
 
 interface MAB extends MABExperimentState {
