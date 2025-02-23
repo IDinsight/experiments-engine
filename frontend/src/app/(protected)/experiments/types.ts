@@ -1,8 +1,12 @@
 type MethodType = "mab" | "ab";
 
+interface StepComponentProps {
+  onValidate: (validation: StepValidation) => void;
+}
+
 interface Step {
   name: string;
-  component: React.FC;
+  component: React.FC<StepComponentProps>;
 }
 
 type Notifications = {
@@ -25,11 +29,10 @@ interface ArmBase {
   description: string;
 }
 
-interface StepComponentProps {
-  nextStep: () => void;
-  previousStep: () => void;
+interface StepValidation {
+  isValid: boolean;
+  errors: Record<string, string> | Record<string, string>[];
 }
-
 // ----- AB
 
 interface NewABArm extends ArmBase {
@@ -83,19 +86,20 @@ interface MAB extends MABExperimentState {
 type ExperimentState = MABExperimentState | ABExperimentState;
 
 export type {
-  Step,
-  Notifications,
-  ExperimentStateBase,
-  ArmBase,
-  StepComponentProps,
-  MethodType,
-  MABExperimentState,
-  ABExperimentState,
-  ExperimentState,
-  MAB,
   AB,
-  MABArm,
   ABArm,
-  NewMABArm,
+  ABExperimentState,
+  ArmBase,
+  ExperimentState,
+  ExperimentStateBase,
+  MAB,
+  MABArm,
+  MABExperimentState,
+  MethodType,
   NewABArm,
+  NewMABArm,
+  Notifications,
+  Step,
+  StepComponentProps,
+  StepValidation,
 };

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { AllSteps } from "./components/addExperimentSteps";
 import AddBasicInfo from "./components/basicInfo";
 import { useExperiment } from "./components/AddExperimentContext";
@@ -20,36 +20,60 @@ import {
 import { useAuth } from "@/utils/auth";
 import { useRouter } from "next/navigation";
 import { createNewExperiment } from "../api";
+import { StepComponentProps, StepValidation } from "../types";
 
 export default function NewExperiment() {
   const [currentStep, setCurrentStep] = useState(0);
   const { experimentState } = useExperiment();
+  const [stepValidations, setStepValidations] = useState<StepValidation[]>([]);
+  const { token } = useAuth();
+  const router = useRouter();
 
   type Methods = typeof AllSteps;
   const [method, setMethod] = useState<keyof Methods>("mab");
 
   const steps = AllSteps[method];
 
-  const nextStep = () =>
+  const nextStep = useCallback(() => {
+    const currentValidation = stepValidations[currentStep];
+    if (!currentValidation || !currentValidation.isValid) {
+      console.log("Cannot proceed. Please fill in all required fields.");
+      return;
+    }
     setCurrentStep((prev) => Math.min(prev + 1, steps.length));
+  }, [currentStep, stepValidations, steps.length]);
+
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
 
-  const EmptyComponent: React.FC = () => <></>;
-  const CurrentStepComponent: React.ComponentType =
+  const EmptyComponent: React.FC<StepComponentProps> = () => null;
+  const CurrentStepComponent: React.ComponentType<StepComponentProps> =
     currentStep === 0 ? EmptyComponent : steps[currentStep - 1].component;
-  const { token } = useAuth();
-  const router = useRouter();
 
   const onSubmit = () => {
-    createNewExperiment({ experimentData: experimentState, token })
-      .then((response) => {
-        console.log("Experiment created", response);
-        router.push("/experiments");
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+    if (stepValidations.every((validation) => validation.isValid)) {
+      createNewExperiment({ experimentData: experimentState, token })
+        .then((response) => {
+          console.log("Experiment created", response);
+          router.push("/experiments");
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    } else {
+      console.log("Cannot proceed. Please check all steps for errors.");
+    }
   };
+  const handleStepValidation = useCallback(
+    (stepIndex: number, validation: StepValidation) => {
+      setStepValidations((prev) => {
+        const newValidations = [...prev];
+        newValidations[stepIndex] = validation;
+        return newValidations;
+      });
+    },
+    [],
+  );
+
   return (
     <>
       <div className="max-w-4xl mx-auto">
@@ -107,9 +131,16 @@ export default function NewExperiment() {
         {currentStep === 0 ? (
           <AddBasicInfo
             setMethodType={(method) => setMethod(method as keyof Methods)}
+            onValidate={(validation: StepValidation) =>
+              handleStepValidation(currentStep, validation)
+            }
           />
         ) : (
-          <CurrentStepComponent />
+          <CurrentStepComponent
+            onValidate={(validation: StepValidation) =>
+              handleStepValidation(currentStep, validation)
+            }
+          />
         )}
       </div>
       <div className="flex justify-between max-w-4xl mx-auto mt-8">
@@ -122,12 +153,19 @@ export default function NewExperiment() {
             type="button"
             className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
             onClick={onSubmit}
+            disabled={
+              !stepValidations.every((validation) => validation.isValid)
+            }
           >
             <PlusIcon aria-hidden="true" className="-ml-0.5 mr-1.5 h-5 w-5" />
             Create Experiment
           </button>
         ) : (
-          <Button className="px-4 py-2 bg-gray-200 rounded" onClick={nextStep}>
+          <Button
+            className="px-4 py-2 bg-gray-200 rounded"
+            onClick={nextStep}
+            disabled={!stepValidations[currentStep]?.isValid}
+          >
             Next
             <ChevronRightIcon className="h-5 w-5" />
           </Button>

@@ -8,20 +8,89 @@ import { Button } from "@/components/catalyst/button";
 import { Input } from "@/components/catalyst/input";
 import { Textarea } from "@/components/catalyst/textarea";
 import { useExperiment } from "../AddExperimentContext";
-import { NewMABArm } from "../../../types";
+import { NewMABArm, StepComponentProps } from "../../../types";
 import { PlusIcon } from "@heroicons/react/16/solid";
 import { DividerWithTitle } from "@/components/Dividers";
 import { TrashIcon } from "@heroicons/react/16/solid";
 import { Heading } from "@/components/catalyst/heading";
-export default function AddMABArms() {
-  const { experimentState, setExperimentState } = useExperiment();
+import { useCallback, useEffect, useState } from "react";
 
+export default function AddMABArms({ onValidate }: StepComponentProps) {
+  const { experimentState, setExperimentState } = useExperiment();
+  const [errors, setErrors] = useState(
+    experimentState.arms.map(() => ({
+      name: "",
+      description: "",
+      alpha_prior: "",
+      beta_prior: "",
+    })),
+  );
   const arms = experimentState.arms as NewMABArm[];
   const defaultArm: NewMABArm = {
     name: "",
     description: "",
     alpha_prior: 1,
     beta_prior: 1,
+  };
+
+  const validateForm = useCallback(() => {
+    let isValid = true;
+    const newErrors = experimentState.arms.map(() => ({
+      name: "",
+      description: "",
+      alpha_prior: "",
+      beta_prior: "",
+    }));
+
+    arms.forEach((arm, index) => {
+      if (!arm.name.trim()) {
+        newErrors[index].name = "Arm name is required";
+        isValid = false;
+      }
+
+      if (!arm.description.trim()) {
+        newErrors[index].description = "Description is required";
+        isValid = false;
+      }
+
+      if (!arm.alpha_prior) {
+        newErrors[index].alpha_prior = "Alpha prior is required";
+        isValid = false;
+      }
+
+      if (!arm.beta_prior) {
+        newErrors[index].beta_prior = "Beta prior is required";
+        isValid = false;
+      }
+    });
+
+    setErrors(newErrors);
+    onValidate({ isValid, errors: newErrors });
+    return isValid;
+  }, [experimentState, onValidate, arms]);
+
+  useEffect(() => {
+    validateForm();
+  }, [arms, validateForm]);
+
+  const typeSafeSetExperimentState = (newState: NewMABArm[]) => {
+    if (experimentState.methodType === "mab") {
+      setErrors(
+        newState.map(() => ({
+          name: "",
+          description: "",
+          alpha_prior: "",
+          beta_prior: "",
+        })),
+      );
+      setExperimentState({
+        ...experimentState,
+        arms: newState,
+      });
+    } else {
+      console.error("Method type is not MAB");
+      throw new Error("Method type is not MAB");
+    }
   };
 
   return (
@@ -81,76 +150,109 @@ export default function AddMABArms() {
               className="md:flex md:flex-row md:space-x-8 md:space-y-0 items-start"
             >
               <div className="basis-1/2">
-                <Field className="flex flex-row ">
-                  <Label className="basis-1/4 mt-3">Name</Label>
-                  <Input
-                    className="basis-3/4"
-                    name={`arm-${index + 1}`}
-                    placeholder="Give the arm a searchable name"
-                    defaultValue={arm.name}
-                    onChange={(e) => {
-                      const newArms = [...arms];
-                      newArms[index].name = e.target.value;
-                      setExperimentState({
-                        ...experimentState,
-                        arms: newArms,
-                      });
-                    }}
-                  />
+                <Field className="flex flex-col mb-4">
+                  <div className="flex flex-row">
+                    <Label className="basis-1/4 mt-3 font-medium">Name</Label>
+                    <div className="basis-3/4 flex flex-col">
+                      <Input
+                        name={`arm-${index + 1}-name`}
+                        placeholder="Give the arm a searchable name"
+                        defaultValue={arm.name}
+                        onChange={(e) => {
+                          const newArms = [...arms];
+                          newArms[index].name = e.target.value;
+                          typeSafeSetExperimentState(newArms);
+                        }}
+                      />
+                      {errors[index]?.name ? (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors[index].name}
+                        </p>
+                      ) : (
+                        <p className="text-red-500 text-xs mt-1">&nbsp;</p>
+                      )}
+                    </div>
+                  </div>
                 </Field>
-                <Field className="flex flex-row ">
-                  <Label className="basis-1/4 mt-3">Description</Label>
-                  <Textarea
-                    className="basis-3/4 "
-                    name={`arm-${index + 1}-description`}
-                    placeholder="What is the hypothesis being tested?"
-                    defaultValue={arm.description}
-                    rows={3}
-                    onChange={(e) => {
-                      const newArms = [...arms];
-                      newArms[index].description = e.target.value;
-                      setExperimentState({
-                        ...experimentState,
-                        arms: newArms,
-                      });
-                    }}
-                  />
+                <Field className="flex flex-col">
+                  <div className="flex flex-row">
+                    <Label className="basis-1/4 mt-3 font-medium">
+                      Description
+                    </Label>
+                    <div className="basis-3/4 flex flex-col">
+                      <Textarea
+                        name={`arm-${index + 1}-description`}
+                        placeholder="Describe the arm"
+                        defaultValue={arm.description}
+                        onChange={(e) => {
+                          const newArms = [...arms];
+                          newArms[index].description = e.target.value;
+                          typeSafeSetExperimentState(newArms);
+                        }}
+                      />
+                      {errors[index]?.description ? (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors[index].description}
+                        </p>
+                      ) : (
+                        <p className="text-red-500 text-xs mt-1">&nbsp;</p>
+                      )}
+                    </div>
+                  </div>
                 </Field>
               </div>
-              <div className="bases-1/2 grow">
-                <Field className="flex flex-row ">
-                  <Label className="basis-1/4 mt-3">Alpha prior</Label>
-                  <Input
-                    className="basis-3/4"
-                    name={`arm-${index + 1}-alpha`}
-                    placeholder="Enter an integer as the prior for the alpha parameter"
-                    defaultValue={arm.alpha_prior}
-                    onChange={(e) => {
-                      const newArms = [...arms];
-                      newArms[index].alpha_prior = parseInt(e.target.value);
-                      setExperimentState({
-                        ...experimentState,
-                        arms: newArms,
-                      });
-                    }}
-                  />
+              <div className="basis-1/2 grow">
+                <Field className="flex flex-col mb-4">
+                  <div className="flex flex-row">
+                    <Label className="basis-1/4 mt-3 font-medium">
+                      Alpha prior
+                    </Label>
+                    <div className="basis-3/4 flex flex-col">
+                      <Input
+                        name={`arm-${index + 1}-alpha`}
+                        placeholder="Enter an integer as the prior for the alpha parameter"
+                        defaultValue={arm.alpha_prior}
+                        onChange={(e) => {
+                          const newArms = [...arms];
+                          newArms[index].alpha_prior = parseInt(e.target.value);
+                          typeSafeSetExperimentState(newArms);
+                        }}
+                      />
+                      {errors[index]?.alpha_prior ? (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors[index].alpha_prior}
+                        </p>
+                      ) : (
+                        <p className="text-red-500 text-xs mt-1">&nbsp;</p>
+                      )}
+                    </div>
+                  </div>
                 </Field>
-                <Field className="flex flex-row ">
-                  <Label className="basis-1/4 mt-3">Beta prior</Label>
-                  <Input
-                    className="basis-3/4"
-                    name={`arm-${index + 1}-beta`}
-                    placeholder="Enter an integer as the prior for the beta parameter"
-                    defaultValue={arm.beta_prior}
-                    onChange={(e) => {
-                      const newArms = [...arms];
-                      newArms[index].beta_prior = parseInt(e.target.value);
-                      setExperimentState({
-                        ...experimentState,
-                        arms: newArms,
-                      });
-                    }}
-                  />
+                <Field className="flex flex-col">
+                  <div className="flex flex-row">
+                    <Label className="basis-1/4 mt-3 font-medium">
+                      Beta prior
+                    </Label>
+                    <div className="basis-3/4 flex flex-col">
+                      <Input
+                        name={`arm-${index + 1}-beta`}
+                        placeholder="Enter an integer as the prior for the beta parameter"
+                        defaultValue={arm.beta_prior}
+                        onChange={(e) => {
+                          const newArms = [...arms];
+                          newArms[index].beta_prior = parseInt(e.target.value);
+                          typeSafeSetExperimentState(newArms);
+                        }}
+                      />
+                      {errors[index]?.beta_prior ? (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors[index].beta_prior}
+                        </p>
+                      ) : (
+                        <p className="text-red-500 text-xs mt-1">&nbsp;</p>
+                      )}
+                    </div>
+                  </div>
                 </Field>
               </div>
             </FieldGroup>
