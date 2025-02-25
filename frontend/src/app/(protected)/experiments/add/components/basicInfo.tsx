@@ -85,19 +85,16 @@ export default function AddBasicInfo({
       isValid = false;
     }
 
-    setErrors(newErrors);
-    onValidate({ isValid, errors: newErrors });
-    return isValid;
-  }, [experimentState, onValidate]);
+    return { isValid, newErrors };
+  }, [experimentState]);
 
   useEffect(() => {
-    validateForm();
-  }, [
-    experimentState.name,
-    experimentState.description,
-    experimentState.methodType,
-    validateForm,
-  ]);
+    const { isValid, newErrors } = validateForm();
+    if (JSON.stringify(newErrors) !== JSON.stringify(errors)) {
+      setErrors(newErrors);
+      onValidate({ isValid, errors: newErrors });
+    }
+  }, [validateForm, onValidate, errors]);
 
   return (
     <div>
@@ -161,8 +158,8 @@ export default function AddBasicInfo({
             </Description>
           </RadioField>
           <RadioField>
-            <Radio id="ab-test" value="ab" />
-            <Label htmlFor="ab-test">A/B Testing</Label>
+            <Radio id="ab-test" value="ab" disabled />
+            <Label htmlFor="ab-test">[Coming soon] A/B Testing</Label>
             <Description>
               A method that compares two or more variants against each other.
             </Description>

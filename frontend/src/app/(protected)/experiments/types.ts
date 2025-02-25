@@ -10,11 +10,11 @@ interface Step {
 }
 
 type Notifications = {
-  onTrialCompletion: boolean;
+  onTrialCompletion?: boolean;
   numberOfTrials?: number;
-  onDaysElapsed: boolean;
+  onDaysElapsed?: boolean;
   daysElapsed?: number;
-  onPercentBetter: boolean;
+  onPercentBetter?: boolean;
   percentBetterThreshold?: number;
 };
 

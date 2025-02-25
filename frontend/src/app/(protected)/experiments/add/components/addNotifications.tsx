@@ -7,14 +7,12 @@ import {
 } from "@/components/catalyst/checkbox";
 import { Description, Fieldset, Label } from "@/components/catalyst/fieldset";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { Notifications, StepComponentProps } from "../../types";
+import { useCallback, useEffect, useState } from "react";
 
-export default function AddNotifications() {
+export default function AddNotifications({ onValidate }: StepComponentProps) {
   const { experimentState, setExperimentState } = useExperiment();
   const notifications = experimentState.notifications;
-  const [trialCount, setTrialCount] = useState(1000);
-  const [dayCount, setDayCount] = useState(30);
-  const [eventPercent, setEventPercent] = useState(20);
 
   const inputClasses = `
     w-16 mx-1 px-1 py-0 h-6 inline-block font-bold rounded-none
@@ -25,64 +23,169 @@ export default function AddNotifications() {
     [-moz-appearance:textfield]
   `;
 
+  const updateNotificationState = (data: Notifications) => {
+    const newNotification = { ...notifications, ...data };
+    setExperimentState({
+      ...experimentState,
+      notifications: newNotification,
+    });
+  };
+
+  const [errors, setErrors] = useState({
+    numberOfTrials: "",
+    daysElapsed: "",
+    percentBetterThreshold: "",
+  });
+
+  const validateForm = useCallback(() => {
+    let isValid = true;
+    const newErrors = {
+      numberOfTrials: "",
+      daysElapsed: "",
+      percentBetterThreshold: "",
+    };
+
+    if (
+      notifications.onTrialCompletion &&
+      (!notifications.numberOfTrials || notifications.numberOfTrials < 0)
+    ) {
+      newErrors.numberOfTrials = "Number of trials should be greater than 0";
+      isValid = false;
+    }
+    if (
+      notifications.onDaysElapsed &&
+      (!notifications.daysElapsed || notifications.daysElapsed < 0)
+    ) {
+      newErrors.daysElapsed = "Days elapsed should be greater than 0";
+      isValid = false;
+    }
+    if (
+      notifications.onPercentBetter &&
+      (!notifications.percentBetterThreshold ||
+        notifications.percentBetterThreshold < 0)
+    ) {
+      newErrors.percentBetterThreshold = "Threshold should be greater than 0";
+      isValid = false;
+    }
+    return { isValid, newErrors };
+  }, [notifications]);
+
+  useEffect(() => {
+    const { isValid, newErrors } = validateForm();
+    if (JSON.stringify(newErrors) !== JSON.stringify(errors)) {
+      setErrors(newErrors);
+      onValidate({ isValid, errors: newErrors });
+    }
+  }, [validateForm, onValidate, errors]);
+
   return (
     <div>
       <div className="pt-5 flex w-full flex-wrap items-end justify-between gap-4 border-b border-zinc-950/10 pb-6 dark:border-white/10">
         <Heading>Select notifications</Heading>
       </div>
-      <Fieldset aria-label="select notications" className="pt-6">
+      <Fieldset aria-label="select notifications" className="pt-6">
         <CheckboxGroup>
-          <CheckboxField>
-            <Checkbox name="discoverability" value="sample" defaultChecked />
+          <CheckboxField className="flex flex-row">
+            <Checkbox
+              name="discoverability"
+              defaultChecked={notifications.onTrialCompletion || false}
+              onChange={(e) =>
+                updateNotificationState({ onTrialCompletion: e })
+              }
+            />
             <Label>
               After
               <Input
                 type="number"
-                value={trialCount}
-                onChange={(e) => setTrialCount(Number(e.target.value))}
-                className={inputClasses}
+                value={notifications.numberOfTrials}
+                onChange={(e) => {
+                  updateNotificationState({
+                    numberOfTrials: Number(e.target.value),
+                  });
+                }}
+                className={`${inputClasses} ${errors.numberOfTrials ? "border-red-500" : ""}`}
                 onClick={(e) => e.stopPropagation()}
               />
               {" trials"}
             </Label>
             <Description>
-              Notify me when <b>{trialCount}</b> trials have been run
+              {errors.numberOfTrials ? (
+                <span className="text-red-500">{errors.numberOfTrials}</span>
+              ) : (
+                <span>
+                  Notify me when <b>{notifications.numberOfTrials}</b> number of
+                  trials have been run
+                </span>
+              )}
             </Description>
           </CheckboxField>
           <CheckboxField>
-            <Checkbox name="discoverability" value="time" />
+            <Checkbox
+              name="discoverability"
+              value="time"
+              defaultChecked={notifications.onDaysElapsed || false}
+              onChange={(e) => updateNotificationState({ onDaysElapsed: e })}
+            />
             <Label>
               After
               <Input
                 type="number"
-                value={dayCount}
-                onChange={(e) => setDayCount(Number(e.target.value))}
-                className={inputClasses}
+                value={notifications.daysElapsed}
+                onChange={(e) =>
+                  updateNotificationState({
+                    daysElapsed: Number(e.target.value),
+                  })
+                }
+                className={`${inputClasses} ${errors.daysElapsed ? "border-red-500" : ""}`}
                 onClick={(e) => e.stopPropagation()}
               />
               {" days"}
             </Label>
             <Description>
-              Notify me when <b>{dayCount}</b> days have passed since the
-              experiment started
+              {errors.daysElapsed ? (
+                <span className="text-red-500">{errors.daysElapsed}</span>
+              ) : (
+                <span>
+                  Notify me when <b>{notifications.daysElapsed}</b> days have
+                  passed since the experiment started
+                </span>
+              )}
             </Description>
           </CheckboxField>
           <CheckboxField>
-            <Checkbox name="discoverability" value="event" />
+            <Checkbox
+              name="discoverability"
+              value="event"
+              defaultChecked={notifications.onPercentBetter || false}
+              onChange={(e) => updateNotificationState({ onPercentBetter: e })}
+            />
             <Label>
               If an arm is superior by
               <Input
                 type="number"
-                value={eventPercent}
-                onChange={(e) => setEventPercent(Number(e.target.value))}
-                className={inputClasses}
+                value={notifications.percentBetterThreshold}
+                onChange={(e) =>
+                  updateNotificationState({
+                    percentBetterThreshold: Number(e.target.value),
+                  })
+                }
+                className={`${inputClasses} ${errors.percentBetterThreshold ? "border-red-500" : ""}`}
                 onClick={(e) => e.stopPropagation()}
               />
               {"%"}
             </Label>
             <Description>
-              Notify me if an arm is <b>{eventPercent}</b>% better than the
-              other arms
+              {errors.percentBetterThreshold ? (
+                <span className="text-red-500">
+                  {errors.percentBetterThreshold}
+                </span>
+              ) : (
+                <span>
+                  Notify me if an arm is{" "}
+                  <b>{notifications.percentBetterThreshold}</b>% better than the
+                  other arms
+                </span>
+              )}
             </Description>
           </CheckboxField>
         </CheckboxGroup>

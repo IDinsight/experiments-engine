@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import { useState, useCallback } from "react";
 import { AllSteps } from "./components/addExperimentSteps";
 import AddBasicInfo from "./components/basicInfo";
@@ -81,50 +82,42 @@ export default function NewExperiment() {
           <Breadcrumb>
             <BreadcrumbList>
               {currentStep === 0 ? (
-                <BreadcrumbItem>
+                <BreadcrumbItem key="basic-details-current">
                   <BreadcrumbPage className="font-semibold">
                     Basic Details
                   </BreadcrumbPage>
                 </BreadcrumbItem>
               ) : (
-                <BreadcrumbItem>
+                <BreadcrumbItem key="basic-details-link">
                   <BreadcrumbLink onClick={() => setCurrentStep(0)}>
                     Basic Details
                   </BreadcrumbLink>
                 </BreadcrumbItem>
               )}
 
-              <BreadcrumbSeparator>
+              <BreadcrumbSeparator key="first-separator">
                 <ChevronRightIcon className="h-5 w-5 text-zinc-800" />
               </BreadcrumbSeparator>
-              {steps.slice(0, currentStep).map((step, index) =>
-                index < currentStep - 1 ? (
-                  <>
-                    <BreadcrumbItem key={index}>
+              {steps.slice(0, currentStep).map((step, index) => (
+                <React.Fragment key={`step-${index}`}>
+                  <BreadcrumbItem>
+                    {index < currentStep - 1 ? (
                       <BreadcrumbLink onClick={() => setCurrentStep(index + 1)}>
                         {step.name}
                       </BreadcrumbLink>
-                    </BreadcrumbItem>
-
-                    <BreadcrumbSeparator>
-                      <ChevronRightIcon className="h-5 w-5 text-zinc-800" />
-                    </BreadcrumbSeparator>
-                  </>
-                ) : (
-                  <>
-                    <BreadcrumbItem key={index}>
-                      <BreadcrumbPage className="text-zinc-800 font-semibold ">
+                    ) : (
+                      <BreadcrumbPage className="text-zinc-800 font-semibold">
                         {step.name}
                       </BreadcrumbPage>
-                    </BreadcrumbItem>
-                    {index < currentStep - 1 && (
-                      <BreadcrumbSeparator>
-                        <ChevronRightIcon className="h-5 w-5 text-zinc-800" />
-                      </BreadcrumbSeparator>
                     )}
-                  </>
-                ),
-              )}
+                  </BreadcrumbItem>
+                  {index < currentStep - 1 && (
+                    <BreadcrumbSeparator key={`separator-${index}`}>
+                      <ChevronRightIcon className="h-5 w-5 text-zinc-800" />
+                    </BreadcrumbSeparator>
+                  )}
+                </React.Fragment>
+              ))}
             </BreadcrumbList>
           </Breadcrumb>
         </div>
@@ -151,7 +144,7 @@ export default function NewExperiment() {
         {currentStep === steps.length ? (
           <button
             type="button"
-            className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={onSubmit}
             disabled={
               !stepValidations.every((validation) => validation.isValid)

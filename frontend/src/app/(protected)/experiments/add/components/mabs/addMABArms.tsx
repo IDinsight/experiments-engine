@@ -35,7 +35,7 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
 
   const validateForm = useCallback(() => {
     let isValid = true;
-    const newErrors = experimentState.arms.map(() => ({
+    const newErrors = arms.map(() => ({
       name: "",
       description: "",
       alpha_prior: "",
@@ -63,26 +63,20 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
         isValid = false;
       }
     });
-
-    setErrors(newErrors);
-    onValidate({ isValid, errors: newErrors });
-    return isValid;
-  }, [experimentState, onValidate, arms]);
+    return { isValid, newErrors };
+  }, [arms]);
 
   useEffect(() => {
-    validateForm();
-  }, [arms, validateForm]);
+    const { isValid, newErrors } = validateForm();
+    if (JSON.stringify(newErrors) !== JSON.stringify(errors)) {
+      console.log("setting errors");
+      setErrors(newErrors);
+      onValidate({ isValid, errors: newErrors });
+    }
+  }, [validateForm, onValidate, errors]);
 
   const typeSafeSetExperimentState = (newState: NewMABArm[]) => {
     if (experimentState.methodType === "mab") {
-      setErrors(
-        newState.map(() => ({
-          name: "",
-          description: "",
-          alpha_prior: "",
-          beta_prior: "",
-        })),
-      );
       setExperimentState({
         ...experimentState,
         arms: newState,
@@ -157,7 +151,7 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
                       <Input
                         name={`arm-${index + 1}-name`}
                         placeholder="Give the arm a searchable name"
-                        defaultValue={arm.name}
+                        value={arm.name || ""}
                         onChange={(e) => {
                           const newArms = [...arms];
                           newArms[index].name = e.target.value;
@@ -183,7 +177,7 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
                       <Textarea
                         name={`arm-${index + 1}-description`}
                         placeholder="Describe the arm"
-                        defaultValue={arm.description}
+                        value={arm.description || ""}
                         onChange={(e) => {
                           const newArms = [...arms];
                           newArms[index].description = e.target.value;
@@ -211,7 +205,7 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
                       <Input
                         name={`arm-${index + 1}-alpha`}
                         placeholder="Enter an integer as the prior for the alpha parameter"
-                        defaultValue={arm.alpha_prior}
+                        value={arm.alpha_prior || ""}
                         onChange={(e) => {
                           const newArms = [...arms];
                           newArms[index].alpha_prior = parseInt(e.target.value);
@@ -237,7 +231,7 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
                       <Input
                         name={`arm-${index + 1}-beta`}
                         placeholder="Enter an integer as the prior for the beta parameter"
-                        defaultValue={arm.beta_prior}
+                        value={arm.beta_prior || ""}
                         onChange={(e) => {
                           const newArms = [...arms];
                           newArms[index].beta_prior = parseInt(e.target.value);

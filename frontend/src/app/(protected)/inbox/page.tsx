@@ -24,25 +24,25 @@ interface Notification {
 const initialNotifications: Notification[] = [
   {
     id: "1",
-    title: "New message from John",
+    title: "Experiment X: Number of trials reached",
     content:
-      "Hi, I wanted to give you an update on the project. We've made significant progress on the frontend and are now moving on to backend integration. I'd like to schedule a meeting to discuss the next steps and any potential roadblocks. Please let me know your availability for next week.",
+      "The experiment has reached the target number of trials. Check out the experiment and results here",
     isRead: false,
     timestamp: "2025-02-12T10:00:00Z",
   },
   {
     id: "2",
-    title: "System update",
+    title: "Experiment Y: Arm A1 is at least p% better than other arms",
     content:
-      "A new system update is available. Please restart your computer to install important security patches and performance improvements. This update addresses several critical vulnerabilities and is essential for maintaining the security of your system.",
+      "One of the arms in the experiment is better than the threshold compared to the other arms. Check out the experiment and results here",
     isRead: true,
     timestamp: "2025-02-11T15:30:00Z",
   },
   {
     id: "3",
-    title: "Meeting reminder",
+    title: "Experiment Z: D days since started",
     content:
-      "Don't forget about the team meeting tomorrow at 10 AM. We'll be discussing the quarterly goals and reviewing our progress on the current project. Please come prepared with any questions or concerns you'd like to address during the meeting.",
+      "The experiment has been running for D days. Check out the experiment and results here",
     isRead: false,
     timestamp: "2023-05-31T09:00:00Z",
   },
