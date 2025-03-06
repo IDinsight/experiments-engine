@@ -60,7 +60,7 @@ async def delete_messages(
     return [MessageResponse.model_validate(message) for message in remaining_messages]
 
 
-@router.put("/", response_model=list[MessageResponse])
+@router.patch("/", response_model=list[MessageResponse])
 async def mark_messages_as_read(
     message_read_toggle: MessageReadToggle,
     user_db: Annotated[UserDB, Depends(get_current_user)],

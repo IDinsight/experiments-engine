@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -17,6 +19,7 @@ class MessageResponse(MessageCreate):
 
     message_id: int
     is_unread: bool
+    created_datetime_utc: datetime
 
     model_config = ConfigDict(from_attributes=True)
 
