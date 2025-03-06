@@ -25,30 +25,50 @@ from .config import (
 )
 
 
-@pytest.fixture(scope="session")
-def db_session() -> Generator[Session, None, None]:
-    """Create a test database session."""
-    with get_session_context_manager() as session:
-        yield session
+@pytest.fixture(scope="function")
+async def asession(async_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
+    """Create an async session for testing.
+
+    Parameters
+    ----------
+    async_engine
+        Async engine for testing.
+
+    Yields
+    ------
+    AsyncGenerator[AsyncSession, None]
+        Async session for testing.
+    """
+
+    async with AsyncSession(async_engine, expire_on_commit=False) as async_session:
+        yield async_session
 
 
-# We recreate engine and session to ensure it is in the same
-# event loop as the test. Without this we get "Future attached to different loop" error.
-# See https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html#using-multiple-asyncio-event-loops
 @pytest.fixture(scope="function")
 async def async_engine() -> AsyncGenerator[AsyncEngine, None]:
+    """Create an async engine for testing.
+
+    NB: We recreate engine and session to ensure it is in the same event loop as the
+    test. Without this we get "Future attached to different loop" error. See:
+    https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html#using-multiple-asyncio-event-loops
+
+    Yields
+    ------
+    Generator[AsyncEngine, None, None]
+        Async engine for testing.
+    """  # noqa: E501
+
     connection_string = get_connection_url()
     engine = create_async_engine(connection_string, pool_size=20)
     yield engine
     await engine.dispose()
 
 
-@pytest.fixture(scope="function")
-async def asession(
-    async_engine: AsyncEngine,
-) -> AsyncGenerator[AsyncSession, None]:
-    async with AsyncSession(async_engine, expire_on_commit=False) as async_session:
-        yield async_session
+@pytest.fixture(scope="session")
+def db_session() -> Generator[Session, None, None]:
+    """Create a test database session."""
+    with get_session_context_manager() as session:
+        yield session
 
 
 @pytest.fixture(scope="session")

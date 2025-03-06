@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import os
 from datetime import datetime, timedelta, timezone
@@ -5,6 +6,7 @@ from typing import Generator, Type
 
 from fastapi.testclient import TestClient
 from pytest import FixtureRequest, MonkeyPatch, fixture, mark
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from backend import create_notifications
@@ -116,7 +118,7 @@ class TestNotificationsJob:
         [((3, 4), 4), ((4, 62), 64), ((3, 40), 40)],
         indirect=["create_mabs_days_elapsed"],
     )
-    def test_days_elapsed_notification(
+    async def test_days_elapsed_notification(
         self,
         client: TestClient,
         admin_token: str,
@@ -124,13 +126,14 @@ class TestNotificationsJob:
         db_session: Session,
         days_elapsed: int,
         monkeypatch: MonkeyPatch,
+        asession: AsyncSession,
     ) -> None:
         monkeypatch.setattr(
             create_notifications,
             "datetime",
             fake_datetime(days_elapsed),
         )
-        n_processed = process_notifications()
+        n_processed = await process_notifications(asession)
         assert n_processed == len(create_mabs_days_elapsed)
 
     @mark.parametrize(
@@ -138,7 +141,7 @@ class TestNotificationsJob:
         [((3, 4), 3), ((4, 62), 50), ((3, 40), 0)],
         indirect=["create_mabs_days_elapsed"],
     )
-    def test_days_elapsed_notification_not_sent(
+    async def test_days_elapsed_notification_not_sent(
         self,
         client: TestClient,
         admin_token: str,
@@ -146,13 +149,14 @@ class TestNotificationsJob:
         db_session: Session,
         days_elapsed: int,
         monkeypatch: MonkeyPatch,
+        asession: AsyncSession,
     ) -> None:
         monkeypatch.setattr(
             create_notifications,
             "datetime",
             fake_datetime(days_elapsed),
         )
-        n_processed = process_notifications()
+        n_processed = await process_notifications(asession)
         assert n_processed == 0
 
     @mark.parametrize(
@@ -160,15 +164,16 @@ class TestNotificationsJob:
         [((3, 4), 4), ((4, 62), 64), ((3, 40), 40)],
         indirect=["create_mabs_trials_run"],
     )
-    def test_trials_run_notification(
+    async def test_trials_run_notification(
         self,
         client: TestClient,
         admin_token: str,
         n_trials: int,
         create_mabs_trials_run: list[dict],
         db_session: Session,
+        asession: AsyncSession,
     ) -> None:
-        n_processed = process_notifications()
+        n_processed = await process_notifications(asession)
         assert n_processed == 0
         api_key = os.environ.get("ADMIN_API_KEY", "")
         for mab in create_mabs_trials_run:
@@ -178,5 +183,6 @@ class TestNotificationsJob:
                     headers={"Authorization": f"Bearer {api_key}"},
                 )
                 assert response.status_code == 200
-        n_processed = process_notifications()
+        n_processed = await process_notifications(asession)
+        await asyncio.sleep(0.1)
         assert n_processed == len(create_mabs_trials_run)
