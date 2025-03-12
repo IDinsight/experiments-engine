@@ -29,8 +29,8 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
   const defaultArm: NewMABArm = {
     name: "",
     description: "",
-    alpha_prior: 1,
-    beta_prior: 1,
+    alpha: 1,
+    beta: 1,
   };
 
   const validateForm = useCallback(() => {
@@ -53,12 +53,12 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
         isValid = false;
       }
 
-      if (!arm.alpha_prior) {
+      if (!arm.alpha) {
         newErrors[index].alpha_prior = "Alpha prior is required";
         isValid = false;
       }
 
-      if (!arm.beta_prior) {
+      if (!arm.beta) {
         newErrors[index].beta_prior = "Beta prior is required";
         isValid = false;
       }
@@ -205,10 +205,10 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
                       <Input
                         name={`arm-${index + 1}-alpha`}
                         placeholder="Enter an integer as the prior for the alpha parameter"
-                        value={arm.alpha_prior || ""}
+                        value={arm.alpha || ""}
                         onChange={(e) => {
                           const newArms = [...arms];
-                          newArms[index].alpha_prior = parseInt(e.target.value);
+                          newArms[index].alpha = parseInt(e.target.value);
                           typeSafeSetExperimentState(newArms);
                         }}
                       />
@@ -231,10 +231,10 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
                       <Input
                         name={`arm-${index + 1}-beta`}
                         placeholder="Enter an integer as the prior for the beta parameter"
-                        value={arm.beta_prior || ""}
+                        value={arm.beta || ""}
                         onChange={(e) => {
                           const newArms = [...arms];
-                          newArms[index].beta_prior = parseInt(e.target.value);
+                          newArms[index].beta = parseInt(e.target.value);
                           typeSafeSetExperimentState(newArms);
                         }}
                       />

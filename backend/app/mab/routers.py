@@ -174,7 +174,7 @@ async def update_arm(
     experiment_data = MultiArmedBanditSample.model_validate(experiment)
 
     # Get and validate arm
-    arms = [a for a in experiment_data.arms if a.arm_id == arm_id]
+    arms = [a for a in experiment.arms if a.arm_id == arm_id]
     if not arms:
         raise HTTPException(status_code=404, detail=f"Arm with id {arm_id} not found")
 
@@ -184,12 +184,18 @@ async def update_arm(
     if experiment_data.reward_type == RewardLikelihood.BERNOULLI:
         Outcome(outcome)  # Check if reward is 0 or 1
         arm.alpha, arm.beta = update_arm_params(
-            arm, experiment_data.prior_type, experiment_data.reward_type, outcome
+            ArmResponse.model_validate(arm),
+            experiment_data.prior_type,
+            experiment_data.reward_type,
+            outcome,
         )
 
     elif experiment_data.reward_type == RewardLikelihood.NORMAL:
         arm.mu, arm.sigma = update_arm_params(
-            arm, experiment_data.prior_type, experiment_data.reward_type, outcome
+            ArmResponse.model_validate(arm),
+            experiment_data.prior_type,
+            experiment_data.reward_type,
+            outcome,
         )
 
     else:
@@ -198,7 +204,10 @@ async def update_arm(
             detail="Reward type not supported.",
         )
 
+    # Save modified arm to database
+    asession.add(arm)
     await asession.commit()
+
     observation = MABObservation(
         experiment_id=experiment.experiment_id,
         arm_id=arm.arm_id,

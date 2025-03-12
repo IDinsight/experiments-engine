@@ -37,8 +37,8 @@ export default function AddBasicInfo({
   });
 
   const defaultMABArms: NewMABArm[] = [
-    { name: "", description: "", alpha_prior: 1, beta_prior: 1 },
-    { name: "", description: "", alpha_prior: 1, beta_prior: 1 },
+    { name: "", description: "", alpha: 1, beta: 1 },
+    { name: "", description: "", alpha: 1, beta: 1 },
   ];
   const defaultABArms: NewABArm[] = [
     { name: "", description: "", mean_prior: 0, stdDev_prior: 1 },
