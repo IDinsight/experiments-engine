@@ -231,7 +231,7 @@ async def update_arm(
         rewards = [obs.reward for obs in all_obs] + [reward]
         contexts = [obs.context_val for obs in all_obs] + [
             sorted(
-                context.context_value
+                float(context.context_value)
                 for context in sorted(context, key=lambda x: x.context_id)
             )
         ]
