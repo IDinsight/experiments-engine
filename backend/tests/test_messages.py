@@ -116,7 +116,6 @@ class TestMessages:
         response = client.get(
             "/messages", headers={"Authorization": f"Bearer {admin_token}"}
         )
-        print("unread: ", [m.get("is_unread") for m in response.json()])
         unread_messages = sum([m.get("is_unread") for m in response.json()])
         assert unread_messages == len(messages)
 

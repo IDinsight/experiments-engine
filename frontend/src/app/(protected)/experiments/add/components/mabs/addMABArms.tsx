@@ -21,8 +21,8 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
     experimentState.arms.map(() => ({
       name: "",
       description: "",
-      alpha_prior: "",
-      beta_prior: "",
+      alpha: "",
+      beta: "",
     })),
   );
   const arms = experimentState.arms as NewMABArm[];
@@ -38,8 +38,8 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
     const newErrors = arms.map(() => ({
       name: "",
       description: "",
-      alpha_prior: "",
-      beta_prior: "",
+      alpha: "",
+      beta: "",
     }));
 
     arms.forEach((arm, index) => {
@@ -54,12 +54,12 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
       }
 
       if (!arm.alpha) {
-        newErrors[index].alpha_prior = "Alpha prior is required";
+        newErrors[index].alpha = "Alpha prior is required";
         isValid = false;
       }
 
       if (!arm.beta) {
-        newErrors[index].beta_prior = "Beta prior is required";
+        newErrors[index].beta = "Beta prior is required";
         isValid = false;
       }
     });
@@ -212,9 +212,9 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
                           typeSafeSetExperimentState(newArms);
                         }}
                       />
-                      {errors[index]?.alpha_prior ? (
+                      {errors[index]?.alpha ? (
                         <p className="text-red-500 text-xs mt-1">
-                          {errors[index].alpha_prior}
+                          {errors[index].alpha}
                         </p>
                       ) : (
                         <p className="text-red-500 text-xs mt-1">&nbsp;</p>
@@ -238,9 +238,9 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
                           typeSafeSetExperimentState(newArms);
                         }}
                       />
-                      {errors[index]?.beta_prior ? (
+                      {errors[index]?.beta ? (
                         <p className="text-red-500 text-xs mt-1">
-                          {errors[index].beta_prior}
+                          {errors[index].beta}
                         </p>
                       ) : (
                         <p className="text-red-500 text-xs mt-1">&nbsp;</p>

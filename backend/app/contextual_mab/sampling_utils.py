@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.optimize import minimize
-from scipy.sparse.linalg import LinearOperator
 
 from ..schemas import ArmPriors, ContextLinkFunctions, RewardLikelihood
 from .schemas import ContextualArmResponse, ContextualBanditSample
@@ -103,18 +102,7 @@ def update_arm_laplace(
 
     result = minimize(objective, current_mu, method="L-BFGS-B", hess="2-point")
     new_mu = result.x
-    inv_hess = np.asarray(result.hess_inv)
-    covariance = np.zeros((len(new_mu), len(new_mu)))
-    if isinstance(inv_hess, LinearOperator):
-        n = len(current_mu)
-        identity = np.eye(n)
-        covariance = np.array(
-            [inv_hess.matvec(identity[i]) for i in range(n)], dtype=np.float64
-        ).reshape(n, n)
-    else:
-        covariance = np.array(inv_hess, dtype=np.float64).reshape(
-            len(new_mu), len(new_mu)
-        )
+    covariance = result.hess_inv.todense()
 
     new_covariance = 0.5 * (covariance + covariance.T)
     return new_mu, new_covariance.astype(np.float64)

@@ -115,7 +115,6 @@ def update_arm_params(
     reward_type: The likelihood distribution of the reward.
     reward: The reward of the arm.
     """
-    print(arm, prior_type, reward_type, reward, arm.mu, arm.sigma)
     if (prior_type == ArmPriors.BETA) and (reward_type == RewardLikelihood.BERNOULLI):
         if arm.alpha is None or arm.beta is None:
             raise ValueError("Beta prior requires alpha and beta.")
