@@ -195,8 +195,7 @@ async def update_arm(
             ArmResponse.model_validate(arm),
             experiment_data.prior_type,
             experiment_data.reward_type,
-            outcome,
-        )
+            outcome)
 
     else:
         raise HTTPException(
@@ -207,6 +206,12 @@ async def update_arm(
     # Save modified arm to database
     asession.add(arm)
     await asession.commit()
+    observation = MABObservation(
+        experiment_id=experiment.experiment_id,
+        arm_id=arm.arm_id,
+        reward=outcome,
+    )
+    await save_observation_to_db(observation, user_db.user_id, asession)
 
     observation = MABObservation(
         experiment_id=experiment.experiment_id,

@@ -216,6 +216,7 @@ async def update_arm(
 
     # Get the arm
     arms = [a for a in experiment.arms if a.arm_id == arm_id]
+
     if not arms:
         raise HTTPException(status_code=404, detail=f"Arm with id {arm_id} not found")
     else:

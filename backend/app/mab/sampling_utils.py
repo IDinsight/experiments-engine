@@ -47,6 +47,7 @@ def update_arm_beta_binomial(
         The reward of the arm.
     """
     if reward == Outcome.SUCCESS:
+
         return alpha + 1, beta
     else:
         return alpha, beta + 1
@@ -115,6 +116,7 @@ def update_arm_params(
     reward_type: The likelihood distribution of the reward.
     reward: The reward of the arm.
     """
+
     if (prior_type == ArmPriors.BETA) and (reward_type == RewardLikelihood.BERNOULLI):
         if arm.alpha is None or arm.beta is None:
             raise ValueError("Beta prior requires alpha and beta.")
