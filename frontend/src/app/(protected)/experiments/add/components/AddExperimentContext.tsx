@@ -28,9 +28,11 @@ export const ExperimentProvider: React.FC<{ children: React.ReactNode }> = ({
     name: "",
     description: "",
     methodType: "mab",
+    rewardType: "binary",
+    priorType: "beta",
     arms: [
-      { name: "", description: "", alpha_prior: 1, beta_prior: 1 },
-      { name: "", description: "", alpha_prior: 1, beta_prior: 1 },
+      { name: "", description: "", alpha: 1, beta: 1 },
+      { name: "", description: "", alpha: 1, beta: 1 },
     ],
     notifications: {
       onTrialCompletion: false,

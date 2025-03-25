@@ -17,8 +17,8 @@ env:
   ADMIN_API_KEY: testkey123
 jobs:
   container-job:
-    runs-on: ubuntu-20.04
-    container: node:20.7-bullseye
+    runs-on: ubuntu-22.04
+    container: python:3.12
     services:
       postgres:
         image: postgres:16.4
@@ -47,7 +47,7 @@ jobs:
         run: apt-get update && apt-get install -y lsb-release && apt-get clean all
       - name: Check out repository code
         uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Install Python libraries

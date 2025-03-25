@@ -6,12 +6,26 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import authenticate_key, get_current_user
 from ..database import get_async_session
-from ..exp_engine_utils.sampling import ts_beta_binomial
 from ..models import get_notifications_from_db, save_notifications_to_db
-from ..schemas import NotificationsResponse, Outcome
+from ..schemas import NotificationsResponse, Outcome, RewardLikelihood
 from ..users.models import UserDB
-from .models import delete_mab_by_id, get_all_mabs, get_mab_by_id, save_mab_to_db
-from .schemas import Arm, ArmResponse, MultiArmedBandit, MultiArmedBanditResponse
+from .models import (
+    delete_mab_by_id,
+    get_all_mabs,
+    get_all_rewards_by_experiment_id,
+    get_mab_by_id,
+    save_mab_to_db,
+    save_observation_to_db,
+)
+from .sampling_utils import choose_arm, update_arm_params
+from .schemas import (
+    ArmResponse,
+    MABObservation,
+    MABObservationResponse,
+    MultiArmedBandit,
+    MultiArmedBanditResponse,
+    MultiArmedBanditSample,
+)
 
 router = APIRouter(prefix="/mab", tags=["Multi-Armed Bandits"])
 
@@ -68,11 +82,7 @@ async def get_mabs(
                 }
             )
         )
-
-    return [
-        MultiArmedBanditResponse.model_validate(experiment)
-        for experiment in all_experiments
-    ]
+    return all_experiments
 
 
 @router.get("/{experiment_id}", response_model=MultiArmedBanditResponse)
@@ -123,8 +133,8 @@ async def delete_mab(
         raise HTTPException(status_code=500, detail=f"Error: {e}") from e
 
 
-@router.get("/{experiment_id}/draw", response_model=Arm)
-async def get_arm(
+@router.get("/{experiment_id}/draw", response_model=ArmResponse)
+async def draw_arm(
     experiment_id: int,
     user_db: UserDB = Depends(authenticate_key),
     asession: AsyncSession = Depends(get_async_session),
@@ -137,22 +147,16 @@ async def get_arm(
         raise HTTPException(
             status_code=404, detail=f"Experiment with id {experiment_id} not found"
         )
-
-    alphas = [arm.alpha_prior for arm in experiment.arms]
-    betas = [arm.beta_prior for arm in experiment.arms]
-    successes = [arm.successes for arm in experiment.arms]
-    failures = [arm.failures for arm in experiment.arms]
-
-    chosen_arm = ts_beta_binomial(alphas, betas, successes, failures)
-
+    experiment_data = MultiArmedBanditSample.model_validate(experiment)
+    chosen_arm = choose_arm(experiment=experiment_data)
     return ArmResponse.model_validate(experiment.arms[chosen_arm])
 
 
-@router.put("/{experiment_id}/{arm_id}/{outcome}", response_model=Arm)
+@router.put("/{experiment_id}/{arm_id}/{outcome}", response_model=ArmResponse)
 async def update_arm(
     experiment_id: int,
     arm_id: int,
-    outcome: Outcome,
+    outcome: float,
     user_db: UserDB = Depends(authenticate_key),
     asession: AsyncSession = Depends(get_async_session),
 ) -> ArmResponse:
@@ -160,24 +164,88 @@ async def update_arm(
     Update the arm with the provided `arm_id` for the given
     `experiment_id` based on the `outcome`.
     """
+    # Get and validate experiment
     experiment = await get_mab_by_id(experiment_id, user_db.user_id, asession)
     if experiment is None:
         raise HTTPException(
             status_code=404, detail=f"Experiment with id {experiment_id} not found"
         )
     experiment.n_trials += 1
+    experiment_data = MultiArmedBanditSample.model_validate(experiment)
 
+    # Get and validate arm
     arms = [a for a in experiment.arms if a.arm_id == arm_id]
     if not arms:
         raise HTTPException(status_code=404, detail=f"Arm with id {arm_id} not found")
-    else:
-        arm = arms[0]
 
-    if outcome == Outcome.SUCCESS:
-        arm.successes += 1
-    else:
-        arm.failures += 1
+    arm = arms[0]
 
+    # Update arm based on reward type
+    if experiment_data.reward_type == RewardLikelihood.BERNOULLI:
+        Outcome(outcome)  # Check if reward is 0 or 1
+        arm.alpha, arm.beta = update_arm_params(
+            ArmResponse.model_validate(arm),
+            experiment_data.prior_type,
+            experiment_data.reward_type,
+            outcome,
+        )
+
+    elif experiment_data.reward_type == RewardLikelihood.NORMAL:
+        arm.mu, arm.sigma = update_arm_params(
+            ArmResponse.model_validate(arm),
+            experiment_data.prior_type,
+            experiment_data.reward_type,
+            outcome)
+
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Reward type not supported.",
+        )
+
+    # Save modified arm to database
+    asession.add(arm)
     await asession.commit()
+    observation = MABObservation(
+        experiment_id=experiment.experiment_id,
+        arm_id=arm.arm_id,
+        reward=outcome,
+    )
+    await save_observation_to_db(observation, user_db.user_id, asession)
+
+    observation = MABObservation(
+        experiment_id=experiment.experiment_id,
+        arm_id=arm.arm_id,
+        reward=outcome,
+    )
+    await save_observation_to_db(observation, user_db.user_id, asession)
 
     return ArmResponse.model_validate(arm)
+
+
+@router.get(
+    "/{experiment_id}/outcomes",
+    response_model=list[MABObservationResponse],
+)
+async def get_outcomes(
+    experiment_id: int,
+    user_db: UserDB = Depends(authenticate_key),
+    asession: AsyncSession = Depends(get_async_session),
+) -> list[MABObservationResponse]:
+    """
+    Get the outcomes for the experiment.
+    """
+    experiment = await get_mab_by_id(experiment_id, user_db.user_id, asession)
+    if not experiment:
+        raise HTTPException(
+            status_code=404, detail=f"Experiment with id {experiment_id} not found"
+        )
+    experiment.n_trials += 1
+
+    rewards = await get_all_rewards_by_experiment_id(
+        experiment_id=experiment.experiment_id,
+        user_id=user_db.user_id,
+        asession=asession,
+    )
+
+    return [MABObservationResponse.model_validate(reward) for reward in rewards]

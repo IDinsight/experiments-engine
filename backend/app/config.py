@@ -10,7 +10,7 @@ DB_POOL_SIZE = os.environ.get("DB_POOL_SIZE", 20)  # Number of connections in th
 REDIS_HOST = os.environ.get("REDIS_HOST", "redis://localhost:6379")
 
 BACKEND_ROOT_PATH = os.environ.get("BACKEND_ROOT_PATH", "")
-LOG_LEVEL = os.environ.get("LOG_LEVEL", "WARNING")
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
 
 # Quotas
 DEFAULT_EXPERIMENTS_QUOTA = int(os.environ.get("DEFAULT_CONTENT_QUOTA", 3))

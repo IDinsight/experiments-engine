@@ -13,23 +13,24 @@ import { BetaLineChart } from "./Charts";
 export default function ExperimentCars({ experiment }: { experiment: MAB }) {
   const { experiment_id, name, is_active, arms } = { ...experiment };
   const [isExpanded, setIsExpanded] = useState(false);
-  const maxValue =
-    arms && arms.length > 0
-      ? Math.max(...arms.map((d) => d.successes + d.failures))
-      : 0;
+  // TODO: Fix maxvalue calculation
+  // const maxValue =
+  //   arms && arms.length > 0
+  //     ? Math.max(...arms.map((d) => d.successes + d.failures))
+  //     : 0;
 
   const toggleExpand = () => setIsExpanded(!isExpanded);
   const priors: BetaParams[] = arms.map((arm) => ({
     name: arm.name,
-    alpha: arm.alpha_prior, // Prior alpha
-    beta: arm.beta_prior, // Prior beta
+    alpha: arm.alpha, // Prior alpha
+    beta: arm.beta, // Prior beta
   }));
 
   // Map arms to posteriors (update with successes and failures)
   const posteriors: BetaParams[] = arms.map((arm) => ({
     name: arm.name,
-    alpha: arm.alpha_prior + arm.successes, // Posterior alpha = alpha_prior + successes
-    beta: arm.beta_prior + arm.failures, // Posterior beta = beta_prior + failures
+    alpha: arm.alpha + 3, // TODO: Fix this -- Posterior alpha = alpha_prior + successes
+    beta: arm.beta + 5, //TODO: Fix this -- Posterior beta = beta_prior + failures
   }));
   return (
     <div className="flex items-center justify-center">
@@ -63,7 +64,7 @@ export default function ExperimentCars({ experiment }: { experiment: MAB }) {
       >
         <Card
           className={`${isExpanded ? null : "cursor-pointer"} z-60 w-full max-w-[800px] dark:bg-black
-                      dark:border-zinc-400 border-zinc-800 dark:shadown-zinc-600`}
+                      dark:border-zinc-400 border-zinc-800 dark:shadown-zinc-600 min-w-[400px]`}
           onClick={(e) => {
             e.stopPropagation();
             e.nativeEvent.stopImmediatePropagation();
@@ -117,14 +118,14 @@ export default function ExperimentCars({ experiment }: { experiment: MAB }) {
                       <div className="flex-1 h-4 bg-secondary rounded-full overflow-hidden">
                         <div
                           className="h-full bg-primary"
-                          style={{
-                            width: `${maxValue > 0 ? (dist.successes / maxValue) * 100 : 0}%`,
-                          }}
+                          // style={{
+                          //  width: `${maxValue > 0 ? (dist.successes / maxValue) * 100 : 0}%`,
+                          // }}
                         />
                       </div>
-                      <div className="w-12 text-right text-sm">
+                      {/* <div className="w-12 text-right text-sm">
                         {dist.successes}%
-                      </div>
+                      </div> */}
                     </div>
                   ))}
               </div>

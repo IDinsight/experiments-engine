@@ -1,4 +1,12 @@
 type MethodType = "mab" | "ab";
+type RewardType = "binary" | "real-valued";
+type PriorType = "beta" | "normal";
+
+interface BetaParams {
+  name: string;
+  alpha: number;
+  beta: number;
+}
 
 interface StepComponentProps {
   onValidate: (validation: StepValidation) => void;
@@ -22,6 +30,8 @@ interface ExperimentStateBase {
   name: string;
   description: string;
   methodType: MethodType;
+  priorType: PriorType;
+  rewardType: RewardType;
 }
 
 interface ArmBase {
@@ -61,14 +71,12 @@ interface AB extends ABExperimentState {
 // ----- MAB
 
 interface NewMABArm extends ArmBase {
-  alpha_prior: number;
-  beta_prior: number;
+  alpha: number;
+  beta: number;
 }
 
 interface MABArm extends NewMABArm {
   arm_id: number;
-  successes: number;
-  failures: number;
 }
 
 interface MABExperimentState extends ExperimentStateBase {
@@ -90,6 +98,7 @@ export type {
   ABArm,
   ABExperimentState,
   ArmBase,
+  BetaParams,
   ExperimentState,
   ExperimentStateBase,
   MAB,

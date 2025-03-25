@@ -31,6 +31,9 @@ class ExperimentBaseDB(Base):
     )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     exp_type: Mapped[str] = mapped_column(String(length=50), nullable=False)
+    prior_type: Mapped[str] = mapped_column(String(length=50), nullable=False)
+    reward_type: Mapped[str] = mapped_column(String(length=50), nullable=False)
+
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
@@ -46,6 +49,61 @@ class ExperimentBaseDB(Base):
         String representation of the model
         """
         return f"<Experiment(name={self.name}, type={self.exp_type})>"
+
+
+class ArmBaseDB(Base):
+    """
+    Base model for arms.
+    """
+
+    __tablename__ = "arms_base"
+
+    arm_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
+    experiment_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("experiments_base.experiment_id"), nullable=False
+    )
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.user_id"), nullable=False
+    )
+
+    name: Mapped[str] = mapped_column(String(length=150), nullable=False)
+    description: Mapped[str] = mapped_column(String(length=500), nullable=False)
+    arm_type: Mapped[str] = mapped_column(String(length=50), nullable=False)
+
+    __mapper_args__ = {
+        "polymorphic_identity": "arm",
+        "polymorphic_on": "arm_type",
+    }
+
+
+class ObservationsBaseDB(Base):
+    """
+    Base model for observations.
+    """
+
+    __tablename__ = "observations_base"
+
+    observation_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, nullable=False
+    )
+    arm_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("arms_base.arm_id"), nullable=False
+    )
+    experiment_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("experiments_base.experiment_id"), nullable=False
+    )
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.user_id"), nullable=False
+    )
+    observed_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    obs_type: Mapped[str] = mapped_column(String(length=50), nullable=False)
+
+    __mapper_args__ = {
+        "polymorphic_identity": "observation",
+        "polymorphic_on": "obs_type",
+    }
 
 
 class NotificationsDB(Base):

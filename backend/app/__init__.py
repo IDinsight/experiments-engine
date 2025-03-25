@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from redis import asyncio as aioredis
 
-from . import auth, contextual_mab, mab
+from . import auth, contextual_mab, mab, messages
 from .config import REDIS_HOST
 from .users.routers import (
     router as users_router,
@@ -39,6 +39,7 @@ def create_app() -> FastAPI:
     app.include_router(contextual_mab.router)
     app.include_router(auth.router)
     app.include_router(users_router)
+    app.include_router(messages.router)
 
     origins = [
         "http://localhost",

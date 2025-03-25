@@ -1,0 +1,74 @@
+site_name: Experiments Engine
+site_description: A platform for running experiments and analyzing results
+site_url: https://experiments-engine.idinsight.github.io
+theme:
+  name: material
+  icon:
+    logo: material/test-tube
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+      primary: amber # Change to desired color
+      accent: blue   # Change to desired color
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+      primary: deep purple # Change to desired color
+      accent: blue   # Change to desired color
+  font:
+    text: "Inter"
+    code: "Roboto Mono"
+  features:
+    - navigation.tabs
+    - content.code.annotate
+    - content.code.copy
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+
+nav:
+  - Welcome to ExE: index.md
+  - Deploying: deploying.md
+  - Set up your first experiment:
+    - first-experiment/index.md
+    - Create an experiment: first-experiment/create.md
+    - Integrate with your application: first-experiment/integrate.md
+    - Monitor your experiment: first-experiment/monitor.md
+  - Blog: blog/index.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - attr_list
+  - md_in_html
+  - def_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - toc:
+      title: On this page
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+plugins:
+  - glightbox
+  - search
+  - blog:
+      post_excerpt: required
+  - open-in-new-tab

@@ -1,5 +1,5 @@
 "use client";
-
+import * as React from "react";
 import { useState } from "react";
 import { Button } from "@/components/catalyst/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,89 +12,76 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-interface Notification {
-  id: string;
-  title: string;
-  content: string;
-  isRead: boolean;
-  timestamp: string;
-}
+import type { Message } from "./types";
+import { getMessages, patchMessageReadStatus, deleteMessages } from "./api";
+import { useAuth } from "@/utils/auth";
 
-// Mock data for notifications
-const initialNotifications: Notification[] = [
-  {
-    id: "1",
-    title: "Experiment X: Number of trials reached",
-    content:
-      "The experiment has reached the target number of trials. Check out the experiment and results here",
-    isRead: false,
-    timestamp: "2025-02-12T10:00:00Z",
-  },
-  {
-    id: "2",
-    title: "Experiment Y: Arm A1 is at least p% better than other arms",
-    content:
-      "One of the arms in the experiment is better than the threshold compared to the other arms. Check out the experiment and results here",
-    isRead: true,
-    timestamp: "2025-02-11T15:30:00Z",
-  },
-  {
-    id: "3",
-    title: "Experiment Z: D days since started",
-    content:
-      "The experiment has been running for D days. Check out the experiment and results here",
-    isRead: false,
-    timestamp: "2023-05-31T09:00:00Z",
-  },
-];
+// Mock data for messages
 
-export default function NotificationPage() {
-  const [notifications, setNotifications] =
-    useState<Notification[]>(initialNotifications);
-  const [selectedNotificationIds, setSelectedNotificationIds] = useState<
-    string[]
-  >([]);
-  const [selectedNotification, setSelectedNotification] =
-    useState<Notification | null>(null);
+export default function MessagePage() {
+  const { token } = useAuth();
+
+  React.useEffect(() => {
+    getMessages({ token }).then((messages) => {
+      const sortedMessages = [...messages].sort(sortMessagesByDate);
+      setMessages(sortedMessages);
+    });
+  }, [token]);
+
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [selectedMessageIds, setSelectedMessageIds] = useState<number[]>([]);
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const handleCheckboxChange = (notificationId: string) => {
-    setSelectedNotificationIds((prev) =>
-      prev.includes(notificationId)
-        ? prev.filter((id) => id !== notificationId)
-        : [...prev, notificationId],
+  const sortMessagesByDate = (a: Message, b: Message) =>
+    new Date(b.created_datetime_utc).getTime() -
+    new Date(a.created_datetime_utc).getTime();
+
+  const handleCheckboxChange = (messageId: number) => {
+    setSelectedMessageIds((prev) =>
+      prev.includes(messageId)
+        ? prev.filter((id) => id !== messageId)
+        : [...prev, messageId],
     );
   };
 
-  const handleNotificationClick = (notification: Notification) => {
-    setSelectedNotification(notification);
+  const handleMessageClick = (message: Message) => {
+    setSelectedMessage(message);
     setIsDrawerOpen(true);
-    if (!notification.isRead) {
-      setNotifications(
-        notifications.map((n) =>
-          n.id === notification.id ? { ...n, isRead: true } : n,
-        ),
-      );
+    if (message.is_unread) {
+      patchMessageReadStatus({
+        token,
+        message_ids: [message.message_id],
+        is_unread: false,
+      }).then((messages) => {
+        const sortedMessages = [...messages].sort(sortMessagesByDate);
+        setMessages(sortedMessages);
+      });
     }
   };
 
   const handleDeleteSelected = () => {
-    setNotifications(
-      notifications.filter((n) => !selectedNotificationIds.includes(n.id)),
+    deleteMessages({ token, message_ids: selectedMessageIds }).then(
+      (messages) => {
+        const sortedMessages = [...messages].sort(sortMessagesByDate);
+        setMessages(sortedMessages);
+      },
     );
-    setSelectedNotificationIds([]);
-    setSelectedNotification(null);
+    setSelectedMessageIds([]);
+    setSelectedMessage(null);
   };
 
   const handleToggleReadSelected = (markAsRead: boolean) => {
-    setNotifications(
-      notifications.map((n) =>
-        selectedNotificationIds.includes(n.id)
-          ? { ...n, isRead: markAsRead }
-          : n,
-      ),
-    );
-    setSelectedNotificationIds([]);
+    patchMessageReadStatus({
+      token,
+      message_ids: selectedMessageIds,
+      is_unread: !markAsRead,
+    }).then((messages) => {
+      const sortedMessages = [...messages].sort(sortMessagesByDate);
+      setMessages(sortedMessages);
+    });
+
+    setSelectedMessageIds([]);
   };
 
   const getTimestampString = (timestamp: string) => {
@@ -131,7 +118,7 @@ export default function NotificationPage() {
           <Button
             outline
             onClick={() => handleToggleReadSelected(true)}
-            disabled={selectedNotificationIds.length === 0}
+            disabled={selectedMessageIds.length === 0}
           >
             <MailIcon size={16} className="mr-2" />
             Read
@@ -140,7 +127,7 @@ export default function NotificationPage() {
           <Button
             outline
             onClick={() => handleToggleReadSelected(false)}
-            disabled={selectedNotificationIds.length === 0}
+            disabled={selectedMessageIds.length === 0}
           >
             <MailOpen size={16} className="mr-2" />
             Unread
@@ -149,78 +136,77 @@ export default function NotificationPage() {
 
         <Button
           onClick={handleDeleteSelected}
-          disabled={selectedNotificationIds.length === 0}
+          disabled={selectedMessageIds.length === 0}
         >
           <Trash size={16} className="mr-2" />
           Delete
         </Button>
       </div>
 
-      {/* Notifications List */}
+      {/* Messages List */}
       <ScrollArea className="flex-grow border rounded-md">
         <div className="divide-y">
-          {notifications.map((notification) => (
+          {messages.map((message) => (
             <div
-              key={notification.id}
+              key={message.message_id}
               className={`grid grid-cols-[auto_1fr_auto] gap-4 p-4 cursor-pointer hover:bg-gray-100 ${
-                notification.id === selectedNotification?.id
+                message.message_id === selectedMessage?.message_id
                   ? "bg-gray-100"
                   : ""
               }`}
-              onClick={() => handleNotificationClick(notification)}
+              onClick={() => handleMessageClick(message)}
             >
               <div className="pt-1">
                 <Checkbox
-                  checked={selectedNotificationIds.includes(notification.id)}
-                  onCheckedChange={() => handleCheckboxChange(notification.id)}
+                  checked={selectedMessageIds.includes(message.message_id)}
+                  onCheckedChange={() =>
+                    handleCheckboxChange(message.message_id)
+                  }
                   onClick={(e) => e.stopPropagation()}
                 />
               </div>
               <div className="min-w-0">
                 <div
-                  className={`${!notification.isRead ? "font-bold" : "font-medium"} truncate`}
+                  className={`${message.is_unread ? "font-bold" : "font-medium"} truncate`}
                 >
-                  {notification.title}
+                  {message.title}
                 </div>
                 <p
-                  className={`${!notification.isRead ? "font-bold" : "font-medium"} text-sm text-gray-600 truncate`}
+                  className={`${message.is_unread ? "font-bold" : "font-medium"} text-sm text-gray-600 truncate`}
                 >
-                  {notification.content}
+                  {message.text}
                 </p>
               </div>
               <div className="text-xs text-gray-500 w-38 text-right hidden md:block">
-                {getTimestampString(notification.timestamp)}
+                {getTimestampString(message.created_datetime_utc)}
               </div>
             </div>
           ))}
         </div>
       </ScrollArea>
 
-      {/* Notification Detail Drawer */}
+      {/* Message Detail Drawer */}
       <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
         <SheetContent className="w-screen sm:w-[400px]">
-          {selectedNotification && (
+          {selectedMessage && (
             <>
               <SheetHeader>
-                <SheetTitle>{selectedNotification.title}</SheetTitle>
+                <SheetTitle>{selectedMessage.title}</SheetTitle>
               </SheetHeader>
               <div className="mt-4">
                 <p className="text-sm text-gray-500 mb-4">
-                  {new Date(selectedNotification.timestamp).toLocaleString(
-                    undefined,
-                    {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    },
-                  )}
+                  {new Date(
+                    selectedMessage.created_datetime_utc,
+                  ).toLocaleString(undefined, {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </p>
                 <ScrollArea className="h-[calc(100vh-8rem)]">
-                  <p className="text-gray-700">
-                    {selectedNotification.content}
-                  </p>
+                  <p className="text-gray-700">{selectedMessage.text}</p>
                 </ScrollArea>
               </div>
             </>

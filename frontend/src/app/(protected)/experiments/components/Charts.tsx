@@ -1,11 +1,15 @@
 import { AreaChart, Area, Tooltip, XAxis } from "recharts";
 import { BetaParams } from "../types";
-import { a } from "framer-motion/client";
 import { gamma } from "mathjs";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
-const lngamma = (x: number): number => Math.log(gamma(x));
+const lngamma = (x: number): number => {
+  if (typeof x!== "number" || isNaN(x) || x <= 0) {
+    return NaN;
+  }
+  return Math.log(gamma(x));
+};
 
 const lnBetaPDF = (x: number, a: number, b: number): number => {
   const betaInv = lngamma(a + b) - lngamma(a) - lngamma(b);
@@ -46,7 +50,7 @@ const BetaLineChart = ({
 
   return (
     <AreaChart width={700} height={400} data={data}>
-      <Tooltip />
+      <Tooltip formatter={tooltipFormatter} />
       <XAxis
         padding={{ left: 40, right: 40 }}
         dataKey="x"

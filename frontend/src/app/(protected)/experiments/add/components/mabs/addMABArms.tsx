@@ -21,16 +21,16 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
     experimentState.arms.map(() => ({
       name: "",
       description: "",
-      alpha_prior: "",
-      beta_prior: "",
+      alpha: "",
+      beta: "",
     })),
   );
   const arms = experimentState.arms as NewMABArm[];
   const defaultArm: NewMABArm = {
     name: "",
     description: "",
-    alpha_prior: 1,
-    beta_prior: 1,
+    alpha: 1,
+    beta: 1,
   };
 
   const validateForm = useCallback(() => {
@@ -38,8 +38,8 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
     const newErrors = arms.map(() => ({
       name: "",
       description: "",
-      alpha_prior: "",
-      beta_prior: "",
+      alpha: "",
+      beta: "",
     }));
 
     arms.forEach((arm, index) => {
@@ -53,13 +53,13 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
         isValid = false;
       }
 
-      if (!arm.alpha_prior) {
-        newErrors[index].alpha_prior = "Alpha prior is required";
+      if (!arm.alpha) {
+        newErrors[index].alpha = "Alpha prior is required";
         isValid = false;
       }
 
-      if (!arm.beta_prior) {
-        newErrors[index].beta_prior = "Beta prior is required";
+      if (!arm.beta) {
+        newErrors[index].beta = "Beta prior is required";
         isValid = false;
       }
     });
@@ -205,16 +205,16 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
                       <Input
                         name={`arm-${index + 1}-alpha`}
                         placeholder="Enter an integer as the prior for the alpha parameter"
-                        value={arm.alpha_prior || ""}
+                        value={arm.alpha || ""}
                         onChange={(e) => {
                           const newArms = [...arms];
-                          newArms[index].alpha_prior = parseInt(e.target.value);
+                          newArms[index].alpha = parseInt(e.target.value);
                           typeSafeSetExperimentState(newArms);
                         }}
                       />
-                      {errors[index]?.alpha_prior ? (
+                      {errors[index]?.alpha ? (
                         <p className="text-red-500 text-xs mt-1">
-                          {errors[index].alpha_prior}
+                          {errors[index].alpha}
                         </p>
                       ) : (
                         <p className="text-red-500 text-xs mt-1">&nbsp;</p>
@@ -231,16 +231,16 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
                       <Input
                         name={`arm-${index + 1}-beta`}
                         placeholder="Enter an integer as the prior for the beta parameter"
-                        value={arm.beta_prior || ""}
+                        value={arm.beta || ""}
                         onChange={(e) => {
                           const newArms = [...arms];
-                          newArms[index].beta_prior = parseInt(e.target.value);
+                          newArms[index].beta = parseInt(e.target.value);
                           typeSafeSetExperimentState(newArms);
                         }}
                       />
-                      {errors[index]?.beta_prior ? (
+                      {errors[index]?.beta ? (
                         <p className="text-red-500 text-xs mt-1">
-                          {errors[index].beta_prior}
+                          {errors[index].beta}
                         </p>
                       ) : (
                         <p className="text-red-500 text-xs mt-1">&nbsp;</p>

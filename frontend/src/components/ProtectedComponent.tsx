@@ -19,7 +19,7 @@ const ProtectedComponent: React.FC<ProtectedComponentProps> = ({
     if (!token) {
       router.push("/login?sourcePage=" + encodeURIComponent(pathname));
     }
-  }, [token]);
+  }, [token, pathname, router]);
 
   // This is to prevent the page from starting to load the children before the token is checked
   useEffect(() => {

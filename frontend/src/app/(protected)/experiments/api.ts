@@ -1,6 +1,7 @@
 import api from "@/utils/api";
 import { MABExperimentState, ABExperimentState } from "./types";
 import { ExperimentState } from "./types";
+import { AxiosError } from "axios";
 
 const createNewExperiment = async ({
   experimentData,
@@ -32,8 +33,14 @@ const createNewExperiment = async ({
       },
     });
     return response.data;
-  } catch (error: any) {
-    throw new Error(`Error creating new experiment: ${error.message}`);
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      throw new Error(`Error creating new experiment: ${error.message}`);
+    }
+    // Handle other error types
+    throw new Error(
+      `Unexpected error creating new experiment: ${String(error)}`,
+    );
   }
 };
 
@@ -45,8 +52,12 @@ const getAllMABExperiments = async (token: string | null) => {
       },
     });
     return response.data;
-  } catch (error: any) {
-    throw new Error(`Error fetching all experiments: ${error.message}`);
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      throw new Error(`Error fetching all experiments: ${error.message}`);
+    }
+    // Handle other error types
+    throw new Error(`Unexpected error fetching experiments: ${String(error)}`);
   }
 };
 

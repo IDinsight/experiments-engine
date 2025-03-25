@@ -62,11 +62,14 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       setLoginError(null);
       router.push(sourcePage);
     } catch (error: unknown) {
-      if (error instanceof Error && (error as any).status === 401) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "status" in error &&
+        error.status === 401
+      ) {
         setLoginError("Invalid username or password");
-        console.error("Login error:", error);
       } else {
-        console.error("Login error:", error);
         setLoginError("An unexpected error occurred. Please try again later.");
       }
     }
