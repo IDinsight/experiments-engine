@@ -1,6 +1,6 @@
 import React from "react";
 import { SidebarLayout } from "@/components/catalyst/sidebar-layout";
-import { sidebar } from "@/components/sidebar";
+import { SidebarComponent } from "@/components/sidebar";
 import { navbar } from "@/components/navbar";
 import { ProtectedComponent } from "@/components/ProtectedComponent";
 import { Toaster } from "@/components/ui/toaster";
@@ -12,7 +12,7 @@ export default function RootLayout({
 }>) {
   return (
     <ProtectedComponent>
-      <SidebarLayout sidebar={sidebar()} navbar={navbar()}>
+      <SidebarLayout sidebar={<SidebarComponent />} navbar={navbar()}>
         {children}
       </SidebarLayout>
 

@@ -25,14 +25,22 @@ type AuthProviderProps = {
 };
 
 const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<string | null>(null);
 
   const getInitialToken = () => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("token");
+      return localStorage.getItem("ee-token");
     }
     return null;
   };
+
+  const getInitialUsername = () => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("ee-username");
+    }
+    return null;
+  };
+
+  const [user, setUser] = useState<string | null>(getInitialUsername);
   const [token, setToken] = useState<string | null>(getInitialToken);
   const [loginError, setLoginError] = useState<string | null>(null);
 
@@ -46,13 +54,15 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
     try {
       const { access_token } = await apiCalls.getLoginToken(username, password);
-      localStorage.setItem("token", access_token);
+      localStorage.setItem("ee-token", access_token);
+      localStorage.setItem("ee-username", username);
+
       setUser(username);
       setToken(access_token);
       setLoginError(null);
       router.push(sourcePage);
     } catch (error: unknown) {
-      if (error.status === 401) {
+      if (error instanceof Error && (error as any).status === 401) {
         setLoginError("Invalid username or password");
         console.error("Login error:", error);
       } else {
@@ -69,7 +79,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     client_id: string;
     credential: string;
   }) => {
-    const sourcePage = searchParams.has("sourcePage")
+    const sourcePage = searchParams.has("sourcePage") && searchParams.get("sourcePage") != ""
       ? decodeURIComponent(searchParams.get("sourcePage") as string)
       : "/";
 
@@ -83,7 +93,8 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           access_token: string;
           username: string;
         }) => {
-          localStorage.setItem("token", access_token);
+          localStorage.setItem("ee-token", access_token);
+          localStorage.setItem("ee-username", username);
           setUser(username);
           setToken(access_token);
           router.push(sourcePage);
@@ -96,8 +107,9 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("accessLevel");
+    localStorage.removeItem("ee-token");
+    localStorage.removeItem("ee-accessLevel");
+    localStorage.removeItem("ee-username");
     setUser(null);
     setToken(null);
     router.push("/login");

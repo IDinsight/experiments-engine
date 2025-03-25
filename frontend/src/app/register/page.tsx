@@ -15,7 +15,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -25,8 +24,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Flex } from "@radix-ui/themes";
 import GoogleLogin from "@/components/auth/GoogleLogin";
+import { Flex } from "@radix-ui/themes";
+import { useState } from "react";
+import { apiCalls } from "@/utils/api";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   email: z.string().email({
@@ -35,7 +37,9 @@ const formSchema = z.object({
   password: z.string().min(4, {
     message: "Password must be at least 4 characters long.",
   }),
-  rememberMe: z.boolean().default(false).optional(),
+  confirm_password: z.string().min(4, {
+    message: "Password must be at least 4 characters long.",
+  }),
 });
 
 export default function LoginPage() {
@@ -44,22 +48,37 @@ export default function LoginPage() {
     defaultValues: {
       email: "",
       password: "",
-      rememberMe: false,
+      confirm_password: "",
     },
   });
 
-  const { login, loginGoogle, loginError } = useAuth();
+  const router = useRouter();
+  const { loginGoogle, loginError } = useAuth();
+  const [errorState, setErrorState] = useState<string | null>(null);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    login(values.email, values.password);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (values.password !== values.confirm_password) {
+      setErrorState("Passwords do not match!");
+    }
+
+    try {
+      await apiCalls.registerUser(values.email, values.password);
+      router.push("/login");
+    } catch (error: unknown) {
+      if (error instanceof Error && (error as any).status === 400) {
+        setErrorState("User with that username already exists.");
+      } else {
+        setErrorState("An unexpected error occurred. Please try again later.");
+      }
+    }
   }
 
   const handleGoogleLogin = (response: any) => {
     loginGoogle({
-      client_id: response.client_id,
+      client_id:response.client_id,
       credential: response.credential,
     });
-  };
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-100 p-4">
@@ -72,10 +91,10 @@ export default function LoginPage() {
         <Card>
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center">
-              Welcome back
+              Welcome
             </CardTitle>
             <CardDescription className="text-center">
-              Enter your email and password to login
+              Enter your email and password to register
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -120,29 +139,32 @@ export default function LoginPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="rememberMe"
+                  name="confirm_password"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormItem>
+                      <div className="flex justify-between h-5">
+                        <FormLabel>Confirm password</FormLabel>
+                        <FormMessage />
+                      </div>
                       <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
+                        <Input
+                          type="password"
+                          placeholder="••••••••"
+                          {...field}
                         />
                       </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Remember me</FormLabel>
-                      </div>
                     </FormItem>
                   )}
                 />
                 <Button type="submit" className="w-full">
-                  Sign in
+                  Register
                 </Button>
 
                 {/* Render loginError if it exists */}
                 <FormMessage>
                   <span className="text-red-500">
                     {loginError ? loginError : "\u00A0"}
+                    {errorState ? errorState : "\u00A0"}
                   </span>
                 </FormMessage>
               </form>
@@ -150,26 +172,16 @@ export default function LoginPage() {
             <Flex direction="column" align="center" justify="center">
               <p className="pb-4 text-sm text-white-700">or</p>
               <GoogleLogin
-                type="signin_with"
+                type="signup_with"
                 handleCredentialResponse={handleGoogleLogin}
               />
             </Flex>
           </CardContent>
           <CardFooter className="flex justify-center">
             <p className="text-sm text-muted-foreground">
-              {"Don't have an account? "}
-              <Link
-                href={{
-                  pathname: "/register",
-                  query: {
-                    sourcePage: typeof window !== "undefined"
-                      ? new URLSearchParams(window.location.search).get("sourcePage")
-                      : null,
-                  },
-                }}
-                className="text-primary hover:underline"
-              >
-                Sign up
+              {"Already have an account? "}
+              <Link href="/login" className="text-primary hover:underline">
+                Sign in
               </Link>
             </p>
           </CardFooter>
