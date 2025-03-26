@@ -10,8 +10,7 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.config import DEFAULT_API_QUOTA, DEFAULT_EXPERIMENTS_QUOTA
-
+from ...app.config import DEFAULT_API_QUOTA, DEFAULT_EXPERIMENTS_QUOTA
 from ..models import Base
 from ..utils import get_key_hash, get_password_salted_hash, get_random_string
 from .schemas import UserCreate, UserCreateWithPassword
