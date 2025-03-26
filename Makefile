@@ -13,7 +13,7 @@ fresh-env:
 	@if conda env list | grep -q "$(PROJECT_NAME)"; then \
 		conda remove --name $(PROJECT_NAME) --all -y; \
 	fi
-	conda create --name $(PROJECT_NAME) python==3.12 -y; \
+	conda create --name $(PROJECT_NAME) python==3.12 -y
 
 	$(CONDA_ACTIVATE) $(PROJECT_NAME); \
 	pip install -r backend/requirements.txt --ignore-installed; \
