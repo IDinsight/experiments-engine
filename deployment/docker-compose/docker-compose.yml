@@ -39,8 +39,6 @@ services:
       - .backend.env
     volumes:
       - db_volume:/var/lib/postgresql/data
-    ports: # Expose the port to port 5434 on the host machine for debugging
-      - 5434:5432
 
   caddy:
     image: caddy:2.7.6

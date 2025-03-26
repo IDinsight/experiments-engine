@@ -18,6 +18,7 @@ fresh-env :
 	$(CONDA_ACTIVATE) $(PROJECT_NAME); \
 	pip install -r backend/requirements.txt --ignore-installed; \
 	pip install -r requirements-dev.txt --ignore-installed; \
+	pip install -t requirements-docs.txt --ignore-installed; \
 	pre-commit install
 
 	if [ "$(psycopg2-binary)" = "true" ]; then \

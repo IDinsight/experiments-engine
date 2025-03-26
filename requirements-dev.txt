@@ -8,10 +8,6 @@ pytest==8.3.2
 pytest-asyncio==0.24.0
 pytest-alembic==0.11.0
 pytest-cov==5.0.0
-mkdocs-material==9.5.3
-pymdown-extensions==10.3
-mkdocs-glightbox==0.3.4
-mkdocs-open-in-new-tab==1.0.3
 pynvim==0.5.0
 jedi-language-server==0.41.4
 google-api-python-client-stubs==1.27.0
