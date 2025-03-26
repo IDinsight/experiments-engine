@@ -80,24 +80,6 @@ export function CMABCards({
             </div>
           </CardHeader>
           <CardContent className="flex flex-col flex-between">
-            {/* {isExpanded && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="min-h-100 flex flex-col space-y-4"
-              >
-                <p className="mt-4 text-base font-light text-neutral-400">
-                  {experiment.description}
-                </p>
-                <div
-                  className="flex items-center justify-center rounded align-middle grow w-full
-                      min-h-[300px] border border-zinc-800"
-                >
-                  <NormalLineChart priors={priors} posteriors={posteriors} />
-                </div>
-              </motion.div>
-            )} */}
             <div className="mt-4">
               <div className="space-y-2">
                 {!isExpanded &&
@@ -108,13 +90,9 @@ export function CMABCards({
                       <div className="flex-1 h-4 bg-secondary rounded-full overflow-hidden">
                         <div
                           className="h-full bg-primary"
-                          //   style={{
-                          //    width: `${maxValue > 0 ? (successes[index] / maxValue) * 100 : 0}%`,
-                          //   }}
                         />
                       </div>
                       <div className="w-12 text-right text-sm">
-                        {/* {successes[index]}% */}
                       </div>
                     </div>
                   ))}
@@ -126,13 +104,9 @@ export function CMABCards({
                       <div className="flex-1 h-4 bg-secondary rounded-full overflow-hidden">
                         <div
                           className="h-full bg-primary"
-                          //   style={{
-                          //    width: `${maxValue > 0 ? (successes[index] / maxValue) * 100 : 0}%`,
-                          //   }}
                         />
                       </div>
                       <div className="w-12 text-right text-sm">
-                        {/* {successes[index]}% */}
                       </div>
                     </div>
                   ))}
@@ -141,11 +115,6 @@ export function CMABCards({
                 <div className="uppercase text-xs dark:text-neutral-400 font-medium mt-4">
                   Last Run: 2 days ago
                 </div>
-                {/* {isExpanded && (
-                    <div className="uppercase text-xs dark:text-neutral-400 font-medium mt-4">
-                    No. of samples: 100
-                  </div>
-                )} */}
               </div>
             </div>
           </CardContent>
