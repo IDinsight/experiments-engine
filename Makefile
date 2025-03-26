@@ -9,16 +9,16 @@ guard-%:
 	@if [ -z '${${*}}' ]; then echo 'ERROR: environment variable $* not set' && exit 1; fi
 
 # Note: Run `make fresh-env psycopg2-binary=true` to manually replace psycopg with psycopg2-binary
-fresh-env :
+fresh-env:
 	@if conda env list | grep -q "$(PROJECT_NAME)"; then \
-		conda remove --name $(PROJECT_NAME) --all -y
+		conda remove --name $(PROJECT_NAME) --all -y; \
 	fi
 	conda create --name $(PROJECT_NAME) python==3.12 -y
 
 	$(CONDA_ACTIVATE) $(PROJECT_NAME); \
 	pip install -r backend/requirements.txt --ignore-installed; \
 	pip install -r requirements-dev.txt --ignore-installed; \
-	pip install -t requirements-docs.txt --ignore-installed; \
+	pip install -r requirements-docs.txt --ignore-installed; \
 	pre-commit install
 
 	if [ "$(psycopg2-binary)" = "true" ]; then \

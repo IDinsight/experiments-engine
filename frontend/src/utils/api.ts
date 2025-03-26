@@ -16,10 +16,9 @@ api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
     if (error.response && error.response.status === 401) {
-      console.log("Unauthorized request");
       const currentPath = window.location.pathname;
       const sourcePage = encodeURIComponent(currentPath);
-      localStorage.removeItem("token");
+      localStorage.removeItem("ee-token");
       if (currentPath.includes("/login")) {
         return Promise.reject(error);
       } else {
@@ -56,7 +55,6 @@ const getLoginToken = async (username: string, password: string) => {
     });
     return response.data;
   } catch (error) {
-    console.log(error);
     throw new Error("Error fetching login token");
   }
 };
@@ -75,9 +73,28 @@ const getGoogleLoginToken = async (idToken: {
   }
 };
 
+const registerUser = async (username: string, password: string) => {
+  const requestBody = {
+    username,
+    password,
+  };
+
+  try {
+    const response = await api.post("/user/", requestBody, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const apiCalls = {
   getUser,
   getLoginToken,
   getGoogleLoginToken,
+  registerUser,
 };
 export default api;

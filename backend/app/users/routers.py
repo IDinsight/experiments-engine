@@ -30,18 +30,12 @@ logger = setup_logger()
 @router.post("/", response_model=UserCreate)
 async def create_user(
     user: UserCreateWithPassword,
-    user_db: Annotated[UserDB, Depends(get_current_user)],
     request: Request,
     asession: AsyncSession = Depends(get_async_session),
 ) -> UserCreate | None:
     """
-    Create user endpoint. Can only be used by user with ID 1.
+    Create user endpoint.
     """
-    if user_db.user_id != 1:
-        raise HTTPException(
-            status_code=403,
-            detail="This user does not have permission to create new users.",
-        )
 
     try:
         new_api_key = generate_key()

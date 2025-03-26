@@ -28,27 +28,27 @@ class TestCreateUser:
         token = response.json()["access_token"]
         return token
 
-    def test_user_id_1_can_create_user(
-        self, client: TestClient, admin_token: str
-    ) -> None:
+    def test_user_id_1_can_create_user(self, client: TestClient) -> None:
         response = client.post(
-            "/user/",
-            json={"username": "user_test", "password": "password_test"},
-            headers={"Authorization": f"Bearer {admin_token}"},
+            "/user/", json={"username": "user_test", "password": "password_test"}
         )
 
         assert response.status_code == 200
 
-    def test_user_id_2_cannot_create_user(
-        self, client: TestClient, user_token: str
-    ) -> None:
+    def test_user_id_2_cannot_create_user(self, client: TestClient) -> None:
+        # Register a user
         response = client.post(
             "/user/",
-            json={"username": "user_test", "password": "password_test"},
-            headers={"Authorization": f"Bearer {user_token}"},
+            json={"username": "user_test1", "password": "password_test"},
         )
+        assert response.status_code == 200
 
-        assert response.status_code == 403
+        # Try to register another user
+        response = client.post(
+            "/user/",
+            json={"username": "user_test1", "password": "password_test"},
+        )
+        assert response.status_code == 400
 
     def test_get_current_user(
         self, client: TestClient, user_token: str, regular_user: int

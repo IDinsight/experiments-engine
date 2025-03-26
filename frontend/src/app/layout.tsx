@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import "@radix-ui/themes/styles.css";
 import { Suspense } from "react";
 import AuthProvider from "@/utils/auth";
+import { Theme } from "@radix-ui/themes";
+import { PublicEnvScript } from "next-runtime-env";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -30,10 +33,13 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
         <script src="https://accounts.google.com/gsi/client" async></script>
+        <PublicEnvScript />
       </head>
       <body className={"font-sans antialiased"}>
         <Suspense>
-          <AuthProvider>{children}</AuthProvider>
+          <Theme>
+            <AuthProvider>{children}</AuthProvider>
+          </Theme>
         </Suspense>
       </body>
     </html>
