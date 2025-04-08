@@ -79,7 +79,6 @@ export default function NewExperiment() {
   };
   const handleStepValidation = useCallback(
     (stepIndex: number, validation: StepValidation) => {
-      console.log("Step validation", stepIndex, validation);
       setStepValidations((prev) => {
         const newValidations = [...prev];
         newValidations[stepIndex] = validation;
