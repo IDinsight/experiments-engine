@@ -69,7 +69,8 @@ teardown-redis:
 
 run-backend:
 	$(CONDA_ACTIVATE) $(PROJECT_NAME); \
-	make setup-db && make setup-redis && \
+	make setup-redis && make setup-db && \
+	sleep 5 && \
 	python backend/main.py
 
 run-frontend:
