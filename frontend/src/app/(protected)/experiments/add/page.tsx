@@ -21,10 +21,12 @@ import {
 import { useAuth } from "@/utils/auth";
 import { useRouter } from "next/navigation";
 import { createNewExperiment } from "../api";
-import { StepComponentProps, StepValidation } from "../types";
+import type { StepComponentProps, StepValidation } from "../types";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function NewExperiment() {
   const [currentStep, setCurrentStep] = useState(0);
+  const [direction, setDirection] = useState(0); // 1 for forward, -1 for backward
   const { experimentState, updateMethodType, resetState } =
     useExperimentStore();
   const [stepValidations, setStepValidations] = useState<StepValidation[]>([]);
@@ -47,10 +49,14 @@ export default function NewExperiment() {
       console.log("Cannot proceed. Please fill in all required fields.");
       return;
     }
+    setDirection(1); // Set direction to forward
     setCurrentStep((prev) => Math.min(prev + 1, steps.length));
   }, [currentStep, stepValidations, steps.length]);
 
-  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
+  const prevStep = () => {
+    setDirection(-1); // Set direction to backward
+    setCurrentStep((prev) => Math.max(prev - 1, 0));
+  };
 
   const EmptyComponent: React.FC<StepComponentProps> = () => null;
   const CurrentStepComponent: React.ComponentType<StepComponentProps> =
@@ -73,6 +79,7 @@ export default function NewExperiment() {
   };
   const handleStepValidation = useCallback(
     (stepIndex: number, validation: StepValidation) => {
+      console.log("Step validation", stepIndex, validation);
       setStepValidations((prev) => {
         const newValidations = [...prev];
         newValidations[stepIndex] = validation;
@@ -81,6 +88,32 @@ export default function NewExperiment() {
     },
     []
   );
+
+  // Animation variants that change based on direction
+  const pageVariants = {
+    initial: (direction: number) => ({
+      opacity: 0,
+      x: direction > 0 ? 100 : -100, // Come from right when going forward, left when going backward
+    }),
+    animate: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        type: "tween",
+        ease: "easeInOut",
+        duration: 0.3,
+      },
+    },
+    exit: (direction: number) => ({
+      opacity: 0,
+      x: direction > 0 ? -100 : 100, // Exit to left when going forward, right when going backward
+      transition: {
+        type: "tween",
+        ease: "easeInOut",
+        duration: 0.3,
+      },
+    }),
+  };
 
   return (
     <>
@@ -96,7 +129,12 @@ export default function NewExperiment() {
                 </BreadcrumbItem>
               ) : (
                 <BreadcrumbItem key="basic-details-link">
-                  <BreadcrumbLink onClick={() => setCurrentStep(0)}>
+                  <BreadcrumbLink
+                    onClick={() => {
+                      setDirection(-1);
+                      setCurrentStep(0);
+                    }}
+                  >
                     Basic Details
                   </BreadcrumbLink>
                 </BreadcrumbItem>
@@ -109,7 +147,12 @@ export default function NewExperiment() {
                 <React.Fragment key={`step-${index}`}>
                   <BreadcrumbItem>
                     {index < currentStep - 1 ? (
-                      <BreadcrumbLink onClick={() => setCurrentStep(index + 1)}>
+                      <BreadcrumbLink
+                        onClick={() => {
+                          setDirection(index + 1 < currentStep ? -1 : 1);
+                          setCurrentStep(index + 1);
+                        }}
+                      >
                         {step.name}
                       </BreadcrumbLink>
                     ) : (
@@ -128,22 +171,34 @@ export default function NewExperiment() {
             </BreadcrumbList>
           </Breadcrumb>
         </div>
-        {currentStep === 0 ? (
-          <AddBasicInfo
-            setMethodType={(method) =>
-              updateMethodType(method as keyof Methods)
-            }
-            onValidate={(validation: StepValidation) =>
-              handleStepValidation(currentStep, validation)
-            }
-          />
-        ) : (
-          <CurrentStepComponent
-            onValidate={(validation: StepValidation) =>
-              handleStepValidation(currentStep, validation)
-            }
-          />
-        )}
+
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={currentStep}
+            custom={direction}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={pageVariants}
+          >
+            {currentStep === 0 ? (
+              <AddBasicInfo
+                setMethodType={(method) =>
+                  updateMethodType(method as keyof Methods)
+                }
+                onValidate={(validation: StepValidation) =>
+                  handleStepValidation(currentStep, validation)
+                }
+              />
+            ) : (
+              <CurrentStepComponent
+                onValidate={(validation: StepValidation) =>
+                  handleStepValidation(currentStep, validation)
+                }
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
       <div className="flex justify-between max-w-4xl mx-auto mt-8">
         <Button onClick={prevStep} disabled={currentStep === 0}>

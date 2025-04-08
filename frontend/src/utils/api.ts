@@ -79,16 +79,12 @@ const registerUser = async (username: string, password: string) => {
     password,
   };
 
-  try {
-    const response = await api.post("/user/", requestBody, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.post("/user/", requestBody, {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  return response.data;
 };
 
 export const apiCalls = {
