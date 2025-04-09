@@ -38,9 +38,12 @@ export default function NewExperiment() {
   const [steps, setSteps] = useState(AllSteps[experimentState.methodType]);
 
   useEffect(() => {
+    resetState();
+  }, []);
+
+  useEffect(() => {
     setSteps(AllSteps[experimentState.methodType]);
     setCurrentStep(0);
-    resetState();
   }, [experimentState.methodType]);
 
   const nextStep = useCallback(() => {
