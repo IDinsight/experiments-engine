@@ -127,4 +127,29 @@ const getAllCMABExperiments = async (token: string | null) => {
   }
 };
 
-export { createNewExperiment, getAllMABExperiments, getAllCMABExperiments };
+const getMABExperimentById = async (token: string | null, id: number) => {
+  try {
+    const response = await api.get(`/mab/${id}/`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const convertedData = {
+      ...response.data,
+      methodType: "mab",
+    };
+    return convertedData;
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      throw new Error(`Error fetching experiment: ${error.message}`);
+    } else {
+      throw new Error("Error fetching experiment");
+    }
+  }
+};
+export {
+  createNewExperiment,
+  getAllMABExperiments,
+  getAllCMABExperiments,
+  getMABExperimentById,
+};

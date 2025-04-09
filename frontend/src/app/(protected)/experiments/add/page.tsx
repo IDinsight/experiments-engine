@@ -127,7 +127,10 @@ export default function NewExperiment() {
                   </BreadcrumbPage>
                 </BreadcrumbItem>
               ) : (
-                <BreadcrumbItem key="basic-details-link">
+                <BreadcrumbItem
+                  key="basic-details-link"
+                  className="hover:cursor-pointer"
+                >
                   <BreadcrumbLink
                     onClick={() => {
                       setDirection(-1);
@@ -140,13 +143,14 @@ export default function NewExperiment() {
               )}
 
               <BreadcrumbSeparator key="first-separator">
-                <ChevronRightIcon className="h-5 w-5 text-zinc-800" />
+                <ChevronRightIcon className="h-5 w-5 text-zinc-800 dark:text-zinc-200" />
               </BreadcrumbSeparator>
               {steps.slice(0, currentStep).map((step, index) => (
                 <React.Fragment key={`step-${index}`}>
                   <BreadcrumbItem>
                     {index < currentStep - 1 ? (
                       <BreadcrumbLink
+                        className="hover:cursor-pointer"
                         onClick={() => {
                           setDirection(index + 1 < currentStep ? -1 : 1);
                           setCurrentStep(index + 1);
@@ -162,7 +166,7 @@ export default function NewExperiment() {
                   </BreadcrumbItem>
                   {index < currentStep - 1 && (
                     <BreadcrumbSeparator key={`separator-${index}`}>
-                      <ChevronRightIcon className="h-5 w-5 text-zinc-800" />
+                      <ChevronRightIcon className="h-5 w-5 text-zinc-800 dark:text-zinc-200" />
                     </BreadcrumbSeparator>
                   )}
                 </React.Fragment>

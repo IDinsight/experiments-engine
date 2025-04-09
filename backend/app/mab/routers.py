@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -171,6 +172,7 @@ async def update_arm(
             status_code=404, detail=f"Experiment with id {experiment_id} not found"
         )
     experiment.n_trials += 1
+    experiment.last_trial_datetime_utc = datetime.now(tz=timezone.utc)
     experiment_data = MultiArmedBanditSample.model_validate(experiment)
 
     # Get and validate arm
@@ -179,6 +181,7 @@ async def update_arm(
         raise HTTPException(status_code=404, detail=f"Arm with id {arm_id} not found")
 
     arm = arms[0]
+    arm.n_outcomes += 1
 
     # Update arm based on reward type
     if experiment_data.reward_type == RewardLikelihood.BERNOULLI:

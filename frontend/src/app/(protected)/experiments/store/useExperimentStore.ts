@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import type {
   ExperimentState,
   CMABExperimentState,
@@ -223,7 +223,6 @@ export const useExperimentStore = create<ExperimentStore>()(
           } else {
             throw new Error("Invalid method type");
           }
-
           return { experimentState: newState };
         }),
 
@@ -581,8 +580,7 @@ export const useExperimentStore = create<ExperimentStore>()(
     }),
     {
       name: "experiment-store", // unique name for localStorage
-      // Optional: You can customize what gets persisted
-      partialize: (state) => ({ experimentState: state.experimentState }),
+      storage: createJSONStorage(() => localStorage),
     }
   )
 );
