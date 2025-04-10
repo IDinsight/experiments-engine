@@ -10,7 +10,7 @@ import { BetaParams, GaussianParams } from "../types";
 import { gamma } from "mathjs";
 import * as d3 from "d3-scale-chromatic";
 
-const COLORMAP = d3.schemeRdYlGn;
+const COLORMAP = d3.interpolateSpectral;
 
 // Beta-Binary Distribution
 const lngamma = (x: number): number => {
@@ -37,9 +37,8 @@ const BetaLineChart = ({
   posteriors: BetaParams[];
 }) => {
   const num_arms = posteriors.length;
-  const COLORS = Array.from(
-    { length: num_arms },
-    (_, i) => COLORMAP[Math.ceil((i * 11 + 1) / num_arms)]
+  const COLORS = Array.from({ length: num_arms }, (_, i) =>
+    COLORMAP(i / num_arms)
   );
 
   // Define the range of x-values
@@ -145,10 +144,9 @@ const NormalLineChart = ({
   priors: GaussianParams[];
   posteriors: GaussianParams[];
 }) => {
-  const num_arms = priors.length;
-  const COLORS = Array.from(
-    { length: num_arms },
-    (_, i) => COLORMAP[Math.ceil((i * 11 + 1) / num_arms)]
+  const num_arms = posteriors.length;
+  const COLORS = Array.from({ length: num_arms }, (_, i) =>
+    COLORMAP(i / num_arms)
   );
 
   // Define the range of x-values
@@ -179,61 +177,63 @@ const NormalLineChart = ({
   };
 
   return (
-    <AreaChart
-      width={700}
-      height={400}
-      data={data}
-      margin={{ top: 10, right: 10, bottom: 15, left: 10 }}
-    >
-      <XAxis
-        // padding={{ left: 40, right: 40 }}
-        dataKey="x"
-        allowDecimals={true}
-        ticks={xlabel}
-        domain={[-5, 5]}
-        label={{
-          value: "Arm parameter",
-          position: "insideBottom",
-          offset: -10,
-        }}
-      />
-      <YAxis
-        // padding={{ top: 20, bottom: 20 }}
-        allowDecimals={true}
-        tick={false}
-        // domain={[0, 1]}
-        label={{ value: "Density", angle: -90, position: "insideLeft" }}
-      />
-      <Tooltip
-        contentStyle={{
-          backgroundColor: "rgba(64, 64, 64, 0.8)",
-          border: "none",
-          borderRadius: "4px",
-          color: "white",
-        }}
-        formatter={tooltipFormatter}
-      />
+    <div className="w-full h-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart
+          data={data}
+          margin={{ top: 10, right: 10, bottom: 15, left: 10 }}
+        >
+          <XAxis
+            // padding={{ left: 40, right: 40 }}
+            dataKey="x"
+            allowDecimals={true}
+            ticks={xlabel}
+            domain={[-5, 5]}
+            label={{
+              value: "Arm parameter",
+              position: "insideBottom",
+              offset: -10,
+            }}
+          />
+          <YAxis
+            // padding={{ top: 20, bottom: 20 }}
+            allowDecimals={true}
+            tick={false}
+            // domain={[0, 1]}
+            label={{ value: "Density", angle: -90, position: "insideLeft" }}
+          />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "rgba(64, 64, 64, 0.8)",
+              border: "none",
+              borderRadius: "4px",
+              color: "white",
+            }}
+            formatter={tooltipFormatter}
+          />
 
-      {posteriors.map((dist, i) => (
-        <Area
-          key={`Posterior - ${i}_${dist.name}`}
-          dataKey={`Posterior - ${i}_${dist.name}`}
-          stroke={COLORS[i]}
-          fill={COLORS[i]}
-          fillOpacity={0.3}
-        />
-      ))}
-      {priors.map((dist, i) => (
-        <Area
-          key={`Prior - ${i}_${dist.name}`}
-          dataKey={`Prior - ${i}_${dist.name}`}
-          stroke={COLORS[i]}
-          strokeDasharray="5 5"
-          fill={undefined}
-          fillOpacity={0.1}
-        />
-      ))}
-    </AreaChart>
+          {posteriors.map((dist, i) => (
+            <Area
+              key={`Posterior - ${i}_${dist.name}`}
+              dataKey={`Posterior - ${i}_${dist.name}`}
+              stroke={COLORS[i]}
+              fill={COLORS[i]}
+              fillOpacity={0.3}
+            />
+          ))}
+          {priors.map((dist, i) => (
+            <Area
+              key={`Prior - ${i}_${dist.name}`}
+              dataKey={`Prior - ${i}_${dist.name}`}
+              stroke={COLORS[i]}
+              strokeDasharray="5 5"
+              fill={undefined}
+              fillOpacity={0.1}
+            />
+          ))}
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
   );
 };
 

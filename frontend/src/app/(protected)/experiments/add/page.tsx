@@ -36,6 +36,7 @@ export default function NewExperiment() {
   type Methods = typeof AllSteps;
 
   const [steps, setSteps] = useState(AllSteps[experimentState.methodType]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     resetState();
@@ -66,6 +67,7 @@ export default function NewExperiment() {
     currentStep === 0 ? EmptyComponent : steps[currentStep - 1].component;
 
   const onSubmit = () => {
+    setIsSubmitting(true);
     if (stepValidations.every((validation) => validation.isValid)) {
       createNewExperiment({ experimentData: experimentState, token })
         .then((response) => {
@@ -78,6 +80,7 @@ export default function NewExperiment() {
     } else {
       console.log("Cannot proceed. Please check all steps for errors.");
     }
+    setIsSubmitting(false);
     resetState();
   };
   const handleStepValidation = useCallback(
@@ -217,7 +220,8 @@ export default function NewExperiment() {
             className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={onSubmit}
             disabled={
-              !stepValidations.every((validation) => validation.isValid)
+              !stepValidations.every((validation) => validation.isValid) ||
+              isSubmitting
             }
           >
             <PlusIcon aria-hidden="true" className="-ml-0.5 mr-1.5 h-5 w-5" />

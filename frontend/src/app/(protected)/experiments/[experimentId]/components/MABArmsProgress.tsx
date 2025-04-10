@@ -15,12 +15,26 @@ import { Info } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 
-export default function MABArmsProgress({ armsData }) {
+import { MABArmDetails } from "../types";
+
+export default function MABArmsProgress({
+  armsData,
+}: {
+  armsData: MABArmDetails[];
+}) {
+  console.log("armsData", armsData);
+  const maxMu = Math.max(...armsData.map((arm) => arm.mu));
   return (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-lg">Experiment Arms</CardTitle>
-        <CardDescription>Success percentage for each arm</CardDescription>
+        <CardDescription>
+          {armsData.length
+            ? armsData[0].beta
+              ? "Success percentage for each arm"
+              : "Estimated reward for each arm"
+            : "No arms data available"}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <TooltipProvider>
@@ -43,13 +57,19 @@ export default function MABArmsProgress({ armsData }) {
                   <Badge variant="outline">{arm.n_outcomes}</Badge>
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {`${((arm.alpha * 100) / (arm.alpha + arm.beta)).toFixed(
-                    1
-                  )}%`}
+                  {arm.beta
+                    ? `${((arm.alpha * 100) / (arm.alpha + arm.beta)).toFixed(
+                        1
+                      )}%`
+                    : `${arm.mu.toFixed(1)}`}
                 </span>
               </div>
               <Progress
-                value={(arm.alpha * 100) / (arm.alpha + arm.beta)}
+                value={
+                  arm.beta
+                    ? (arm.alpha * 100) / (arm.alpha + arm.beta)
+                    : (arm.mu / (maxMu * 2)) * 100
+                }
                 className="h-2"
               />
             </div>

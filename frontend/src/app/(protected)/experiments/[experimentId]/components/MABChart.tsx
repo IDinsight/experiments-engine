@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { MABExperimentDetails } from "../types";
-import { BetaLineChart, NormalLineChart } from "../../../components/Charts";
+import { BetaLineChart, NormalLineChart } from "./Charts";
 
 export default function MABChart({
   experimentData,
@@ -22,10 +22,16 @@ export default function MABChart({
     return <div>No data available</div>;
   }
 
-  const posteriorData = experimentData.arms.map((arm) => ({
+  const posteriorBetaData = experimentData.arms.map((arm) => ({
     name: arm.name,
     alpha: arm.alpha,
     beta: arm.beta,
+  }));
+
+  const posteriorGaussianData = experimentData.arms.map((arm) => ({
+    name: arm.name,
+    mu: arm.mu,
+    sigma: arm.sigma,
   }));
 
   return (
@@ -33,10 +39,8 @@ export default function MABChart({
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-lg">
-              Experiment #{experimentData.experiment_id}: {experimentData.name}
-            </CardTitle>
-            <CardDescription>{experimentData.description}</CardDescription>
+            <CardTitle className="text-lg">Experiment Results</CardTitle>
+            <CardDescription>Plotting performance of each arm</CardDescription>
           </div>
           <div className="flex items-center space-x-2">
             <label htmlFor="show-priors" className="text-sm font-medium">
@@ -53,9 +57,9 @@ export default function MABChart({
       <CardContent>
         <div className="h-[300px] w-full">
           {experimentData.prior_type == "beta" ? (
-            <BetaLineChart posteriors={posteriorData} priors={[]} />
+            <BetaLineChart posteriors={posteriorBetaData} priors={[]} />
           ) : (
-            <NormalLineChart posteriors={posteriorData} priors={[]} />
+            <NormalLineChart posteriors={posteriorGaussianData} priors={[]} />
           )}
         </div>
       </CardContent>

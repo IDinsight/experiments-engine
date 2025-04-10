@@ -7,7 +7,7 @@ import MABArmsProgress from "./components/MABArmsProgress";
 import NotificationDetails from "./components/Notifications";
 import ExtraInfo from "./components/ExtraInfo";
 
-import { getMABExperimentById } from "../../api";
+import { getMABExperimentById } from "../api";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/utils/auth";
 import {
@@ -75,7 +75,7 @@ export default function ExperimentDetails() {
             {experimentDetails ? experimentDetails?.name : "Experiment Details"}
           </h1>
           <p className="text-muted-foreground dark:text-gray-400">
-            Testing new checkout flow for increased conversion
+            {experimentDetails ? experimentDetails.description : "Loading..."}
           </p>
         </div>
         <div className="flex items-center space-x-4">
@@ -103,8 +103,10 @@ export default function ExperimentDetails() {
         <div className="space-y-6">
           <NotificationDetails
             notificationData={notificationData}
-            dateCreated={experimentDetails?.created_datetime_utc}
-            nTrials={experimentDetails?.n_trials}
+            dateCreated={
+              experimentDetails ? experimentDetails.created_datetime_utc : null
+            }
+            nTrials={experimentDetails ? experimentDetails.n_trials : null}
           />
           <ExtraInfo data={extraInfo} />
         </div>
