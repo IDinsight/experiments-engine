@@ -48,6 +48,7 @@ export default function ExperimentDetails() {
         dateCreated: data.created_datetime_utc,
         lastTrialDate: data.last_trial_datetime_utc,
         experimentType: experimentType,
+        nTrials: data.n_trials,
       });
     });
   }, [experimentId, token]);

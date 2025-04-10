@@ -37,23 +37,29 @@ export default function ExtraInfo({ data }: { data: ExtraInfoType | null }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-1">
-          <span className="text-sm text-muted-foreground">1. Last Sample</span>
+          <span className="text-sm text-muted-foreground">Last Sample</span>
           <p className="font-medium">{formatDate(data.lastTrialDate, true)}</p>
         </div>
 
         <div className="space-y-1">
-          <span className="text-sm text-muted-foreground">2. Date Created</span>
+          <span className="text-sm text-muted-foreground">
+            Total Observations
+          </span>
+          <p className="font-medium">{data.nTrials}</p>
+        </div>
+        <div className="space-y-1">
+          <span className="text-sm text-muted-foreground">Date Created</span>
           <p className="font-medium">{formatDate(data.dateCreated)}</p>
         </div>
 
         <div className="space-y-1">
-          <span className="text-sm text-muted-foreground">3. Date Updated</span>
+          <span className="text-sm text-muted-foreground">Date Updated</span>
           <p className="font-medium">{formatDate(data.dateCreated)}</p>
         </div>
 
         <div className="space-y-1">
           <span className="text-sm text-muted-foreground">
-            4. Type of Experiment
+            Type of Experiment
           </span>
           <p className="font-medium">{data.experimentType}</p>
         </div>

@@ -34,6 +34,7 @@ interface ExtraInfo {
   dateCreated: string;
   lastTrialDate: string;
   experimentType: string;
+  nTrials: number;
 }
 
 export type { MABExperimentDetails, MABArmDetails, Notification, ExtraInfo };

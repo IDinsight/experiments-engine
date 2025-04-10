@@ -22,7 +22,6 @@ export default function MABArmsProgress({
 }: {
   armsData: MABArmDetails[];
 }) {
-  console.log("armsData", armsData);
   const maxMu = Math.max(...armsData.map((arm) => arm.mu));
   return (
     <Card>

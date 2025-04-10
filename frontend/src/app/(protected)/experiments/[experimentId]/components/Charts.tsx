@@ -6,7 +6,7 @@ import {
   YAxis,
   ResponsiveContainer,
 } from "recharts";
-import { BetaParams, GaussianParams } from "../types";
+import { BetaParams, GaussianParams } from "../../types";
 import { gamma } from "mathjs";
 import * as d3 from "d3-scale-chromatic";
 
