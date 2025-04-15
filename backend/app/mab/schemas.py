@@ -43,6 +43,11 @@ class Arm(BaseModel):
         examples=[None, 1.0],
         description="Standard deviation parameter for Normal prior",
     )
+    n_outcomes: Optional[int] = Field(
+        default=0,
+        description="Number of outcomes for the arm",
+        examples=[0, 10, 15],
+    )
 
     @model_validator(mode="after")
     def check_values(self) -> Self:
@@ -170,6 +175,7 @@ class MultiArmedBanditResponse(MultiArmedBanditBase):
     arms: list[ArmResponse]
     notifications: list[NotificationsResponse]
     created_datetime_utc: datetime
+    last_trial_datetime_utc: Optional[datetime] = None
     n_trials: int
     model_config = ConfigDict(from_attributes=True, revalidate_instances="always")
 

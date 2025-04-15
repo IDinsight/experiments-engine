@@ -120,12 +120,14 @@ interface MABExperimentStateBeta extends ExperimentStateBase {
 interface MABNormal extends MABExperimentStateNormal {
   experiment_id: number;
   is_active: boolean;
+  last_trial_datetime_utc: string;
   arms: MABArmNormal[];
 }
 
 interface MABBeta extends MABExperimentStateBeta {
   experiment_id: number;
   is_active: boolean;
+  last_trial_datetime_utc: string;
   arms: MABArmBeta[];
 }
 

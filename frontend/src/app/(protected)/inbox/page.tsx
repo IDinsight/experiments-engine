@@ -144,7 +144,7 @@ export default function MessagePage() {
       </div>
 
       {/* Messages List */}
-      <ScrollArea className="flex-grow border rounded-md">
+      <ScrollArea className="flex-grow border rounded-md dark:border-zinc-600">
         <div className="divide-y">
           {messages.map((message) => (
             <div

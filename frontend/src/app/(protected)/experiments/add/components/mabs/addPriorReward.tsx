@@ -49,7 +49,6 @@ export default function MABPriorRewardSelection({
         "Beta prior is not compatible with real-valued reward";
       isValid = false;
     }
-    setErrors(newErrors);
     return { isValid, newErrors };
   }, [experimentState.priorType, experimentState.rewardType]);
 
@@ -61,9 +60,15 @@ export default function MABPriorRewardSelection({
     }
   }, [validateForm, onValidate, errors]);
 
+  useEffect(() => {
+    const { isValid, newErrors } = validateForm();
+    setErrors(newErrors);
+    onValidate({ isValid, errors: newErrors });
+  }, []);
+
   return (
     <div>
-      <div className="flex w-full flex-wrap items-end justify-between gap-4 border-b border-zinc-950/10 pb-6 dark:border-white/10">
+      <div className="pt-5 flex w-full flex-wrap items-end justify-between gap-4 border-b border-zinc-950/10 pb-6 dark:border-white/10">
         <Heading>Configure MAB Parameters</Heading>
       </div>
       <Fieldset aria-label="MAB Parameters" className="pt-6">

@@ -48,7 +48,6 @@ export default function AddBasicInfo({
       newErrors.methodType = "Please select an experiment type";
       isValid = false;
     }
-
     return { isValid, newErrors };
   }, [experimentState]);
 

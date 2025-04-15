@@ -77,7 +77,7 @@ export default function AddCMABContext({ onValidate }: StepComponentProps) {
 
   return (
     <div>
-      <div className="flex w-full flex-wrap items-end justify-between gap-4 border-b border-zinc-950/10 pb-6 dark:border-white/10">
+      <div className="pt-5 flex w-full flex-wrap items-end justify-between gap-4 border-b border-zinc-950/10 pb-6 dark:border-white/10">
         <Heading>Add CMAB Contexts</Heading>
         <div className="flex gap-4">
           <Button className="mt-4" onClick={addContext}>

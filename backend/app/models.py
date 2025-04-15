@@ -38,7 +38,9 @@ class ExperimentBaseDB(Base):
         DateTime(timezone=True), nullable=False
     )
     n_trials: Mapped[int] = mapped_column(Integer, nullable=False)
-
+    last_trial_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     __mapper_args__ = {
         "polymorphic_identity": "experiment",
         "polymorphic_on": "exp_type",
