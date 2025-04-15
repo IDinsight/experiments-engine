@@ -6,11 +6,12 @@ import jwt
 from redis.asyncio import Redis
 
 from ..utils import setup_logger
-from .config import JWT_ALGORITHM, JWT_SECRET
-
-# Token settings
-VERIFICATION_TOKEN_EXPIRE_MINUTES = 1440  # 24 hours
-PASSWORD_RESET_TOKEN_EXPIRE_MINUTES = 30  # 30 minutes
+from .config import (
+    JWT_ALGORITHM,
+    JWT_SECRET,
+    PASSWORD_RESET_TOKEN_EXPIRE_MINUTES,
+    VERIFICATION_TOKEN_EXPIRE_MINUTES,
+)
 
 logger = setup_logger()
 

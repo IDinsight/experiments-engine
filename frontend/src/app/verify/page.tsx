@@ -19,7 +19,6 @@ export default function VerifyEmailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [token, setToken] = useState<string | null>(null);
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
@@ -31,13 +30,12 @@ export default function VerifyEmailPage() {
       return;
     }
 
-    setToken(tokenParam);
     verifyEmail(tokenParam);
   }, [searchParams]);
 
   const verifyEmail = async (token: string) => {
     try {
-      const response = await apiCalls.verifyEmail(token);
+      await apiCalls.verifyEmail(token);
       setStatus('success');
 
       // Redirect to login page after 3 seconds
@@ -47,7 +45,6 @@ export default function VerifyEmailPage() {
     } catch (error) {
       setStatus('error');
       setErrorMessage('Failed to verify email. The link may have expired or is invalid.');
-      console.error("Email verification error:", error);
     }
   };
 

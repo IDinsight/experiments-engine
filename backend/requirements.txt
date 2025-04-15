@@ -14,4 +14,4 @@ scipy==1.15.2
 sqlalchemy[asyncio]==2.0.20
 uvicorn==0.23.2
 boto3==1.37.25
-pydantic[email]
+pydantic[email]==2.11.3

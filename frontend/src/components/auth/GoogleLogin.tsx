@@ -14,7 +14,7 @@ declare global {
   }
 }
 
-const NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: string =
+export const NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: string =
   env("NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID") || "";
 
 const GoogleLogin: React.FC<GoogleLoginProps> = ({

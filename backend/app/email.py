@@ -7,7 +7,6 @@ from fastapi import HTTPException
 from .config import (
     AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY,
-    ENV,
     FRONTEND_URL,
     SES_REGION,
     SES_SENDER_EMAIL,
@@ -131,10 +130,6 @@ class EmailService:
         """
         Send an email using AWS SES
         """
-        if ENV == "testing" or self.client is None:
-            logger.info(f"[MOCK EMAIL] To: {recipient}, Subject: {subject}")
-            logger.info(f"[MOCK EMAIL] Text: {text_body[:100]}...")
-            return {"MessageId": "mock-message-id"}
 
         try:
             response = self.client.send_email(

@@ -15,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+// import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Flex } from "@radix-ui/themes";
-import GoogleLogin from "@/components/auth/GoogleLogin";
+import GoogleLogin, { NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID } from "@/components/auth/GoogleLogin";
 
 const formSchema = z.object({
   email: z.string().email({
@@ -54,9 +54,9 @@ export default function LoginPage() {
     login(values.email, values.password);
   }
 
-  const handleGoogleLogin = (response: any) => {
+  const handleGoogleLogin = (response: google.accounts.id.CredentialResponse) => {
     loginGoogle({
-      client_id: response.client_id,
+      client_id: NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID,
       credential: response.credential,
     });
   };
@@ -119,7 +119,7 @@ export default function LoginPage() {
                   )}
                 />
                 <div className="flex items-center justify-between">
-                  <FormField
+                  {/* <FormField
                     control={form.control}
                     name="rememberMe"
                     render={({ field }) => (
@@ -135,7 +135,7 @@ export default function LoginPage() {
                         </div>
                       </FormItem>
                     )}
-                  />
+                  /> */}
                   <Link
                     href="/forgot-password"
                     className="text-sm text-primary hover:underline"

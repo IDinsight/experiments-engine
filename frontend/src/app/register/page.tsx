@@ -24,7 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import GoogleLogin from "@/components/auth/GoogleLogin";
+import GoogleLogin, { NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID } from "@/components/auth/GoogleLogin";
 import { Flex } from "@radix-ui/themes";
 import { useState } from "react";
 import { apiCalls } from "@/utils/api";
@@ -65,7 +65,7 @@ export default function LoginPage() {
       await apiCalls.registerUser(values.email, values.password);
       router.push("/login");
     } catch (error: unknown) {
-      if (error instanceof Error && (error as any).status === 400) {
+      if (error instanceof Error && (error as { status?: number }).status === 400) {
         setErrorState("User with that username already exists.");
       } else {
         setErrorState("An unexpected error occurred. Please try again later.");
@@ -73,9 +73,9 @@ export default function LoginPage() {
     }
   }
 
-  const handleGoogleLogin = (response: any) => {
+  const handleGoogleLogin = (response: google.accounts.id.CredentialResponse) => {
     loginGoogle({
-      client_id:response.client_id,
+      client_id: NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID,
       credential: response.credential,
     });
   }

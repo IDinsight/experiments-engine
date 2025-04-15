@@ -1,9 +1,22 @@
 import os
+from typing import Annotated, Generator
+from unittest.mock import MagicMock, patch
 
+from fastapi import Depends
 from fastapi.testclient import TestClient
 from pytest import fixture
 
+from backend.app.auth.dependencies import get_current_user, get_verified_user
+from backend.app.users.models import UserDB
+
 from .config import TEST_PASSWORD, TEST_USER_API_KEY, TEST_USERNAME
+
+
+@fixture
+def mock_send_email() -> Generator[MagicMock, None, None]:
+    with patch("backend.app.email.EmailService._send_email") as mocked_send:
+        mocked_send.return_value = {"MessageId": "mock-message-id"}
+        yield mocked_send
 
 
 class TestCreateUser:
@@ -28,14 +41,29 @@ class TestCreateUser:
         token = response.json()["access_token"]
         return token
 
-    def test_user_id_1_can_create_user(self, client: TestClient) -> None:
+    @fixture
+    def mock_verified_user(self, client: TestClient) -> Generator[None, None, None]:
+        async def mock_get_verified_user(
+            user_db: Annotated[UserDB, Depends(get_current_user)],
+        ) -> UserDB:
+            return user_db
+
+        client.app.dependency_overrides[get_verified_user] = mock_get_verified_user
+        yield
+        client.app.dependency_overrides.clear()
+
+    def test_user_id_1_can_create_user(
+        self, client: TestClient, mock_send_email: MagicMock
+    ) -> None:
         response = client.post(
             "/user/", json={"username": "user_test", "password": "password_test"}
         )
 
         assert response.status_code == 200
 
-    def test_user_id_2_cannot_create_user(self, client: TestClient) -> None:
+    def test_user_id_2_cannot_create_user(
+        self, client: TestClient, mock_send_email: MagicMock
+    ) -> None:
         # Register a user
         response = client.post(
             "/user/",
@@ -62,7 +90,9 @@ class TestCreateUser:
         assert response.json()["user_id"] == regular_user
         assert response.json()["username"] == TEST_USERNAME
 
-    def test_rotate_key(self, client: TestClient, user_token: str) -> None:
+    def test_rotate_key(
+        self, client: TestClient, user_token: str, mock_verified_user: None
+    ) -> None:
         response = client.get(
             "/user/", headers={"Authorization": f"Bearer {user_token}"}
         )

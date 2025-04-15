@@ -12,7 +12,7 @@ from fastapi.security import (
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..config import CHECK_API_LIMIT, DEFAULT_API_QUOTA, DEFAULT_EXPERIMENTS_QUOTA, ENV
+from ..config import CHECK_API_LIMIT, DEFAULT_API_QUOTA, DEFAULT_EXPERIMENTS_QUOTA
 from ..database import get_async_session
 from ..users.models import (
     UserDB,
@@ -176,9 +176,6 @@ async def get_verified_user(
     """
     Check if the user is verified
     """
-    if ENV == "testing":
-        return user_db
-
     if not user_db.is_verified:
         raise HTTPException(
             status_code=403,

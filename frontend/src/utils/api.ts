@@ -74,12 +74,11 @@ const getGoogleLoginToken = async (idToken: {
 };
 
 const registerUser = async (username: string, password: string) => {
-  const requestBody = {
-    username,
-    password,
-  };
-
   try {
+    const requestBody = {
+      username,
+      password,
+    };
     const response = await api.post("/user/", requestBody, {
       headers: {
         "Content-Type": "application/json",
@@ -87,7 +86,7 @@ const registerUser = async (username: string, password: string) => {
     });
     return response.data;
   } catch (error) {
-    throw error;
+    throw new Error("Error registering user");;
   }
 };
 

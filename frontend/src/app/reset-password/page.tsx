@@ -78,7 +78,7 @@ export default function ResetPasswordPage() {
     setErrorState(null);
 
     try {
-      const response = await apiCalls.resetPassword(token, values.password);
+      await apiCalls.resetPassword(token, values.password);
       setSuccess(true);
 
       // Redirect to login page after 3 seconds
