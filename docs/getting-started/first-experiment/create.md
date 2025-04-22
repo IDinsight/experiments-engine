@@ -2,9 +2,9 @@
 
 ## Log in to the application
 
-If you have deployed the docker containers locally as per the instructions [here](../deploying.md), you should see a login screen when you navigate to `https://localhost/`
+If you have deployed the docker containers locally as per the instructions [here](../../deploying.md), you should see a login screen when you navigate to `https://localhost/`
 
-![Login Screen](../images/login.png)
+![Login Screen](../../images/login.png)
 
 The credentials are what you set in your `.backend.env` file.
 
@@ -13,7 +13,7 @@ The credentials are what you set in your `.backend.env` file.
 
 Once you have logged in, you should see a screen like this:
 
-![New Experiment](../images/new_experiment.png)
+![New Experiment](../../images/new_experiment.png)
 
 Click on the `+ New Experiment` button to create a new experiment.
 
@@ -21,7 +21,7 @@ Click on the `+ New Experiment` button to create a new experiment.
 
 Enter the details for the experiment. Both `Experiment Name` field and `Description` are mandatory. Select `MAB` as the experiment type.
 
-![Experiment Details](../images/basic_details.png)
+![Experiment Details](../../images/basic_details.png)
 
 Click on the `Next` button to proceed.
 
@@ -29,7 +29,7 @@ Click on the `Next` button to proceed.
 
 Click on the `+ Add Arm` button to add arms to the experiment. You can add as many arms as you like but must have a minimum of 2 arms.
 
-![Arms](../images/arms.png)
+![Arms](../../images/arms.png)
 
 Enter details for each arm. The `Name` and `Description` fields are both mandatory. You can also change the prior (1) for the arms.
 { .annotate }
@@ -42,7 +42,7 @@ Click on the `Next` button to proceed.
 
 You can select events when you should be notified. Let's select the first two and set values as in the image below.
 
-![Notifications](../images/notifications.png)
+![Notifications](../../images/notifications.png)
 
 Click on the `+ Create Experiment` to create the experiment.
 
@@ -50,6 +50,6 @@ Click on the `+ Create Experiment` to create the experiment.
 
 You will be taken to the home page where you can see the details of the experiment and the arms you created.
 
-![Experiment Created](../images/experiment_created.png)
+![Experiment Created](../../images/experiment_created.png)
 
 Now we are ready to integrate this with your application. Go to [Integrate with your application](./integrate.md) to see how to do that.

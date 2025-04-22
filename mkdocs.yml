@@ -29,14 +29,41 @@ theme:
     - navigation.indexes
     - navigation.top
 
+markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+
+extra:
+  katex_options: >
+    katex.render = (function(oldRender) {
+      return function(tex, element, options) {
+        element.classList.add('katex-block');
+        return oldRender(tex, element, options);
+      };
+    })(katex.render);
+
 nav:
   - Welcome to ExE: index.md
   - Deploying: deploying.md
-  - Set up your first experiment:
-    - first-experiment/index.md
-    - Create an experiment: first-experiment/create.md
-    - Integrate with your application: first-experiment/integrate.md
-    - Monitor your experiment: first-experiment/monitor.md
+  - Getting Started:
+    - Overview: getting-started/index.md
+    - Setup your first experiment:
+        - Overview: getting-started/first-experiment/index.md
+        - Create an experiment: getting-started/first-experiment/create.md
+        - Integrate with your application: getting-started/first-experiment/integrate.md
+        - Monitor your experiment: getting-started/first-experiment/monitor.md
+    - Experiments:
+        - Overview: getting-started/experiments/index.md
+        - Multi-Armed Bandits:
+          - Overview: getting-started/experiments/mabs/index.md
+          - Setting up a MAB: getting-started/experiments/mabs/setting-up.md
+        # - Contextual Bandits: getting-started/experiments/cmabs/index.md
+        # - Bayesian A/B Testing: getting-started/experiments/bayes_ab/index.md
   - Blog: blog/index.md
 
 markdown_extensions:
