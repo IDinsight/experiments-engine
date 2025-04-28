@@ -112,9 +112,9 @@ const getAllBayesianABExperiments = async (token: string | null) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    const convertedData = response.data.map((experiment: CMAB) => ({
+    const convertedData = response.data.map((experiment: BayesianAB) => ({
       ...experiment,
-      methodType: "cmab",
+      methodType: "bayes_ab",
     }));
     return convertedData;
   } catch (error: unknown) {
@@ -125,7 +125,6 @@ const getAllBayesianABExperiments = async (token: string | null) => {
     }
   }
 };
-
 
 const getMABExperimentById = async (token: string | null, id: number) => {
   try {
