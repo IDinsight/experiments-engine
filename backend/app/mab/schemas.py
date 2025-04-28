@@ -245,6 +245,7 @@ class MABObservationResponse(BaseModel):
     arm_id: int
     reward: float
     draw_id: str
+    client_id: str | None
     observed_datetime_utc: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -256,4 +257,5 @@ class MABDrawResponse(BaseModel):
     """
 
     draw_id: str
+    client_id: str | None
     arm: ArmResponse

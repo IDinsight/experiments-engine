@@ -19,6 +19,7 @@ from .models import (
     delete_mab_by_id,
     get_all_mabs,
     get_all_obs_by_experiment_id,
+    get_draw_by_client_id,
     get_draw_by_id,
     get_mab_by_id,
     save_draw_to_db,
@@ -147,6 +148,7 @@ async def delete_mab(
 async def draw_arm(
     experiment_id: int,
     draw_id: Optional[str] = None,
+    client_id: Optional[str] = None,
     user_db: UserDB = Depends(authenticate_key),
     asession: AsyncSession = Depends(get_async_session),
 ) -> MABDrawResponse:
@@ -158,9 +160,14 @@ async def draw_arm(
         raise HTTPException(
             status_code=404, detail=f"Experiment with id {experiment_id} not found"
         )
-    experiment_data = MultiArmedBanditSample.model_validate(experiment)
-    chosen_arm = choose_arm(experiment=experiment_data)
 
+    if experiment.sticky_assignment and client_id is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Client ID is required for sticky assignment.",
+        )
+
+    # Check for existing draws
     if draw_id is None:
         draw_id = str(uuid4())
 
@@ -171,11 +178,27 @@ async def draw_arm(
             detail=f"Draw ID {draw_id} already exists.",
         )
 
+    experiment_data = MultiArmedBanditSample.model_validate(experiment)
+    chosen_arm = choose_arm(experiment=experiment_data)
+    chosen_arm_id = experiment.arms[chosen_arm].arm_id
+
+    # If sticky assignment, check if the client_id has a previous arm assigned
+    if experiment.sticky_assignment and client_id:
+        previous_draw = await get_draw_by_client_id(
+            client_id=client_id,
+            user_id=user_db.user_id,
+            asession=asession,
+        )
+        if previous_draw:
+            print(f"Previous draw found: {previous_draw.arm_id}")
+            chosen_arm_id = previous_draw.arm_id
+
     try:
         _ = await save_draw_to_db(
             experiment_id=experiment.experiment_id,
-            arm_id=experiment.arms[chosen_arm].arm_id,
+            arm_id=chosen_arm_id,
             draw_id=draw_id,
+            client_id=client_id,
             user_id=user_db.user_id,
             asession=asession,
         )
@@ -185,10 +208,15 @@ async def draw_arm(
             detail=f"Error saving draw to database: {e}",
         ) from e
 
+    print([arm for arm in experiment.arms])
+
     return MABDrawResponse.model_validate(
         {
             "draw_id": draw_id,
-            "arm": ArmResponse.model_validate(experiment.arms[chosen_arm]),
+            "client_id": client_id,
+            "arm": ArmResponse.model_validate(
+                [arm for arm in experiment.arms if arm.arm_id == chosen_arm_id][0]
+            ),
         }
     )
 
