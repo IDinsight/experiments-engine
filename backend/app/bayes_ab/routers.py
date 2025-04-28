@@ -17,6 +17,7 @@ from .models import (
     BayesianABDrawDB,
     delete_bayes_ab_experiment_by_id,
     get_all_bayes_ab_experiments,
+    get_bayes_ab_draw_by_client_id,
     get_bayes_ab_draw_by_id,
     get_bayes_ab_experiment_by_id,
     get_bayes_ab_obs_by_experiment_id,
@@ -148,6 +149,7 @@ async def delete_bayes_ab(
 async def draw_arm(
     experiment_id: int,
     draw_id: Optional[str] = None,
+    client_id: Optional[str] = None,
     user_db: UserDB = Depends(authenticate_key),
     asession: AsyncSession = Depends(get_async_session),
 ) -> BayesianABDrawResponse:
@@ -162,9 +164,25 @@ async def draw_arm(
         raise HTTPException(
             status_code=404, detail=f"Experiment with id {experiment_id} not found"
         )
+
+    if experiment.sticky_assignment and not client_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Client ID is required for sticky assignment.",
+        )
+
     experiment_data = BayesianABSample.model_validate(experiment)
     chosen_arm = choose_arm(experiment=experiment_data)
+    chosen_arm_id = experiment.arms[chosen_arm].arm_id
+    if experiment.sticky_assignment and client_id:
+        # Check if the client_id is already assigned to an arm
+        previous_draw = await get_bayes_ab_draw_by_client_id(
+            client_id=client_id, user_id=user_db.user_id, asession=asession
+        )
+        if previous_draw:
+            chosen_arm_id = previous_draw.arm_id
 
+    # Check for existing draws
     if draw_id is None:
         draw_id = str(uuid4())
 
@@ -183,7 +201,8 @@ async def draw_arm(
             experiment_id=experiment.experiment_id,
             user_id=user_db.user_id,
             draw_id=draw_id,
-            arm_id=experiment.arms[chosen_arm].arm_id,
+            client_id=client_id,
+            arm_id=chosen_arm_id,
             asession=asession,
         )
     except Exception as e:
@@ -195,8 +214,9 @@ async def draw_arm(
     return BayesianABDrawResponse.model_validate(
         {
             "draw_id": draw_id,
+            "client_id": client_id,
             "arm": BayesABArmResponse.model_validate(
-                experiment.arms[chosen_arm],
+                [arm for arm in experiment.arms if arm.arm_id == chosen_arm_id][0],
             ),
         }
     )
