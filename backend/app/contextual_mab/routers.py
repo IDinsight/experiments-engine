@@ -22,6 +22,7 @@ from .models import (
     get_all_contextual_obs_by_experiment_id,
     get_contextual_mab_by_id,
     get_contextual_obs_by_experiment_arm_id,
+    get_draw_by_client_id,
     get_draw_by_id,
     save_contextual_mab_to_db,
     save_contextual_obs_to_db,
@@ -152,6 +153,7 @@ async def draw_arm(
     experiment_id: int,
     context: List[ContextInput],
     draw_id: Optional[str] = None,
+    client_id: Optional[str] = None,
     user_db: UserDB = Depends(authenticate_key),
     asession: AsyncSession = Depends(get_async_session),
 ) -> CMABDrawResponse:
@@ -167,6 +169,7 @@ async def draw_arm(
             status_code=404, detail=f"Experiment with id {experiment_id} not found"
         )
 
+    # Check context inputs
     if len(experiment.contexts) != len(context):
         raise HTTPException(
             status_code=400,
@@ -199,17 +202,34 @@ async def draw_arm(
             detail=f"Draw ID {draw_id} already exists.",
         )
 
+    # Check if sticky assignment
+    if experiment.sticky_assignment and not client_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Client ID is required for sticky assignment.",
+        )
+
     chosen_arm = choose_arm(
         experiment_data,
         [c.context_value for c in sorted_context],
     )
+    chosen_arm_id = experiment.arms[chosen_arm].arm_id
+    if experiment.sticky_assignment and client_id:
+        previous_draw = await get_draw_by_client_id(
+            client_id=client_id,
+            user_id=user_db.user_id,
+            asession=asession,
+        )
+        if previous_draw:
+            chosen_arm_id = previous_draw.arm_id
 
     try:
         _ = await save_draw_to_db(
             experiment_id=experiment.experiment_id,
-            arm_id=experiment.arms[chosen_arm].arm_id,
+            arm_id=chosen_arm_id,
             context_val=[c.context_value for c in sorted_context],
             draw_id=draw_id,
+            client_id=client_id,
             user_id=user_db.user_id,
             asession=asession,
         )
@@ -222,7 +242,10 @@ async def draw_arm(
     return CMABDrawResponse.model_validate(
         {
             "draw_id": draw_id,
-            "arm": ContextualArmResponse.model_validate(experiment.arms[chosen_arm]),
+            "client_id": client_id,
+            "arm": ContextualArmResponse.model_validate(
+                [arm for arm in experiment.arms if arm.arm_id == chosen_arm_id][0]
+            ),
         }
     )
 
