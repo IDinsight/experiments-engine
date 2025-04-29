@@ -382,7 +382,7 @@ async def save_observation_to_db(
     draw: MABDrawDB,
     reward: float,
     asession: AsyncSession,
-    observation_type: ObservationType = ObservationType.AUTO,
+    observation_type: ObservationType,
 ) -> MABDrawDB:
     """
     Save an observation to the database

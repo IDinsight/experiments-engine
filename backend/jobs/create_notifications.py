@@ -1,20 +1,25 @@
-# For each type of notification, get notification data from database
-# check if experiment has reached milestone
-# if so, create entry in messages table
-# if not, do nothing
+#!/usr/bin/env python
+"""
+This script processes notifications for experiments.
+"""
 
 import asyncio
 import logging
+import sys
 from datetime import datetime, timezone
+from pathlib import Path
+
+# Add the parent directory to sys.path to allow absolute imports
+sys.path.append(str(Path(__file__).parent.parent))
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..app.database import get_async_session
-from ..app.messages.models import EventMessageDB
-from ..app.models import ExperimentBaseDB, NotificationsDB
-from ..app.schemas import EventType
-from ..app.utils import setup_logger
+from app.database import get_async_session
+from app.messages.models import EventMessageDB
+from app.models import ExperimentBaseDB, NotificationsDB
+from app.schemas import EventType
+from app.utils import setup_logger
 
 logger = setup_logger(log_level=logging.INFO)
 

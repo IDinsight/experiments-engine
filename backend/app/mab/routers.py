@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from typing import Annotated, Optional
 from uuid import uuid4
 
@@ -9,11 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..auth.dependencies import authenticate_key, get_verified_user
 from ..database import get_async_session
 from ..models import get_notifications_from_db, save_notifications_to_db
-from ..schemas import NotificationsResponse, Outcome, RewardLikelihood
+from ..schemas import NotificationsResponse, ObservationType
 from ..users.models import UserDB
 from ..utils import setup_logger
 from .models import (
-    MABArmDB,
     MABDrawDB,
     MultiArmedBanditDB,
     delete_mab_by_id,
@@ -24,9 +22,9 @@ from .models import (
     get_mab_by_id,
     save_draw_to_db,
     save_mab_to_db,
-    save_observation_to_db,
 )
-from .sampling_utils import choose_arm, update_arm_params
+from .observation import update_based_on_outcome
+from .sampling_utils import choose_arm
 from .schemas import (
     ArmResponse,
     MABDrawResponse,
@@ -235,16 +233,9 @@ async def update_arm(
         experiment_id, draw_id, user_db.user_id, asession
     )
 
-    update_experiment_metadata(experiment)
-
-    arm = get_arm_from_experiment(experiment, draw.arm_id)
-    arm.n_outcomes += 1
-
-    experiment_data = MultiArmedBanditSample.model_validate(experiment)
-    await update_arm_parameters(arm, experiment_data, outcome)
-    await save_updated_data(arm, draw, outcome, asession)
-
-    return ArmResponse.model_validate(arm)
+    return await update_based_on_outcome(
+        experiment, draw, outcome, asession, ObservationType.USER
+    )
 
 
 @router.get(
@@ -304,52 +295,3 @@ async def validate_experiment_and_draw(
         )
 
     return experiment, draw
-
-
-def update_experiment_metadata(experiment: MultiArmedBanditDB) -> None:
-    """Update experiment metadata with new trial information"""
-    experiment.n_trials += 1
-    experiment.last_trial_datetime_utc = datetime.now(tz=timezone.utc)
-
-
-def get_arm_from_experiment(experiment: MultiArmedBanditDB, arm_id: int) -> MABArmDB:
-    """Get and validate the arm from the experiment"""
-    arms = [a for a in experiment.arms if a.arm_id == arm_id]
-    if not arms:
-        raise HTTPException(status_code=404, detail=f"Arm with id {arm_id} not found")
-    return arms[0]
-
-
-async def update_arm_parameters(
-    arm: MABArmDB, experiment_data: MultiArmedBanditSample, outcome: float
-) -> None:
-    """Update the arm parameters based on the reward type and outcome"""
-    if experiment_data.reward_type == RewardLikelihood.BERNOULLI:
-        Outcome(outcome)  # Check if reward is 0 or 1
-        arm.alpha, arm.beta = update_arm_params(
-            ArmResponse.model_validate(arm),
-            experiment_data.prior_type,
-            experiment_data.reward_type,
-            outcome,
-        )
-    elif experiment_data.reward_type == RewardLikelihood.NORMAL:
-        arm.mu, arm.sigma = update_arm_params(
-            ArmResponse.model_validate(arm),
-            experiment_data.prior_type,
-            experiment_data.reward_type,
-            outcome,
-        )
-    else:
-        raise HTTPException(
-            status_code=400,
-            detail="Reward type not supported.",
-        )
-
-
-async def save_updated_data(
-    arm: MABArmDB, draw: MABDrawDB, outcome: float, asession: AsyncSession
-) -> None:
-    """Save the updated arm and observation data"""
-    asession.add(arm)
-    await asession.commit()
-    await save_observation_to_db(draw, outcome, asession)
