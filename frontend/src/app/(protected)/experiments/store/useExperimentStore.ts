@@ -51,10 +51,10 @@ interface ExperimentStore {
   updateName: (name: string) => void;
   updateDescription: (description: string) => void;
   updateMethodType: (methodType: MethodType) => void;
-  updateStickyAssignment: (stickyAssignment: boolean) => void;
-  updateAutoFail: (autoFail: boolean) => void;
-  updateAutoFailValue: (autoFailValue: number) => void;
-  updateAutoFailUnit: (autoFailUnit: "hours" | "days") => void;
+  updateStickyAssignment: (sticky_assignment: boolean) => void;
+  updateAutoFail: (auto_fail: boolean) => void;
+  updateAutoFailValue: (auto_fail_value: number) => void;
+  updateAutoFailUnit: (auto_fail_unit: "hours" | "days") => void;
 
   // Prior and reward type page
   updatePriorType: (prior_type: PriorType) => void;
@@ -90,10 +90,10 @@ const createInitialState = (): ExperimentState => {
   const baseDescr = {
     name: "",
     description: "",
-    stickyAssignment: false,
-    autoFail: false,
-    autoFailValue: 10,
-    autoFailUnit: "days",
+    sticky_assignment: false,
+    auto_fail: false,
+    auto_fail_value: 10,
+    auto_fail_unit: "days",
   };
   const methodType: MethodType = "mab";
   const prior_type: PriorType = "beta";
@@ -149,32 +149,32 @@ export const useExperimentStore = create<ExperimentStore>()(
           experimentState: { ...state.experimentState, description },
         })),
 
-      updateStickyAssignment: (stickyAssignment: boolean) =>
+      updateStickyAssignment: (sticky_assignment: boolean) =>
         set((state) => ({
           experimentState: {
             ...state.experimentState,
-            stickyAssignment,
+            sticky_assignment,
           },
         })),
 
-      updateAutoFail: (autoFail: boolean) =>
+      updateAutoFail: (auto_fail: boolean) =>
         set((state) => ({
-          experimentState: { ...state.experimentState, autoFail },
+          experimentState: { ...state.experimentState, auto_fail },
         })),
 
-      updateAutoFailValue: (autoFailValue: number) =>
+      updateAutoFailValue: (auto_fail_value: number) =>
         set((state) => ({
           experimentState: {
             ...state.experimentState,
-            autoFailValue,
+            auto_fail_value,
           },
         })),
 
-      updateAutoFailUnit: (autoFailUnit: "hours" | "days") =>
+      updateAutoFailUnit: (auto_fail_unit: "hours" | "days") =>
         set((state) => ({
           experimentState: {
             ...state.experimentState,
-            autoFailUnit,
+            auto_fail_unit,
           },
         })),
 

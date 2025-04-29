@@ -19,16 +19,6 @@ const createNewExperiment = async ({
   ): {
     endpoint: string;
   } => {
-    const baseData = {
-      name: data.name,
-      description: data.description,
-      sticky_assignment: data.stickyAssignment,
-      auto_fail: data.autoFail,
-      auto_fail_value: data.autoFailValue,
-      auto_fail_unit: data.autoFailUnit,
-      arms: data.arms,
-      notifications: data.notifications,
-    };
 
     if (isMABExperimentStateBeta(data) || isMABExperimentStateNormal(data)) {
       return { endpoint: "/mab/" };

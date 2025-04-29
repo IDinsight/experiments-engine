@@ -68,6 +68,7 @@ export default function AddBasicInfo({
     updateAutoFailValue,
     updateAutoFailUnit,
   } = useExperimentStore();
+
   const [errors, setErrors] = useState({
     name: "",
     description: "",
@@ -189,7 +190,7 @@ export default function AddBasicInfo({
             </div>
             <Switch
               id="sticky-assignment"
-              checked={experimentState.stickyAssignment}
+              checked={experimentState.sticky_assignment}
               onCheckedChange={updateStickyAssignment}
             />
           </div>
@@ -208,7 +209,7 @@ export default function AddBasicInfo({
               </div>
               <Switch
                 id="auto-fail"
-                checked={experimentState.autoFail}
+                checked={experimentState.auto_fail}
                 onCheckedChange={updateAutoFail}
               />
             </div>
@@ -219,34 +220,34 @@ export default function AddBasicInfo({
               <div
                 className="flex flex-wrap items-center gap-3 transition-opacity duration-200 ease-in-out"
                 style={{
-                  opacity: experimentState.autoFail ? 1 : 0,
-                  pointerEvents: experimentState.autoFail ? "auto" : "none",
+                  opacity: experimentState.auto_fail ? 1 : 0,
+                  pointerEvents: experimentState.auto_fail ? "auto" : "none",
                   position: "relative",
-                  zIndex: experimentState.autoFail ? 1 : -1,
+                  zIndex: experimentState.auto_fail ? 1 : -1,
                 }}
               >
                 <div className="w-24">
                   <Input
                     type="number"
-                    value={experimentState.autoFailValue}
+                    value={experimentState.auto_fail_value}
                     onChange={(e) => {
                       const numValue = Number.parseInt(e.target.value, 10) || 0;
                       updateAutoFailValue(numValue);
                     }}
                     min="1"
-                    aria-hidden={!experimentState.autoFail}
-                    tabIndex={experimentState.autoFail ? 0 : -1}
+                    aria-hidden={!experimentState.auto_fail}
+                    tabIndex={experimentState.auto_fail ? 0 : -1}
                   />
                 </div>
                 <div className="w-32 dark:text-gray-50">
                   <Select
-                    value={experimentState.autoFailUnit}
+                    value={experimentState.auto_fail_unit}
                     onValueChange={updateAutoFailUnit}
-                    disabled={!experimentState.autoFail}
+                    disabled={!experimentState.auto_fail}
                   >
                     <SelectTrigger
-                      aria-hidden={!experimentState.autoFail}
-                      tabIndex={experimentState.autoFail ? 0 : -1}
+                      aria-hidden={!experimentState.auto_fail}
+                      tabIndex={experimentState.auto_fail ? 0 : -1}
                     >
                       <SelectValue placeholder="Select unit" />
                     </SelectTrigger>
