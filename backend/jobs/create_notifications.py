@@ -10,11 +10,11 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_async_session
-from app.messages.models import EventMessageDB
-from app.models import ExperimentBaseDB, NotificationsDB
-from app.schemas import EventType
-from app.utils import setup_logger
+from ..app.database import get_async_session
+from ..app.messages.models import EventMessageDB
+from ..app.models import ExperimentBaseDB, NotificationsDB
+from ..app.schemas import EventType
+from ..app.utils import setup_logger
 
 logger = setup_logger(log_level=logging.INFO)
 
