@@ -251,10 +251,12 @@ class TestCMab:
     ) -> None:
         id = create_cmabs[0]["experiment_id"]
         api_key = os.environ.get("ADMIN_API_KEY", "")
+        url = f"/contextual_mab/{id}/draw"
+        if client_id:
+            url += f"?client_id={client_id}"
+
         response = client.post(
-            f"/contextual_mab/{id}/draw{
-                '?client_id=' + client_id\
-                if client_id else ''}",
+            url,
             headers={"Authorization": f"Bearer {api_key}"},
             json=[
                 {"context_id": 1, "context_value": 0},
