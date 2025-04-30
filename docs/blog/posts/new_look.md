@@ -11,7 +11,7 @@ We are excited to announce a new look for the app! We standardized our theme and
 
 <!-- more -->
 
-The new design is based on [shadcn](ui.shadcn.com). Here's what it now looks like:
+The new design is based on [shadcn](https://ui.shadcn.com). Here's what it now looks like:
 
 ### Create experiment page
 ![New theme](../images/no_catalyst.png)
