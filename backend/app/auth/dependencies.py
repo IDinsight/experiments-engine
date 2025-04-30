@@ -97,6 +97,8 @@ async def authenticate_or_create_google_user(
     *,
     request: Request,
     google_email: str,
+    first_name: str,
+    last_name: str,
     asession: AsyncSession,
 ) -> Optional[AuthenticatedUser]:
     """
@@ -119,6 +121,8 @@ async def authenticate_or_create_google_user(
     except UserNotFoundError:
         user = UserCreate(
             username=google_email,
+            first_name=first_name,
+            last_name=last_name,
             experiments_quota=DEFAULT_EXPERIMENTS_QUOTA,
             api_daily_quota=DEFAULT_API_QUOTA,
         )

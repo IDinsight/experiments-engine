@@ -57,7 +57,13 @@ class TestCreateUser:
         self, client: TestClient, mock_send_email: MagicMock
     ) -> None:
         response = client.post(
-            "/user/", json={"username": "user_test", "password": "password_test"}
+            "/user/",
+            json={
+                "username": "user_test",
+                "password": "password_test",
+                "first_name": "Test",
+                "last_name": "User",
+            },
         )
 
         assert response.status_code == 200
@@ -68,14 +74,24 @@ class TestCreateUser:
         # Register a user
         response = client.post(
             "/user/",
-            json={"username": "user_test1", "password": "password_test"},
+            json={
+                "username": "user_test1",
+                "password": "password_test",
+                "first_name": "Test",
+                "last_name": "User",
+            },
         )
         assert response.status_code == 200
 
         # Try to register another user
         response = client.post(
             "/user/",
-            json={"username": "user_test1", "password": "password_test"},
+            json={
+                "username": "user_test1",
+                "password": "password_test",
+                "first_name": "Test",
+                "last_name": "User",
+            },
         )
         assert response.status_code == 400
 

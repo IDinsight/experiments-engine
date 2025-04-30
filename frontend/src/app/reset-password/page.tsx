@@ -86,7 +86,9 @@ export default function ResetPasswordPage() {
         router.push("/login");
       }, 3000);
     } catch (error) {
-      setErrorState("Failed to reset password. The link may have expired or is invalid.");
+      setErrorState(
+        "Failed to reset password. The link may have expired or is invalid."
+      );
       console.error("Password reset error:", error);
     } finally {
       setIsSubmitting(false);
@@ -94,12 +96,13 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-purple-50 to-blue-100 p-4">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
+        key="reset-pwd-form-container"
       >
         <Card>
           <CardHeader className="space-y-1">
@@ -115,7 +118,7 @@ export default function ResetPasswordPage() {
               <div className="text-center space-y-4">
                 <div className="rounded-md bg-red-50 p-4 mb-4">
                   <div className="flex">
-                    <div className="flex-shrink-0">
+                    <div className="shrink-0">
                       <svg
                         className="h-5 w-5 text-red-400"
                         viewBox="0 0 20 20"
@@ -131,7 +134,8 @@ export default function ResetPasswordPage() {
                     </div>
                     <div className="ml-3">
                       <p className="text-sm font-medium text-red-800">
-                        Missing or invalid reset token. Please request a new password reset link.
+                        Missing or invalid reset token. Please request a new
+                        password reset link.
                       </p>
                     </div>
                   </div>
@@ -144,7 +148,7 @@ export default function ResetPasswordPage() {
               <div className="text-center space-y-4">
                 <div className="rounded-md bg-green-50 p-4 mb-4">
                   <div className="flex">
-                    <div className="flex-shrink-0">
+                    <div className="shrink-0">
                       <svg
                         className="h-5 w-5 text-green-400"
                         viewBox="0 0 20 20"
@@ -160,7 +164,8 @@ export default function ResetPasswordPage() {
                     </div>
                     <div className="ml-3">
                       <p className="text-sm font-medium text-green-800">
-                        Your password has been reset successfully. Redirecting to login...
+                        Your password has been reset successfully. Redirecting
+                        to login...
                       </p>
                     </div>
                   </div>
@@ -221,9 +226,7 @@ export default function ResetPasswordPage() {
                   {/* Error message */}
                   {errorState && (
                     <FormMessage>
-                      <span className="text-red-500">
-                        {errorState}
-                      </span>
+                      <span className="text-red-500">{errorState}</span>
                     </FormMessage>
                   )}
                 </form>

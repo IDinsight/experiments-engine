@@ -6,7 +6,7 @@ import { MABBeta, MABNormal, CMAB, BayesianAB, MethodType } from "./types";
 import ExperimentCard from "./components/ExperimentCard";
 import Hourglass from "@/components/Hourglass";
 import FloatingAddButton from "./components/FloatingAddButton";
-import { Link } from "@/components/catalyst/link";
+import Link from "next/link";
 import { useAuth } from "@/utils/auth";
 import { DividerWithTitle } from "@/components/Dividers";
 

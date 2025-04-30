@@ -10,6 +10,8 @@ class UserCreate(BaseModel):
     """
 
     username: str
+    first_name: str
+    last_name: str
     experiments_quota: Optional[int] = None
     api_daily_quota: Optional[int] = None
 
@@ -26,14 +28,12 @@ class UserCreateWithPassword(UserCreate):
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserRetrieve(BaseModel):
+class UserRetrieve(UserCreate):
     """
     Pydantic model for user retrieval
     """
 
     user_id: int
-    username: str
-    experiments_quota: Optional[int]
     api_key_first_characters: str
     api_key_updated_datetime_utc: datetime
     created_datetime_utc: datetime

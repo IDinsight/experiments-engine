@@ -9,7 +9,7 @@ import { ApiKeyDisplay } from "./components/ApiKeyDisplay";
 
 export default function ApiKeyPage() {
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-10 ">
       <Card>
         <CardHeader>
           <CardTitle>API Key Management</CardTitle>

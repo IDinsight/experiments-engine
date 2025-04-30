@@ -46,7 +46,7 @@ class EmailService:
         self.client = boto3.client("ses", **session_kwargs)
 
     async def send_verification_email(
-        self, email: str, username: str, token: str
+        self, email: str, name: str, token: str
     ) -> Dict[str, Any]:
         """
         Send account verification email
@@ -59,7 +59,7 @@ class EmailService:
         <head></head>
         <body>
             <h1>Account Verification</h1>
-            <p>Hello {username},</p>
+            <p>Hello {name},</p>
             <p>Thank you for signing up. Please click the link below to verify
             your account:</p>
             <p><a href="{verification_url}">Verify My Account</a></p>
@@ -71,7 +71,7 @@ class EmailService:
         text_body = f"""
         Account Verification
 
-        Hello {username},
+        Hello {name},
 
         Thank you for signing up. Please use the link below to verify your account:
 

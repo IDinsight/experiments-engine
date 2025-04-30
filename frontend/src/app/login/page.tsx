@@ -26,7 +26,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Flex } from "@radix-ui/themes";
-import GoogleLogin, { NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID } from "@/components/auth/GoogleLogin";
+import GoogleLogin, {
+  NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID,
+} from "@/components/auth/GoogleLogin";
 
 const formSchema = z.object({
   email: z.string().email({
@@ -46,6 +48,7 @@ export default function LoginPage() {
       password: "",
       rememberMe: false,
     },
+    mode: "onChange",
   });
 
   const { login, loginGoogle, loginError } = useAuth();
@@ -54,7 +57,9 @@ export default function LoginPage() {
     login(values.email, values.password);
   }
 
-  const handleGoogleLogin = (response: google.accounts.id.CredentialResponse) => {
+  const handleGoogleLogin = (
+    response: google.accounts.id.CredentialResponse
+  ) => {
     loginGoogle({
       client_id: NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID,
       credential: response.credential,
@@ -62,12 +67,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-purple-50 to-blue-100 p-4">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
+        key="login-form-container"
       >
         <Card>
           <CardHeader className="space-y-1">
@@ -106,7 +112,9 @@ export default function LoginPage() {
                     <FormItem>
                       <div className="flex justify-between h-5">
                         <FormLabel>Password</FormLabel>
-                        <FormMessage />
+                        <div className="min-h-[20px]">
+                          <FormMessage />
+                        </div>
                       </div>
                       <FormControl>
                         <Input
@@ -157,10 +165,12 @@ export default function LoginPage() {
             </Form>
             <Flex direction="column" align="center" justify="center">
               <p className="pb-4 text-sm text-white-700">or</p>
-              <GoogleLogin
-                type="signin_with"
-                handleCredentialResponse={handleGoogleLogin}
-              />
+              <div className="min-h-[20px]">
+                <GoogleLogin
+                  type="signin_with"
+                  handleCredentialResponse={handleGoogleLogin}
+                />
+              </div>
             </Flex>
           </CardContent>
           <CardFooter className="flex justify-center">
@@ -170,9 +180,12 @@ export default function LoginPage() {
                 href={{
                   pathname: "/register",
                   query: {
-                    sourcePage: typeof window !== "undefined"
-                      ? new URLSearchParams(window.location.search).get("sourcePage")
-                      : null,
+                    sourcePage:
+                      typeof window !== "undefined"
+                        ? new URLSearchParams(window.location.search).get(
+                            "sourcePage"
+                          )
+                        : null,
                   },
                 }}
                 className="text-primary hover:underline"

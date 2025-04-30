@@ -1,6 +1,7 @@
 site_name: Experiments Engine
 site_description: A platform for running experiments and analyzing results
 site_url: https://experiments-engine.idinsight.github.io
+repo_url: https://github.com/IDinsight/experiments-engine
 theme:
   name: material
   icon:

@@ -42,7 +42,7 @@ export default function VerificationRequiredPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-purple-50 to-blue-100 p-4">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -61,7 +61,7 @@ export default function VerificationRequiredPage() {
           <CardContent className="space-y-4">
             <div className="rounded-md bg-amber-50 p-4">
               <div className="flex">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <svg
                     className="h-5 w-5 text-amber-400"
                     viewBox="0 0 20 20"
@@ -86,7 +86,7 @@ export default function VerificationRequiredPage() {
             {resendSuccess && (
               <div className="rounded-md bg-green-50 p-4">
                 <div className="flex">
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     <svg
                       className="h-5 w-5 text-green-400"
                       viewBox="0 0 20 20"
@@ -112,7 +112,7 @@ export default function VerificationRequiredPage() {
             {resendError && (
               <div className="rounded-md bg-red-50 p-4">
                 <div className="flex">
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     <svg
                       className="h-5 w-5 text-red-400"
                       viewBox="0 0 20 20"

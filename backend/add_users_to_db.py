@@ -20,6 +20,8 @@ logger = setup_logger()
 
 # admin user
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin@idinsight.org")
+ADMIN_FIRST_NAME = os.environ.get("ADMIN_FIRST_NAME", "Admin")
+ADMIN_LAST_NAME = os.environ.get("ADMIN_LAST_NAME", "User")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "12345")
 ADMIN_API_KEY = os.environ.get("ADMIN_API_KEY", "admin-key")
 ADMIN_EXPERIMENT_QUOTA = os.environ.get("ADMIN_EXPERIMENT_QUOTA", None)
@@ -28,6 +30,8 @@ ADMIN_API_DAILY_QUOTA = os.environ.get("ADMIN_API_DAILY_QUOTA", None)
 
 user_db = UserDB(
     username=ADMIN_USERNAME,
+    first_name=ADMIN_FIRST_NAME,
+    last_name=ADMIN_LAST_NAME,
     hashed_password=get_password_salted_hash(ADMIN_PASSWORD),
     hashed_api_key=get_key_hash(ADMIN_API_KEY),
     api_key_first_characters=ADMIN_API_KEY[:5],

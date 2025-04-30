@@ -1,19 +1,8 @@
 import { useExperimentStore } from "../../store/useExperimentStore";
-import {
-  Field,
-  FieldGroup,
-  Fieldset,
-  Label,
-} from "@/components/catalyst/fieldset";
-import { useState, useEffect, useCallback } from "react";
-import { Input } from "@/components/catalyst/input";
-import { Textarea } from "@/components/catalyst/textarea";
-import { AllSteps } from "./addExperimentSteps";
-import { Heading } from "@/components/catalyst/heading";
-import { StepValidation } from "../../types";
-import { MethodCard } from "./methodCard";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { DividerWithTitle } from "@/components/Dividers";
 import {
   Select,
   SelectContent,
@@ -21,8 +10,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useState, useEffect, useCallback } from "react";
+import type { AllSteps } from "./addExperimentSteps";
+import type { StepValidation } from "../../types";
+import { MethodCard } from "./methodCard";
+import { DividerWithTitle } from "@/components/Dividers";
 
 type Methods = typeof AllSteps;
+
 // Method information with detailed descriptions
 const methodInfo = {
   mab: {
@@ -53,6 +48,7 @@ const methodInfo = {
     disabled: false,
   },
 };
+
 export default function AddBasicInfo({
   onValidate,
 }: {
@@ -107,14 +103,17 @@ export default function AddBasicInfo({
 
   return (
     <div>
-      <div className="pt-5 flex w-full flex-wrap items-end justify-between gap-4 border-b border-zinc-950/10 pb-6 dark:border-white/10">
-        <Heading>Start a new experiment</Heading>
+      <div className="pt-5 flex w-full flex-wrap items-end justify-between gap-4 border-b pb-6 ">
+        <h2 className="text-2xl font-semibold tracking-tight">
+          Start a new experiment
+        </h2>
       </div>
-      <Fieldset aria-label="New MAB Experiment" className="pt-6">
-        <FieldGroup>
-          <Field>
-            <Label>Experiment Name</Label>
+      <div className="pt-6 space-y-6" aria-label="New MAB Experiment">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="experiment-name">Experiment Name</Label>
             <Input
+              id="experiment-name"
               name="experiment-name"
               placeholder="Give it a name you'll remember"
               value={experimentState.name}
@@ -123,14 +122,15 @@ export default function AddBasicInfo({
               }}
             />
             {errors.name ? (
-              <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+              <p className="text-destructive text-xs mt-1">{errors.name}</p>
             ) : (
-              <p className="text-red-500 text-xs mt-1">&nbsp;</p>
+              <p className="text-destructive text-xs mt-1">&nbsp;</p>
             )}
-          </Field>
-          <Field>
-            <Label>Description</Label>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="experiment-description">Description</Label>
             <Textarea
+              id="experiment-description"
               name="experiment-description"
               placeholder="Why are you running this experiment? What do you wish to test?"
               value={experimentState.description}
@@ -140,12 +140,14 @@ export default function AddBasicInfo({
               }}
             />
             {errors.description ? (
-              <p className="text-red-500 text-xs mt-1">{errors.description}</p>
+              <p className="text-destructive text-xs mt-1">
+                {errors.description}
+              </p>
             ) : (
-              <p className="text-red-500 text-xs mt-1">&nbsp;</p>
+              <p className="text-destructive text-xs mt-1">&nbsp;</p>
             )}
-          </Field>
-        </FieldGroup>
+          </div>
+        </div>
         <div className="mt-6">
           <Label className="mb-3 font-medium">Select experiment type</Label>
           <div
@@ -170,9 +172,9 @@ export default function AddBasicInfo({
             )}
           </div>
           {errors.methodType ? (
-            <p className="text-red-500 text-xs mt-2">{errors.methodType}</p>
+            <p className="text-destructive text-xs mt-2">{errors.methodType}</p>
           ) : (
-            <p className="text-red-500 text-xs mt-2">&nbsp;</p>
+            <p className="text-destructive text-xs mt-2">&nbsp;</p>
           )}
         </div>
         <DividerWithTitle title="Other options" />
@@ -181,10 +183,10 @@ export default function AddBasicInfo({
         <div className="mt-6 space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5 pr-2">
-              <Label htmlFor="sticky-assignment" className="text-base">
+              <Label htmlFor="sticky-assignment">
                 Enable sticky assignment
               </Label>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Ensures users consistently see the same variant across sessions
               </p>
             </div>
@@ -199,10 +201,8 @@ export default function AddBasicInfo({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5 pr-2">
-                <Label htmlFor="auto-fail" className="text-base">
-                  Auto fail after
-                </Label>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <Label htmlFor="auto-fail">Auto fail after</Label>
+                <p className="text-sm text-muted-foreground">
                   Automatically fail the experiment after a specified time
                   period if there has been no outcome recorded.
                 </p>
@@ -239,7 +239,7 @@ export default function AddBasicInfo({
                     tabIndex={experimentState.auto_fail ? 0 : -1}
                   />
                 </div>
-                <div className="w-32 dark:text-gray-50">
+                <div className="w-32 ">
                   <Select
                     value={experimentState.auto_fail_unit}
                     onValueChange={updateAutoFailUnit}
@@ -261,7 +261,7 @@ export default function AddBasicInfo({
             </div>
           </div>
         </div>
-      </Fieldset>
+      </div>
     </div>
   );
 }

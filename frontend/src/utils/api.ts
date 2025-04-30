@@ -73,9 +73,16 @@ const getGoogleLoginToken = async (idToken: {
   }
 };
 
-const registerUser = async (username: string, password: string) => {
+const registerUser = async (
+  first_name: string,
+  last_name: string,
+  username: string,
+  password: string
+) => {
   try {
     const requestBody = {
+      first_name,
+      last_name,
       username,
       password,
     };
@@ -86,7 +93,7 @@ const registerUser = async (username: string, password: string) => {
     });
     return response.data;
   } catch (error) {
-    throw new Error("Error registering user");;
+    throw new Error("Error registering user");
   }
 };
 
@@ -103,7 +110,7 @@ const resetPassword = async (token: string, newPassword: string) => {
   try {
     const response = await api.post("/reset-password", {
       token,
-      new_password: newPassword
+      new_password: newPassword,
     });
     return response.data;
   } catch (error) {

@@ -35,6 +35,8 @@ class UserDB(Base):
 
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    first_name: Mapped[str] = mapped_column(String, nullable=False)
+    last_name: Mapped[str] = mapped_column(String, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(96), nullable=False)
     hashed_api_key: Mapped[str] = mapped_column(String(96), nullable=False, unique=True)
     api_key_first_characters: Mapped[str] = mapped_column(String(5), nullable=False)
@@ -89,6 +91,8 @@ async def save_user_to_db(
 
     user_db = UserDB(
         username=user.username,
+        first_name=user.first_name,
+        last_name=user.last_name,
         experiments_quota=user.experiments_quota,
         api_daily_quota=user.api_daily_quota,
         hashed_password=hashed_password,

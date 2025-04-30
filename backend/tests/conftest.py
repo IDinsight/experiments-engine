@@ -19,6 +19,8 @@ from backend.app.utils import get_key_hash, get_password_salted_hash
 from .config import (
     TEST_API_QUOTA,
     TEST_EXPERIMENTS_QUOTA,
+    TEST_FIRST_NAME,
+    TEST_LAST_NAME,
     TEST_PASSWORD,
     TEST_USER_API_KEY,
     TEST_USERNAME,
@@ -84,6 +86,8 @@ def regular_user(client: TestClient, db_session: Session) -> Generator:
     regular_user = UserDB(
         username=TEST_USERNAME,
         hashed_password=get_password_salted_hash(TEST_PASSWORD),
+        first_name=TEST_FIRST_NAME,
+        last_name=TEST_LAST_NAME,
         hashed_api_key=get_key_hash(TEST_USER_API_KEY),
         api_key_first_characters=TEST_USER_API_KEY[:5],
         api_key_updated_datetime_utc=datetime.utcnow(),

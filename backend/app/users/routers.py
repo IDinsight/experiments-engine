@@ -60,12 +60,14 @@ async def create_user(
         background_tasks.add_task(
             email_service.send_verification_email,
             user_new.username,
-            user_new.username,
+            user_new.first_name,
             token,
         )
 
         return UserCreate(
             username=user_new.username,
+            first_name=user_new.first_name,
+            last_name=user_new.last_name,
             experiments_quota=user_new.experiments_quota,
             api_daily_quota=user_new.api_daily_quota,
         )
@@ -84,18 +86,7 @@ async def get_user(
     Get user endpoint. Returns the user object for the requester.
     """
 
-    return UserRetrieve(
-        user_id=user_db.user_id,
-        username=user_db.username,
-        experiments_quota=user_db.experiments_quota,
-        api_key_first_characters=user_db.api_key_first_characters,
-        api_key_updated_datetime_utc=user_db.api_key_updated_datetime_utc,
-        created_datetime_utc=user_db.created_datetime_utc,
-        updated_datetime_utc=user_db.updated_datetime_utc,
-        is_active=user_db.is_active,
-        is_verified=user_db.is_verified,
-        access_level=user_db.access_level,
-    )
+    return UserRetrieve.model_validate(user_db)
 
 
 @router.put("/rotate-key", response_model=KeyResponse)
