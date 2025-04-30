@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from typing import Annotated, Optional
 from uuid import uuid4
 
@@ -9,10 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..auth.dependencies import authenticate_key, get_verified_user
 from ..database import get_async_session
 from ..models import get_notifications_from_db, save_notifications_to_db
-from ..schemas import NotificationsResponse, Outcome, RewardLikelihood
+from ..schemas import NotificationsResponse, ObservationType
 from ..users.models import UserDB
 from .models import (
-    BayesianABArmDB,
     BayesianABDB,
     BayesianABDrawDB,
     delete_bayes_ab_experiment_by_id,
@@ -22,9 +20,9 @@ from .models import (
     get_bayes_ab_experiment_by_id,
     get_bayes_ab_obs_by_experiment_id,
     save_bayes_ab_draw_to_db,
-    save_bayes_ab_observation_to_db,
     save_bayes_ab_to_db,
 )
+from .observation import update_based_on_outcome
 from .sampling_utils import choose_arm, update_arm_params
 from .schemas import (
     BayesABArmResponse,
@@ -239,19 +237,13 @@ async def save_observation_for_arm(
         experiment_id, draw_id, user_db.user_id, asession
     )
 
-    update_experiment_metadata(experiment)
-
-    arm = get_arm_from_experiment(experiment, draw.arm_id)
-    arm.n_outcomes += 1
-
-    experiment_data = BayesianABSample.model_validate(experiment)
-
-    if experiment_data.reward_type == RewardLikelihood.BERNOULLI:
-        Outcome(outcome)  # Check if reward is 0 or 1
-
-    await save_updated_data(arm, draw, outcome, asession)
-
-    return BayesABArmResponse.model_validate(arm)
+    return await update_based_on_outcome(
+        experiment=experiment,
+        draw=draw,
+        outcome=outcome,
+        asession=asession,
+        observation=ObservationType.USER,
+    )
 
 
 @router.get(
@@ -305,12 +297,17 @@ async def update_arms(
         )
 
     # Prepare data for arms update
-    (rewards, treatments, treatment_mu, treatment_sigma, control_mu, control_sigma) = (
-        await prepare_data_for_arms_update(
-            experiment=experiment,
-            user_id=user_db.user_id,
-            asession=asession,
-        )
+    (
+        rewards,
+        treatments,
+        treatment_mu,
+        treatment_sigma,
+        control_mu,
+        control_sigma,
+    ) = await prepare_data_for_arms_update(
+        experiment=experiment,
+        user_id=user_db.user_id,
+        asession=asession,
     )
 
     # Make updates
@@ -363,38 +360,6 @@ async def validate_experiment_and_draw(
         )
 
     return experiment, draw
-
-
-def update_experiment_metadata(experiment: BayesianABDB) -> None:
-    """
-    Update the experiment metadata with new information.
-    """
-    experiment.n_trials += 1
-    experiment.last_trial_datetime_utc = datetime.now(tz=timezone.utc)
-
-
-def get_arm_from_experiment(experiment: BayesianABDB, arm_id: int) -> BayesianABArmDB:
-    """
-    Get and validate the arm from the experiment.
-    """
-    arms = [a for a in experiment.arms if a.arm_id == arm_id]
-    if not arms:
-        raise HTTPException(status_code=404, detail=f"Arm with id {arm_id} not found")
-    return arms[0]
-
-
-async def save_updated_data(
-    arm: BayesianABArmDB,
-    draw: BayesianABDrawDB,
-    outcome: float,
-    asession: AsyncSession,
-) -> None:
-    """
-    Save the updated data to the database.
-    """
-    asession.add(arm)
-    await asession.commit()
-    await save_bayes_ab_observation_to_db(draw, outcome, asession)
 
 
 async def prepare_data_for_arms_update(

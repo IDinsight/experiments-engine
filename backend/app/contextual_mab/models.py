@@ -340,7 +340,7 @@ async def save_contextual_obs_to_db(
     draw: ContextualDrawDB,
     reward: float,
     asession: AsyncSession,
-    observation_type: ObservationType = ObservationType.AUTO,
+    observation_type: ObservationType,
 ) -> ContextualDrawDB:
     """
     Save the observation to the database.
