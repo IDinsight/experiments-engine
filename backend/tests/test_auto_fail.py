@@ -1,19 +1,3 @@
-# Create an experiment with auto_fail set to True,
-#   auto_fail_value set to 3, auto_fail_unit set to hour
-# Create 5 draws with different dates
-# Monkeypatch date such that 3 of them expire
-# Run auto_fail job
-# Check that 3 draws are marked as failed
-
-# Repeat with experiment with auto_fail set to False
-# Check that no draws are marked as failed
-
-# Repeat with experiment with auto_fail set to True,
-#   auto_fail_value set to 3, auto_fail_unit set to day
-# Create 5 draws with different dates
-# Monkeypatch date such that 2 of them expire
-# Run auto_fail job
-# Check that 2 draws are marked as failed
 import copy
 import os
 from datetime import datetime, timedelta, timezone
