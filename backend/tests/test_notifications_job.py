@@ -179,9 +179,18 @@ class TestNotificationsJob:
         assert n_processed == 0
         api_key = os.environ.get("ADMIN_API_KEY", "")
         for mab in create_mabs_trials_run:
-            for _ in range(n_trials):
+            for i in range(n_trials):
+                draw_id = f"draw_{i}_{mab['experiment_id']}"
+                response = client.get(
+                    f"/mab/{mab['experiment_id']}/draw",
+                    params={"draw_id": draw_id},
+                    headers={"Authorization": f"Bearer {api_key}"},
+                )
+                assert response.status_code == 200
+                assert response.json()["draw_id"] == draw_id
+
                 response = client.put(
-                    f"/mab/{mab['experiment_id']}/{mab['arms'][0]['arm_id']}/{1}",
+                    f"/mab/{mab['experiment_id']}/{draw_id}/1",
                     headers={"Authorization": f"Bearer {api_key}"},
                 )
                 assert response.status_code == 200

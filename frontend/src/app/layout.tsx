@@ -4,8 +4,9 @@ import "./globals.css";
 import "@radix-ui/themes/styles.css";
 import { Suspense } from "react";
 import AuthProvider from "@/utils/auth";
-import { Theme } from "@radix-ui/themes";
 import { PublicEnvScript } from "next-runtime-env";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -37,9 +38,15 @@ export default function RootLayout({
       </head>
       <body className={"font-sans antialiased"}>
         <Suspense>
-          <Theme>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
             <AuthProvider>{children}</AuthProvider>
-          </Theme>
+          </ThemeProvider>
+          <Toaster />
         </Suspense>
       </body>
     </html>

@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import get_current_user
+from ..auth.dependencies import get_verified_user
 from ..database import get_async_session
 from ..users.models import UserDB
 from .models import EventMessageDB, MessageDB
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/messages", tags=["Messages"])
 
 @router.get("/", response_model=list[MessageResponse])
 async def get_messages(
-    user_db: Annotated[UserDB, Depends(get_current_user)],
+    user_db: Annotated[UserDB, Depends(get_verified_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[MessageResponse]:
     """
@@ -27,7 +27,7 @@ async def get_messages(
 @router.post("/", response_model=MessageResponse)
 async def create_message(
     message: EventMessageCreate,
-    user_db: Annotated[UserDB, Depends(get_current_user)],
+    user_db: Annotated[UserDB, Depends(get_verified_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> MessageResponse:
     """
@@ -47,7 +47,7 @@ async def create_message(
 @router.delete("/", response_model=list[MessageResponse])
 async def delete_messages(
     message_ids: list[int],
-    user_db: Annotated[UserDB, Depends(get_current_user)],
+    user_db: Annotated[UserDB, Depends(get_verified_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[MessageResponse]:
     """
@@ -63,7 +63,7 @@ async def delete_messages(
 @router.patch("/", response_model=list[MessageResponse])
 async def mark_messages_as_read(
     message_read_toggle: MessageReadToggle,
-    user_db: Annotated[UserDB, Depends(get_current_user)],
+    user_db: Annotated[UserDB, Depends(get_verified_user)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[MessageResponse]:
     """

@@ -15,6 +15,12 @@ env:
   ADMIN_USERNAME: test@idinsight.org
   ADMIN_PASSWORD: test123
   ADMIN_API_KEY: testkey123
+  SES_REGION: ap-south-1
+  SES_SENDER_EMAIL: no-reply@example.com
+  FRONTEND_URL: http://localhost:3000
+  AWS_ACCESS_KEY_ID: aws_access_key
+  AWS_SECRET_ACCESS_KEY: aws_secret_key
+  ENV: testing
 jobs:
   container-job:
     runs-on: ubuntu-22.04

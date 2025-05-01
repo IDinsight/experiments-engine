@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import { useState } from "react";
-import { Button } from "@/components/catalyst/button";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Trash, MailOpen, MailIcon } from "lucide-react";
@@ -116,7 +116,7 @@ export default function MessagePage() {
       <div className="mb-4 flex justify-between gap-2">
         <div className="flex gap-2">
           <Button
-            outline
+            variant="outline"
             onClick={() => handleToggleReadSelected(true)}
             disabled={selectedMessageIds.length === 0}
           >
@@ -125,7 +125,7 @@ export default function MessagePage() {
           </Button>
 
           <Button
-            outline
+            variant="outline"
             onClick={() => handleToggleReadSelected(false)}
             disabled={selectedMessageIds.length === 0}
           >
@@ -144,7 +144,7 @@ export default function MessagePage() {
       </div>
 
       {/* Messages List */}
-      <ScrollArea className="flex-grow border rounded-md dark:border-zinc-600">
+      <ScrollArea className="grow border rounded-md dark:border-zinc-600">
         <div className="divide-y">
           {messages.map((message) => (
             <div

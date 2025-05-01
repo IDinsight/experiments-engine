@@ -1,4 +1,4 @@
-import { PlusIcon } from "@heroicons/react/20/solid";
+import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function FloatingAddButton() {

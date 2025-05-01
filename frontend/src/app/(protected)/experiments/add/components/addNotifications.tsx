@@ -1,13 +1,8 @@
 import { useExperimentStore } from "../../store/useExperimentStore";
-import { Heading } from "@/components/catalyst/heading";
-import {
-  Checkbox,
-  CheckboxField,
-  CheckboxGroup,
-} from "@/components/catalyst/checkbox";
-import { Description, Fieldset, Label } from "@/components/catalyst/fieldset";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { StepComponentProps } from "../../types";
+import type { StepComponentProps } from "../../types";
 import { useCallback, useEffect, useState } from "react";
 
 export default function AddNotifications({ onValidate }: StepComponentProps) {
@@ -74,145 +69,165 @@ export default function AddNotifications({ onValidate }: StepComponentProps) {
   return (
     <div>
       <div className="pt-5 flex w-full flex-wrap items-end justify-between gap-4 border-b border-zinc-950/10 pb-6 dark:border-white/10">
-        <Heading>Select notifications</Heading>
+        <h2 className="text-2xl font-semibold tracking-tight">
+          Select notifications
+        </h2>
       </div>
-      <Fieldset aria-label="select notifications" className="pt-6">
-        <CheckboxGroup>
-          <CheckboxField className="flex flex-row">
+      <div className="pt-6 space-y-4" aria-label="select notifications">
+        <div className="space-y-6">
+          <div className="flex items-start space-x-4">
             <Checkbox
-              name="discoverability"
-              defaultChecked={
-                experimentState.notifications.onTrialCompletion || false
-              }
-              onChange={(e) =>
+              id="trial-completion"
+              className="mt-1"
+              checked={experimentState.notifications.onTrialCompletion || false}
+              onCheckedChange={(checked) =>
                 updateNotifications({
                   ...experimentState.notifications,
-                  onTrialCompletion: e,
+                  onTrialCompletion: checked as boolean,
                 })
               }
             />
-            <Label>
-              After
-              <Input
-                type="number"
-                value={experimentState.notifications.numberOfTrials}
-                onChange={(e) => {
-                  updateNotifications({
-                    ...experimentState.notifications,
-                    numberOfTrials: Number(e.target.value),
-                  });
-                }}
-                className={`${inputClasses} ${
-                  errors.numberOfTrials ? "border-red-500" : ""
-                }`}
-                onClick={(e) => e.stopPropagation()}
-              />
-              {" trials"}
-            </Label>
-            <Description>
-              {errors.numberOfTrials ? (
-                <span className="text-red-500">{errors.numberOfTrials}</span>
-              ) : (
-                <span>
-                  Notify me when{" "}
-                  <b>{experimentState.notifications.numberOfTrials}</b> number
-                  of trials have been run
-                </span>
-              )}
-            </Description>
-          </CheckboxField>
-          <CheckboxField>
+            <div className="grid gap-1.5 leading-none">
+              <Label
+                htmlFor="trial-completion"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                After
+                <Input
+                  type="number"
+                  value={experimentState.notifications.numberOfTrials}
+                  onChange={(e) => {
+                    updateNotifications({
+                      ...experimentState.notifications,
+                      numberOfTrials: Number(e.target.value),
+                    });
+                  }}
+                  className={`${inputClasses} ${
+                    errors.numberOfTrials ? "border-red-500" : ""
+                  }`}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                {" trials"}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {errors.numberOfTrials ? (
+                  <span className="text-destructive">
+                    {errors.numberOfTrials}
+                  </span>
+                ) : (
+                  <span>
+                    Notify me when{" "}
+                    <b>{experimentState.notifications.numberOfTrials}</b> number
+                    of trials have been run
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-4">
             <Checkbox
-              name="discoverability"
-              value="time"
-              defaultChecked={
-                experimentState.notifications.onDaysElapsed || false
-              }
-              onChange={(e) =>
+              id="days-elapsed"
+              className="mt-1"
+              checked={experimentState.notifications.onDaysElapsed || false}
+              onCheckedChange={(checked) =>
                 updateNotifications({
                   ...experimentState.notifications,
-                  onDaysElapsed: e,
+                  onDaysElapsed: checked as boolean,
                 })
               }
             />
-            <Label>
-              After
-              <Input
-                type="number"
-                value={experimentState.notifications.daysElapsed}
-                onChange={(e) =>
-                  updateNotifications({
-                    ...experimentState.notifications,
-                    daysElapsed: Number(e.target.value),
-                  })
-                }
-                className={`${inputClasses} ${
-                  errors.daysElapsed ? "border-red-500" : ""
-                }`}
-                onClick={(e) => e.stopPropagation()}
-              />
-              {" days"}
-            </Label>
-            <Description>
-              {errors.daysElapsed ? (
-                <span className="text-red-500">{errors.daysElapsed}</span>
-              ) : (
-                <span>
-                  Notify me when{" "}
-                  <b>{experimentState.notifications.daysElapsed}</b> days have
-                  passed since the experiment started
-                </span>
-              )}
-            </Description>
-          </CheckboxField>
-          <CheckboxField>
+            <div className="grid gap-1.5 leading-none">
+              <Label
+                htmlFor="days-elapsed"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                After
+                <Input
+                  type="number"
+                  value={experimentState.notifications.daysElapsed}
+                  onChange={(e) =>
+                    updateNotifications({
+                      ...experimentState.notifications,
+                      daysElapsed: Number(e.target.value),
+                    })
+                  }
+                  className={`${inputClasses} ${
+                    errors.daysElapsed ? "border-red-500" : ""
+                  }`}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                {" days"}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {errors.daysElapsed ? (
+                  <span className="text-destructive">{errors.daysElapsed}</span>
+                ) : (
+                  <span>
+                    Notify me when{" "}
+                    <b>{experimentState.notifications.daysElapsed}</b> days have
+                    passed since the experiment started
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-4">
             <Checkbox
-              name="discoverability"
-              value="event"
-              defaultChecked={
-                experimentState.notifications.onPercentBetter || false
-              }
-              onChange={(e) =>
+              id="percent-better"
+              className="mt-1"
+              disabled={true}
+              checked={experimentState.notifications.onPercentBetter || false}
+              onCheckedChange={(checked) =>
                 updateNotifications({
                   ...experimentState.notifications,
-                  onPercentBetter: e,
+                  onPercentBetter: checked as boolean,
                 })
               }
             />
-            <Label>
-              If an arm is superior by
-              <Input
-                type="number"
-                value={experimentState.notifications.percentBetterThreshold}
-                onChange={(e) =>
-                  updateNotifications({
-                    ...experimentState.notifications,
-                    percentBetterThreshold: Number(e.target.value),
-                  })
-                }
-                className={`${inputClasses} ${
-                  errors.percentBetterThreshold ? "border-red-500" : ""
-                }`}
-                onClick={(e) => e.stopPropagation()}
-              />
-              {"%"}
-            </Label>
-            <Description>
-              {errors.percentBetterThreshold ? (
-                <span className="text-red-500">
-                  {errors.percentBetterThreshold}
-                </span>
-              ) : (
-                <span>
-                  Notify me if an arm is{" "}
-                  <b>{experimentState.notifications.percentBetterThreshold}</b>%
-                  better than the other arms
-                </span>
-              )}
-            </Description>
-          </CheckboxField>
-        </CheckboxGroup>
-      </Fieldset>
+            <div className="grid gap-1.5 leading-none">
+              <Label
+                htmlFor="percent-better"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-400"
+              >
+                [Coming soon] If an arm is superior by
+                <Input
+                  type="number"
+                  value={experimentState.notifications.percentBetterThreshold}
+                  onChange={(e) =>
+                    updateNotifications({
+                      ...experimentState.notifications,
+                      percentBetterThreshold: Number(e.target.value),
+                    })
+                  }
+                  className={`${inputClasses} ${
+                    errors.percentBetterThreshold ? "border-red-500" : ""
+                  }`}
+                  onClick={(e) => e.stopPropagation()}
+                  disabled={true}
+                />
+                {"%"}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {errors.percentBetterThreshold ? (
+                  <span className="text-destructive">
+                    {errors.percentBetterThreshold}
+                  </span>
+                ) : (
+                  <span>
+                    Notify me if an arm is{" "}
+                    <b>
+                      {experimentState.notifications.percentBetterThreshold}
+                    </b>
+                    % better than the other arms
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

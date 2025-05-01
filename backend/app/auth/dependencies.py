@@ -20,6 +20,7 @@ from ..users.models import (
     get_user_by_api_key,
     get_user_by_username,
     save_user_to_db,
+    update_user_verification_status,
 )
 from ..users.schemas import UserCreate
 from ..utils import (
@@ -54,6 +55,12 @@ async def authenticate_key(
     token = credentials.credentials
     try:
         user_db = await get_user_by_api_key(token, asession)
+
+        if not user_db.is_active:
+            raise HTTPException(
+                status_code=403, detail="Account is inactive. Please contact support."
+            )
+
         return user_db
     except UserNotFoundError as e:
         raise HTTPException(status_code=403, detail="Invalid API key") from e
@@ -67,12 +74,18 @@ async def authenticate_credentials(
     """
     try:
         user_db = await get_user_by_username(username, asession)
+
+        if not user_db.is_active:
+            logger.warning(f"Inactive user {username} attempted to login")
+            return None
+
         if verify_password_salted_hash(password, user_db.hashed_password):
             # hardcode "fullaccess" now, but may use it in the future
             return AuthenticatedUser(
                 username=username,
                 access_level="fullaccess",
                 api_key_first_characters=user_db.api_key_first_characters,
+                is_verified=user_db.is_verified,
             )
         else:
             return None
@@ -84,26 +97,37 @@ async def authenticate_or_create_google_user(
     *,
     request: Request,
     google_email: str,
+    first_name: str,
+    last_name: str,
     asession: AsyncSession,
 ) -> Optional[AuthenticatedUser]:
     """
-    Check if user exists in Db. If not, create user
+    Check if user exists in Db. If not, create user.
+    Google authenticated users are automatically verified.
     """
     try:
         user_db = await get_user_by_username(google_email, asession)
+
+        if not user_db.is_verified:
+            asession.add(user_db)
+            await update_user_verification_status(user_db, True, asession)
+
         return AuthenticatedUser(
             username=user_db.username,
             access_level="fullaccess",
             api_key_first_characters=user_db.api_key_first_characters,
+            is_verified=user_db.is_verified,
         )
     except UserNotFoundError:
         user = UserCreate(
             username=google_email,
+            first_name=first_name,
+            last_name=last_name,
             experiments_quota=DEFAULT_EXPERIMENTS_QUOTA,
             api_daily_quota=DEFAULT_API_QUOTA,
         )
         api_key = generate_key()
-        user_db = await save_user_to_db(user, api_key, asession)
+        user_db = await save_user_to_db(user, api_key, asession, is_verified=True)
         await update_api_limits(
             request.app.state.redis, user_db.username, user_db.api_daily_quota
         )
@@ -111,6 +135,7 @@ async def authenticate_or_create_google_user(
             username=user_db.username,
             access_level="fullaccess",
             api_key_first_characters=user_db.api_key_first_characters,
+            is_verified=True,
         )
 
 
@@ -135,11 +160,33 @@ async def get_current_user(
         # fetch user from database
         try:
             user_db = await get_user_by_username(username, asession)
+
+            if not user_db.is_active:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Account is inactive. Please contact support.",
+                )
+
             return user_db
         except UserNotFoundError as err:
             raise credentials_exception from err
     except InvalidTokenError as err:
         raise credentials_exception from err
+
+
+async def get_verified_user(
+    user_db: Annotated[UserDB, Depends(get_current_user)],
+) -> UserDB:
+    """
+    Check if the user is verified
+    """
+    if not user_db.is_verified:
+        raise HTTPException(
+            status_code=403,
+            detail="Account not verified. Please check your email to verify "
+            "your account.",
+        )
+    return user_db
 
 
 def create_access_token(username: str) -> str:

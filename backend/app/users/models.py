@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     Integer,
     String,
@@ -34,6 +35,8 @@ class UserDB(Base):
 
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    first_name: Mapped[str] = mapped_column(String, nullable=False)
+    last_name: Mapped[str] = mapped_column(String, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(96), nullable=False)
     hashed_api_key: Mapped[str] = mapped_column(String(96), nullable=False, unique=True)
     api_key_first_characters: Mapped[str] = mapped_column(String(5), nullable=False)
@@ -48,6 +51,11 @@ class UserDB(Base):
     updated_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
+    access_level: Mapped[str] = mapped_column(
+        String, nullable=False, default="fullaccess"
+    )
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     def __repr__(self) -> str:
         """Pretty Print"""
@@ -58,6 +66,7 @@ async def save_user_to_db(
     user: UserCreateWithPassword | UserCreate,
     api_key: str,
     asession: AsyncSession,
+    is_verified: bool = False,
 ) -> UserDB:
     """
     Saves a user in the database
@@ -82,6 +91,8 @@ async def save_user_to_db(
 
     user_db = UserDB(
         username=user.username,
+        first_name=user.first_name,
+        last_name=user.last_name,
         experiments_quota=user.experiments_quota,
         api_daily_quota=user.api_daily_quota,
         hashed_password=hashed_password,
@@ -90,6 +101,9 @@ async def save_user_to_db(
         api_key_first_characters=api_key[:5],
         created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
+        is_active=True,
+        is_verified=is_verified,
+        access_level="fullaccess",
     )
 
     asession.add(user_db)
@@ -111,6 +125,57 @@ async def update_user_api_key(
     user_db.hashed_api_key = get_key_hash(new_api_key)
     user_db.api_key_first_characters = new_api_key[:5]
     user_db.api_key_updated_datetime_utc = datetime.now(timezone.utc)
+    user_db.updated_datetime_utc = datetime.now(timezone.utc)
+
+    await asession.commit()
+    await asession.refresh(user_db)
+
+    return user_db
+
+
+async def update_user_verification_status(
+    user_db: UserDB,
+    is_verified: bool,
+    asession: AsyncSession,
+) -> UserDB:
+    """
+    Updates a user's verification status
+    """
+    user_db.is_verified = is_verified
+    user_db.updated_datetime_utc = datetime.now(timezone.utc)
+
+    await asession.commit()
+    await asession.refresh(user_db)
+
+    return user_db
+
+
+async def update_user_active_status(
+    user_db: UserDB,
+    is_active: bool,
+    asession: AsyncSession,
+) -> UserDB:
+    """
+    Updates a user's active status
+    """
+    user_db.is_active = is_active
+    user_db.updated_datetime_utc = datetime.now(timezone.utc)
+
+    await asession.commit()
+    await asession.refresh(user_db)
+
+    return user_db
+
+
+async def update_user_password(
+    user_db: UserDB,
+    new_password: str,
+    asession: AsyncSession,
+) -> UserDB:
+    """
+    Updates a user's password
+    """
+    user_db.hashed_password = get_password_salted_hash(new_password)
     user_db.updated_datetime_utc = datetime.now(timezone.utc)
 
     await asession.commit()

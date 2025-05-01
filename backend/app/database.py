@@ -2,6 +2,8 @@ import contextlib
 from collections.abc import AsyncGenerator, Generator
 from typing import ContextManager
 
+from fastapi import Request
+from redis.asyncio import Redis
 from sqlalchemy.engine import URL, Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
@@ -81,3 +83,10 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as async_session:
         yield async_session
+
+
+async def get_redis(request: Request) -> Redis:
+    """
+    Returns the Redis client for the request.
+    """
+    return request.app.state.redis

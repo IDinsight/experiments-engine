@@ -13,3 +13,4 @@ jedi-language-server==0.41.4
 google-api-python-client-stubs==1.27.0
 httpx==0.28.1
 scipy-stubs==1.15.2.0
+types-boto3==1.37.34

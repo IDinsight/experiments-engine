@@ -49,6 +49,10 @@ interface ExperimentStateBase {
   methodType: MethodType;
   prior_type: PriorType;
   reward_type: RewardType;
+  stickyAssignment: boolean;
+  autoFail: boolean;
+  autoFailValue: number;
+  autoFailUnit: "days" | "hours";
 }
 
 interface ArmBase {

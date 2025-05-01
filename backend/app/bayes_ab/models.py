@@ -14,11 +14,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..models import (
     ArmBaseDB,
+    DrawsBaseDB,
     ExperimentBaseDB,
     NotificationsDB,
-    ObservationsBaseDB,
 )
-from .schemas import BayesianAB, BayesianABObservation
+from ..schemas import ObservationType
+from .schemas import BayesianAB
 
 
 class BayesianABDB(ExperimentBaseDB):
@@ -38,8 +39,8 @@ class BayesianABDB(ExperimentBaseDB):
         "BayesianABArmDB", back_populates="experiment", lazy="selectin"
     )
 
-    observations: Mapped[list["BayesianABObservationDB"]] = relationship(
-        "BayesianABObservationDB", back_populates="experiment", lazy="joined"
+    draws: Mapped[list["BayesianABDrawDB"]] = relationship(
+        "BayesianABDrawDB", back_populates="experiment", lazy="joined"
     )
 
     __mapper_args__ = {"polymorphic_identity": "bayes_ab_experiments"}
@@ -53,6 +54,10 @@ class BayesianABDB(ExperimentBaseDB):
             "user_id": self.user_id,
             "name": self.name,
             "description": self.description,
+            "sticky_assignment": self.sticky_assignment,
+            "auto_fail": self.auto_fail,
+            "auto_fail_value": self.auto_fail_value,
+            "auto_fail_unit": self.auto_fail_unit,
             "created_datetime_utc": self.created_datetime_utc,
             "is_active": self.is_active,
             "n_trials": self.n_trials,
@@ -87,8 +92,8 @@ class BayesianABArmDB(ArmBaseDB):
     experiment: Mapped[BayesianABDB] = relationship(
         "BayesianABDB", back_populates="arms", lazy="joined"
     )
-    observations: Mapped[list["BayesianABObservationDB"]] = relationship(
-        "BayesianABObservationDB", back_populates="arm", lazy="joined"
+    draws: Mapped[list["BayesianABDrawDB"]] = relationship(
+        "BayesianABDrawDB", back_populates="arm", lazy="joined"
     )
 
     __mapper_args__ = {"polymorphic_identity": "bayes_ab_arms"}
@@ -106,41 +111,44 @@ class BayesianABArmDB(ArmBaseDB):
             "mu": self.mu,
             "sigma": self.sigma,
             "is_treatment_arm": self.is_treatment_arm,
-            "observations": [obs.to_dict() for obs in self.observations],
+            "draws": [draw.to_dict() for draw in self.draws],
         }
 
 
-class BayesianABObservationDB(ObservationsBaseDB):
+class BayesianABDrawDB(DrawsBaseDB):
     """
-    ORM for managing observations of AB experiment.
+    ORM for managing draws of AB experiment.
     """
 
-    __tablename__ = "bayes_ab_observations"
+    __tablename__ = "bayes_ab_draws"
 
-    observation_id: Mapped[int] = mapped_column(
-        ForeignKey("observations_base.observation_id", ondelete="CASCADE"),
+    draw_id: Mapped[str] = mapped_column(  # Changed from int to str
+        ForeignKey("draws_base.draw_id", ondelete="CASCADE"),
         primary_key=True,
         nullable=False,
     )
 
-    reward: Mapped[float] = mapped_column(Float, nullable=False)
-
     arm: Mapped[BayesianABArmDB] = relationship(
-        "BayesianABArmDB", back_populates="observations", lazy="joined"
+        "BayesianABArmDB", back_populates="draws", lazy="joined"
     )
     experiment: Mapped[BayesianABDB] = relationship(
-        "BayesianABDB", back_populates="observations", lazy="joined"
+        "BayesianABDB", back_populates="draws", lazy="joined"
     )
 
-    __mapper_args__ = {"polymorphic_identity": "bayes_ab_observations"}
+    __mapper_args__ = {"polymorphic_identity": "bayes_ab_draws"}
 
     def to_dict(self) -> dict:
         """
         Convert the ORM object to a dictionary.
         """
         return {
-            "observation_id": self.observation_id,
+            "draw_id": self.draw_id,
+            "draw_datetime_utc": self.draw_datetime_utc,
+            "arm_id": self.arm_id,
+            "experiment_id": self.experiment_id,
+            "user_id": self.user_id,
             "reward": self.reward,
+            "observation_type": self.observation_type,
             "observed_datetime_utc": self.observed_datetime_utc,
         }
 
@@ -159,7 +167,7 @@ async def save_bayes_ab_to_db(
             description=arm.description,
             mu_init=arm.mu_init,
             sigma_init=arm.sigma_init,
-            n_outcomes=0,
+            n_outcomes=arm.n_outcomes,
             is_treatment_arm=arm.is_treatment_arm,
             mu=arm.mu_init,
             sigma=arm.sigma_init,
@@ -169,15 +177,19 @@ async def save_bayes_ab_to_db(
     ]
 
     bayes_ab_db = BayesianABDB(
-        user_id=user_id,
         name=ab_experiment.name,
         description=ab_experiment.description,
-        created_datetime_utc=datetime.now(timezone.utc),
+        user_id=user_id,
         is_active=ab_experiment.is_active,
+        created_datetime_utc=datetime.now(timezone.utc),
         n_trials=0,
         arms=arms,
-        prior_type=ab_experiment.prior_type,
-        reward_type=ab_experiment.reward_type,
+        sticky_assignment=ab_experiment.sticky_assignment,
+        auto_fail=ab_experiment.auto_fail,
+        auto_fail_value=ab_experiment.auto_fail_value,
+        auto_fail_unit=ab_experiment.auto_fail_unit,
+        prior_type=ab_experiment.prior_type.value,
+        reward_type=ab_experiment.reward_type.value,
     )
 
     asession.add(bayes_ab_db)
@@ -233,6 +245,7 @@ async def delete_bayes_ab_experiment_by_id(
         and_(
             BayesianABDB.user_id == user_id,
             BayesianABDB.experiment_id == experiment_id,
+            BayesianABDB.experiment_id == ExperimentBaseDB.experiment_id,
         )
     )
     await asession.execute(stmt)
@@ -245,16 +258,18 @@ async def delete_bayes_ab_experiment_by_id(
     )
     await asession.execute(stmt)
 
-    stmt = delete(BayesianABObservationDB).where(
+    stmt = delete(BayesianABDrawDB).where(
         and_(
-            BayesianABObservationDB.user_id == user_id,
-            BayesianABObservationDB.experiment_id == experiment_id,
+            BayesianABDrawDB.draw_id == DrawsBaseDB.draw_id,
+            DrawsBaseDB.user_id == user_id,
+            BayesianABDrawDB.experiment_id == experiment_id,
         )
     )
     await asession.execute(stmt)
 
     stmt = delete(BayesianABArmDB).where(
         and_(
+            BayesianABArmDB.arm_id == ArmBaseDB.arm_id,
             BayesianABArmDB.user_id == user_id,
             BayesianABArmDB.experiment_id == experiment_id,
         )
@@ -266,69 +281,113 @@ async def delete_bayes_ab_experiment_by_id(
 
 
 async def save_bayes_ab_observation_to_db(
-    ab_observation: BayesianABObservation,
-    user_id: int,
+    draw: BayesianABDrawDB,
+    reward: float,
     asession: AsyncSession,
-) -> BayesianABObservationDB:
+    observation_type: ObservationType = ObservationType.AUTO,
+) -> BayesianABDrawDB:
     """
     Save the A/B observation to the database.
     """
-    ab_observation_db = BayesianABObservationDB(
-        **ab_observation.model_dump(),
+    draw.reward = reward
+    draw.observed_datetime_utc = datetime.now(timezone.utc)
+    draw.observation_type = observation_type
+
+    await asession.commit()
+    await asession.refresh(draw)
+
+    return draw
+
+
+async def save_bayes_ab_draw_to_db(
+    experiment_id: int,
+    arm_id: int,
+    draw_id: str,
+    user_id: int,
+    asession: AsyncSession,
+) -> BayesianABDrawDB:
+    """
+    Save a draw to the database
+    """
+
+    draw_datetime_utc: datetime = datetime.now(timezone.utc)
+
+    draw = BayesianABDrawDB(
+        draw_id=draw_id,
+        experiment_id=experiment_id,
         user_id=user_id,
-        observed_datetime_utc=datetime.now(timezone.utc),
+        arm_id=arm_id,
+        draw_datetime_utc=draw_datetime_utc,
     )
 
-    asession.add(ab_observation_db)
+    asession.add(draw)
     await asession.commit()
-    await asession.refresh(ab_observation_db)
+    await asession.refresh(draw)
 
-    return ab_observation_db
+    return draw
 
 
-async def get_bayes_ab_observations_by_experiment_arm_id(
+async def get_bayes_ab_obs_by_experiment_arm_id(
     experiment_id: int,
     arm_id: int,
     user_id: int,
     asession: AsyncSession,
-) -> Sequence[BayesianABObservationDB]:
+) -> Sequence[BayesianABDrawDB]:
     """
     Get the observations of the A/B experiment by id.
     """
     stmt = (
-        select(BayesianABObservationDB)
+        select(BayesianABDrawDB)
         .where(
             and_(
-                BayesianABObservationDB.user_id == user_id,
-                BayesianABObservationDB.experiment_id == experiment_id,
-                BayesianABObservationDB.arm_id == arm_id,
+                BayesianABDrawDB.user_id == user_id,
+                BayesianABDrawDB.experiment_id == experiment_id,
+                BayesianABDrawDB.arm_id == arm_id,
+                BayesianABDrawDB.reward.is_not(None),
             )
         )
-        .order_by(BayesianABObservationDB.observed_datetime_utc)
+        .order_by(BayesianABDrawDB.observed_datetime_utc)
     )
 
     result = await asession.execute(stmt)
     return result.unique().scalars().all()
 
 
-async def get_bayes_ab_observations_by_experiment_id(
+async def get_bayes_ab_obs_by_experiment_id(
     experiment_id: int,
     user_id: int,
     asession: AsyncSession,
-) -> Sequence[BayesianABObservationDB]:
+) -> Sequence[BayesianABDrawDB]:
     """
     Get the observations of the A/B experiment by id.
     """
     stmt = (
-        select(BayesianABObservationDB)
+        select(BayesianABDrawDB)
         .where(
             and_(
-                BayesianABObservationDB.user_id == user_id,
-                BayesianABObservationDB.experiment_id == experiment_id,
+                BayesianABDrawDB.user_id == user_id,
+                BayesianABDrawDB.experiment_id == experiment_id,
+                BayesianABDrawDB.reward.is_not(None),
             )
         )
-        .order_by(BayesianABObservationDB.observed_datetime_utc)
+        .order_by(BayesianABDrawDB.observed_datetime_utc)
     )
 
     result = await asession.execute(stmt)
     return result.unique().scalars().all()
+
+
+async def get_bayes_ab_draw_by_id(
+    draw_id: str, user_id: int, asession: AsyncSession
+) -> BayesianABDrawDB | None:
+    """
+    Get a draw by its ID
+    """
+    statement = (
+        select(BayesianABDrawDB)
+        .where(BayesianABDrawDB.draw_id == draw_id)
+        .where(BayesianABDrawDB.user_id == user_id)
+    )
+    result = await asession.execute(statement)
+
+    return result.unique().scalar_one_or_none()

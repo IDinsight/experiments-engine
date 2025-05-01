@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/catalyst/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogBody,
+  DialogContent,
   DialogDescription,
-  DialogActions,
   DialogTitle,
-} from "@/components/catalyst/dialog";
+} from "@/components/ui/dialog";
 import { KeyRound, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/utils/auth";
@@ -96,9 +95,9 @@ export function ApiKeyDisplay() {
   ) : (
     <div className="space-y-4">
       <div className="flex items-center justify-between p-4 border flex-wrap gap-4 rounded-lg bg-muted">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 truncate">
           <KeyRound className="w-4 h-4 text-muted-foreground" />
-          <span className="font-mono">
+          <span className="font-mono ">
             {apiKey.slice(0, 5)}
             {"•".repeat(27)}
           </span>
@@ -108,8 +107,8 @@ export function ApiKeyDisplay() {
         </Button>
       </div>
 
-      <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <DialogBody>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent>
           <DialogTitle>New API Key Generated</DialogTitle>
           <DialogDescription>
             Make sure to copy your new API key. You won&apos;t be able to see it
@@ -119,17 +118,17 @@ export function ApiKeyDisplay() {
             <div className="p-4 bg-muted rounded-lg font-mono break-all">
               {newKey}
             </div>
-            <DialogActions className="flex justify-between">
-              <Button outline onClick={handleCopyKey}>
+            <div className="flex items-center justify-between mt-4">
+              <Button variant="outline" onClick={handleCopyKey}>
                 <Copy className="w-4 h-4 mr-2" />
                 Copy
               </Button>
               <Button onClick={handleConfirm}>
                 I&apos;ve saved my API key
               </Button>
-            </DialogActions>
+            </div>
           </div>
-        </DialogBody>
+        </DialogContent>
       </Dialog>
     </div>
   );

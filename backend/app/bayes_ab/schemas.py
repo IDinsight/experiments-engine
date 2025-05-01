@@ -4,7 +4,6 @@ from typing import Optional, Self
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ..mab.schemas import (
-    MABObservation,
     MABObservationResponse,
     MultiArmedBanditBase,
 )
@@ -127,17 +126,18 @@ class BayesianABSample(MultiArmedBanditBase):
     arms: list[BayesABArmResponse]
 
 
-class BayesianABObservation(MABObservation):
-    """
-    Pydantic model for an observation in an A/B experiment.
-    """
-
-    pass
-
-
 class BayesianABObservationResponse(MABObservationResponse):
     """
     Pydantic model for an observation response in an A/B experiment.
     """
 
     pass
+
+
+class BayesianABDrawResponse(BaseModel):
+    """
+    Pydantic model for a draw response in an A/B experiment.
+    """
+
+    draw_id: str
+    arm: BayesABArmResponse

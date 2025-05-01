@@ -72,7 +72,7 @@ export default function ExperimentDetails() {
       </Breadcrumb>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold dark:text-gray-100">
+          <h1 className="text-3xl font-semibold dark:text-gray-100">
             {experimentDetails ? experimentDetails?.name : "Experiment Details"}
           </h1>
           <p className="text-muted-foreground dark:text-gray-400">

@@ -1,9 +1,9 @@
 import React from "react";
-import { SidebarLayout } from "@/components/catalyst/sidebar-layout";
-import { SidebarComponent } from "@/components/sidebar";
-import { navbar } from "@/components/navbar";
 import { ProtectedComponent } from "@/components/ProtectedComponent";
-import { Toaster } from "@/components/ui/toaster";
+
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SiteHeader } from "@/components/site-header";
 
 export default function RootLayout({
   children,
@@ -12,11 +12,13 @@ export default function RootLayout({
 }>) {
   return (
     <ProtectedComponent>
-      <SidebarLayout sidebar={<SidebarComponent />} navbar={navbar()}>
-        {children}
-      </SidebarLayout>
-
-      <Toaster />
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <SiteHeader />
+          <div className="mx-3 md:mx-6">{children}</div>
+        </SidebarInset>
+      </SidebarProvider>
     </ProtectedComponent>
   );
 }

@@ -73,18 +73,67 @@ const getGoogleLoginToken = async (idToken: {
   }
 };
 
-const registerUser = async (username: string, password: string) => {
-  const requestBody = {
-    username,
-    password,
-  };
+const registerUser = async (
+  first_name: string,
+  last_name: string,
+  username: string,
+  password: string
+) => {
+  try {
+    const requestBody = {
+      first_name,
+      last_name,
+      username,
+      password,
+    };
+    const response = await api.post("/user/", requestBody, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error("Error registering user");
+  }
+};
 
-  const response = await api.post("/user/", requestBody, {
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  return response.data;
+const requestPasswordReset = async (username: string) => {
+  try {
+    const response = await api.post("/request-password-reset", { username });
+    return response.data;
+  } catch (error) {
+    throw new Error("Error requesting password reset");
+  }
+};
+
+const resetPassword = async (token: string, newPassword: string) => {
+  try {
+    const response = await api.post("/reset-password", {
+      token,
+      new_password: newPassword,
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error("Error resetting password");
+  }
+};
+
+const verifyEmail = async (token: string) => {
+  try {
+    const response = await api.post("/verify-email", { token });
+    return response.data;
+  } catch (error) {
+    throw new Error("Error verifying email");
+  }
+};
+
+const resendVerification = async (username: string) => {
+  try {
+    const response = await api.post("/resend-verification", { username });
+    return response.data;
+  } catch (error) {
+    throw new Error("Error resending verification email");
+  }
 };
 
 export const apiCalls = {
@@ -92,5 +141,9 @@ export const apiCalls = {
   getLoginToken,
   getGoogleLoginToken,
   registerUser,
+  requestPasswordReset,
+  resetPassword,
+  verifyEmail,
+  resendVerification,
 };
 export default api;

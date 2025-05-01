@@ -1,15 +1,11 @@
 "use client";
-import React, { useEffect } from "react";
-import { useState, useCallback } from "react";
+import React from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AllSteps } from "./components/addExperimentSteps";
 import AddBasicInfo from "./components/basicInfo";
 import { useExperimentStore } from "../store/useExperimentStore";
-import { Button } from "@/components/catalyst/button";
-import {
-  PlusIcon,
-  ChevronRightIcon,
-  ChevronLeftIcon,
-} from "@heroicons/react/20/solid";
+import { Button } from "@/components/ui/button";
+import { PlusIcon, ChevronRightIcon, ChevronLeftIcon } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -27,13 +23,10 @@ import { AnimatePresence, motion } from "framer-motion";
 export default function NewExperiment() {
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState(0); // 1 for forward, -1 for backward
-  const { experimentState, updateMethodType, resetState } =
-    useExperimentStore();
+  const { experimentState, resetState } = useExperimentStore();
   const [stepValidations, setStepValidations] = useState<StepValidation[]>([]);
   const { token } = useAuth();
   const router = useRouter();
-
-  type Methods = typeof AllSteps;
 
   const [steps, setSteps] = useState(AllSteps[experimentState.methodType]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -192,9 +185,6 @@ export default function NewExperiment() {
           >
             {currentStep === 0 ? (
               <AddBasicInfo
-                setMethodType={(method) =>
-                  updateMethodType(method as keyof Methods)
-                }
                 onValidate={(validation: StepValidation) =>
                   handleStepValidation(currentStep, validation)
                 }
@@ -217,7 +207,7 @@ export default function NewExperiment() {
         {currentStep === steps.length ? (
           <button
             type="button"
-            className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={onSubmit}
             disabled={
               !stepValidations.every((validation) => validation.isValid) ||
@@ -229,7 +219,6 @@ export default function NewExperiment() {
           </button>
         ) : (
           <Button
-            className="px-4 py-2 bg-gray-200 rounded"
             onClick={nextStep}
             disabled={!stepValidations[currentStep]?.isValid}
           >

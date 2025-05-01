@@ -1,11 +1,21 @@
+import uuid
 from datetime import datetime
 from typing import Sequence
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, select
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    select,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from .schemas import EventType, Notifications
+from .schemas import AutoFailUnitType, EventType, Notifications, ObservationType
 
 
 class Base(DeclarativeBase):
@@ -26,6 +36,15 @@ class ExperimentBaseDB(Base):
     )
     name: Mapped[str] = mapped_column(String(length=150), nullable=False)
     description: Mapped[str] = mapped_column(String(length=500), nullable=False)
+    sticky_assignment: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
+    auto_fail: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    auto_fail_value: Mapped[int] = mapped_column(Integer, nullable=True)
+    auto_fail_unit: Mapped[AutoFailUnitType] = mapped_column(
+        Enum(AutoFailUnitType), nullable=True
+    )
+
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.user_id"), nullable=False
     )
@@ -71,7 +90,7 @@ class ArmBaseDB(Base):
     name: Mapped[str] = mapped_column(String(length=150), nullable=False)
     description: Mapped[str] = mapped_column(String(length=500), nullable=False)
     arm_type: Mapped[str] = mapped_column(String(length=50), nullable=False)
-    n_outcomes: Mapped[int] = mapped_column(Integer, nullable=False)
+    n_outcomes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     __mapper_args__ = {
         "polymorphic_identity": "arm",
@@ -79,16 +98,17 @@ class ArmBaseDB(Base):
     }
 
 
-class ObservationsBaseDB(Base):
+class DrawsBaseDB(Base):
     """
-    Base model for observations.
+    Base model for draws.
     """
 
-    __tablename__ = "observations_base"
+    __tablename__ = "draws_base"
 
-    observation_id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, nullable=False
+    draw_id: Mapped[str] = mapped_column(
+        String, primary_key=True, default=lambda x: str(uuid.uuid4())
     )
+
     arm_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("arms_base.arm_id"), nullable=False
     )
@@ -98,14 +118,27 @@ class ObservationsBaseDB(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.user_id"), nullable=False
     )
-    observed_datetime_utc: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
+
+    draw_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
     )
-    obs_type: Mapped[str] = mapped_column(String(length=50), nullable=False)
+
+    observed_datetime_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    observation_type: Mapped[ObservationType] = mapped_column(
+        Enum(ObservationType), nullable=True
+    )
+
+    draw_type: Mapped[str] = mapped_column(String(length=50), nullable=False)
+
+    reward: Mapped[float] = mapped_column(Float, nullable=True)
 
     __mapper_args__ = {
-        "polymorphic_identity": "observation",
-        "polymorphic_on": "obs_type",
+        "polymorphic_identity": "draw",
+        "polymorphic_on": "draw_type",
     }
 
 

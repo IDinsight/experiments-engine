@@ -15,8 +15,7 @@ export function BayesianABCards({ experiment }: { experiment: BayesianAB }) {
       <Card
         className="cursor-pointer z-60 w-full max-w-[800px] dark:bg-black
                    dark:border-zinc-400 border-zinc-800 dark:shadown-zinc-600"
-        onClick={(e) => {
-          e.stopPropagation();
+        onClick={() => {
           console.log("Details page not built yet");
         }}
       >

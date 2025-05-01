@@ -71,6 +71,10 @@ run-backend:
 	$(CONDA_ACTIVATE) $(PROJECT_NAME); \
 	make setup-redis && make setup-db && \
 	sleep 5 && \
+	set -a && \
+        source "$(CURDIR)/deployment/docker-compose/.base.env" && \
+        source "$(CURDIR)/deployment/docker-compose/.backend.env" && \
+  set +a && \
 	python backend/main.py
 
 run-frontend:

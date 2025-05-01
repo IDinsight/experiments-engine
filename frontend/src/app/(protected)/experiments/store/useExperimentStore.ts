@@ -14,7 +14,7 @@ import type {
   NewMABArmNormal,
   NewBayesianABArm,
   NewContext,
-  Notifications,
+  Notifications
 } from "../types";
 
 // Type guards for better type safety
@@ -51,6 +51,10 @@ interface ExperimentStore {
   updateName: (name: string) => void;
   updateDescription: (description: string) => void;
   updateMethodType: (methodType: MethodType) => void;
+  updateStickyAssignment: (stickyAssignment: boolean) => void;
+  updateAutoFail: (autoFail: boolean) => void;
+  updateAutoFailValue: (autoFailValue: number) => void;
+  updateAutoFailUnit: (autoFailUnit: "hours" | "days") => void;
 
   // Prior and reward type page
   updatePriorType: (prior_type: PriorType) => void;
@@ -83,7 +87,14 @@ interface ExperimentStore {
 }
 
 const createInitialState = (): ExperimentState => {
-  const baseDescr = { name: "", description: "" };
+  const baseDescr = {
+    name: "",
+    description: "",
+    stickyAssignment: false,
+    autoFail: false,
+    autoFailValue: 10,
+    autoFailUnit: "days",
+  };
   const methodType: MethodType = "mab";
   const prior_type: PriorType = "beta";
   const reward_type: RewardType = "binary";
@@ -138,6 +149,35 @@ export const useExperimentStore = create<ExperimentStore>()(
           experimentState: { ...state.experimentState, description },
         })),
 
+      updateStickyAssignment: (stickyAssignment: boolean) =>
+        set((state) => ({
+          experimentState: {
+            ...state.experimentState,
+            stickyAssignment,
+          },
+        })),
+
+      updateAutoFail: (autoFail: boolean) =>
+        set((state) => ({
+          experimentState: { ...state.experimentState, autoFail },
+        })),
+
+      updateAutoFailValue: (autoFailValue: number) =>
+        set((state) => ({
+          experimentState: {
+            ...state.experimentState,
+            autoFailValue,
+          },
+        })),
+
+      updateAutoFailUnit: (autoFailUnit: "hours" | "days") =>
+        set((state) => ({
+          experimentState: {
+            ...state.experimentState,
+            autoFailUnit,
+          },
+        })),
+
       // ------------ Method type update ------------
       updateMethodType: (newMethodType: MethodType) =>
         set((state) => {
@@ -145,17 +185,13 @@ export const useExperimentStore = create<ExperimentStore>()(
           if (newMethodType === experimentState.methodType)
             return { experimentState };
 
-          const baseDescr = {
-            name: experimentState.name,
-            description: experimentState.description,
-          };
-          const { reward_type, prior_type, notifications } = experimentState;
+          const { reward_type, notifications } = experimentState;
 
           let newState: ExperimentState;
 
           if (newMethodType == "mab") {
             newState = {
-              ...baseDescr,
+              ...experimentState,
               methodType: newMethodType,
               prior_type: "beta",
               reward_type,
@@ -177,7 +213,7 @@ export const useExperimentStore = create<ExperimentStore>()(
             } as MABExperimentStateBeta;
           } else if (newMethodType == "cmab") {
             newState = {
-              ...baseDescr,
+              ...experimentState,
               methodType: newMethodType,
               prior_type: "normal",
               reward_type,
@@ -206,7 +242,7 @@ export const useExperimentStore = create<ExperimentStore>()(
             } as CMABExperimentState;
           } else if (newMethodType == "bayes_ab") {
             newState = {
-              ...baseDescr,
+              ...experimentState,
               methodType: newMethodType,
               prior_type: "normal",
               reward_type,
@@ -244,22 +280,14 @@ export const useExperimentStore = create<ExperimentStore>()(
             return { experimentState };
 
           // Create new state based on prior type
-          const baseState = {
-            name: experimentState.name,
-            description: experimentState.description,
-            methodType: experimentState.methodType,
-            reward_type: experimentState.reward_type,
-            notifications: experimentState.notifications,
-            prior_type: newPriorType,
-          };
-
           let newState: ExperimentState;
           const baseArm = { name: "", description: "" };
 
           if (experimentState.methodType === "mab") {
             if (newPriorType === "beta") {
               newState = {
-                ...baseState,
+                ...experimentState,
+                prior_type: newPriorType,
                 arms: experimentState.arms.map(() => ({
                   ...baseArm,
                   alpha_init: 1,
@@ -268,7 +296,8 @@ export const useExperimentStore = create<ExperimentStore>()(
               } as MABExperimentStateBeta;
             } else {
               newState = {
-                ...baseState,
+                ...experimentState,
+                prior_type: newPriorType,
                 arms: experimentState.arms.map(() => ({
                   ...baseArm,
                   mu_init: 0,
@@ -278,8 +307,8 @@ export const useExperimentStore = create<ExperimentStore>()(
             }
           } else if (experimentState.methodType === "cmab") {
             newState = {
-              ...baseState,
-              prior_type: "normal",
+              ...experimentState,
+              priorType: "normal",
               arms: experimentState.arms.map(() => ({
                 ...baseArm,
                 mu_init: 0,
@@ -287,15 +316,18 @@ export const useExperimentStore = create<ExperimentStore>()(
               })) as NewCMABArm[],
               contexts: (experimentState as CMABExperimentState).contexts,
             } as CMABExperimentState;
-          } else {
+          } else if (experimentState.methodType === "bayes_ab"){
             newState = {
-              ...baseState,
+              ...experimentState,
+              priorType: newPriorType,
               arms: experimentState.arms.map(() => ({
                 ...baseArm,
                 mu_init: 0,
                 sigma_init: 1,
               })) as NewBayesianABArm[],
             } as BayesianABState;
+          } else {
+            throw new Error("Invalid method type");
           }
 
           return { experimentState: newState };
@@ -337,13 +369,15 @@ export const useExperimentStore = create<ExperimentStore>()(
               arms: validatedArms,
             };
             return { experimentState: updatedState };
-          } else {
+          } else if (isBayesianABState(experimentState)) {
             const validatedArms = newArms as NewBayesianABArm[];
             const updatedState: BayesianABState = {
               ...experimentState,
               arms: validatedArms,
             };
             return { experimentState: updatedState };
+          } else {
+            throw new Error("Invalid method type")
           }
         }),
 
@@ -445,20 +479,10 @@ export const useExperimentStore = create<ExperimentStore>()(
                 arms: [...experimentState.arms, newArm],
               },
             };
-          } else {
-            const newArm = {
-              name: "",
-              description: "",
-              mu_init: 0,
-              sigma_init: 1,
-            } as NewBayesianABArm;
-            return {
-              experimentState: {
-                ...experimentState,
-                arms: [...experimentState.arms, newArm],
-              },
-            };
+          } else if (isBayesianABState(experimentState)){
+            throw new Error("Adding arms for Bayesian A/B experiments is not currently supported");
           }
+          return { experimentState }; // Return original state for any other case
         }),
 
       removeArm: (index: number) =>

@@ -19,6 +19,17 @@ const createNewExperiment = async ({
   ): {
     endpoint: string;
   } => {
+    const baseData = {
+      name: data.name,
+      description: data.description,
+      sticky_assignment: data.stickyAssignment,
+      auto_fail: data.autoFail,
+      auto_fail_value: data.autoFailValue,
+      auto_fail_unit: data.autoFailUnit,
+      arms: data.arms,
+      notifications: data.notifications,
+    };
+
     if (isMABExperimentStateBeta(data) || isMABExperimentStateNormal(data)) {
       return { endpoint: "/mab/" };
     }
@@ -101,9 +112,9 @@ const getAllBayesianABExperiments = async (token: string | null) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    const convertedData = response.data.map((experiment: CMAB) => ({
+    const convertedData = response.data.map((experiment: BayesianAB) => ({
       ...experiment,
-      methodType: "cmab",
+      methodType: "bayes_ab",
     }));
     return convertedData;
   } catch (error: unknown) {
@@ -114,6 +125,7 @@ const getAllBayesianABExperiments = async (token: string | null) => {
     }
   }
 };
+
 
 
 const getMABExperimentById = async (token: string | null, id: number) => {

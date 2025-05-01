@@ -14,6 +14,7 @@ class AuthenticatedUser(BaseModel):
     username: str
     access_level: AccessLevel
     api_key_first_characters: str
+    is_verified: bool
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -38,5 +39,6 @@ class AuthenticationDetails(BaseModel):
     access_level: AccessLevel
     api_key_first_characters: str
     username: str
+    is_verified: bool
 
     model_config = ConfigDict(from_attributes=True)
