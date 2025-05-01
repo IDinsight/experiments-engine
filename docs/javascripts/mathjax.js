@@ -4,7 +4,10 @@ window.MathJax = {
     displayMath: [['$$', '$$'], ['\\[', '\\]']],
     processEscapes: true,
     processEnvironments: true,
-    packages: ['base', 'ams', 'noerrors', 'noundefined']
+    packages: {'[+]': ['base', 'ams', 'noerrors', 'noundefined', 'boldsymbol']},
+    macros: {
+      bm: ["\\boldsymbol{#1}", 1]
+    }
   },
   options: {
     ignoreHtmlClass: 'docs-md-plain',
@@ -21,7 +24,7 @@ window.MathJax = {
 
 document$.subscribe(() => {
   MathJax.startup.output.clearCache()
-  MathJax.typesetClear()
   MathJax.texReset()
+  MathJax.typesetClear()
   MathJax.typesetPromise()
 })

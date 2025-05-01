@@ -87,5 +87,7 @@ Now, you can [set up the MAB](./setting-up.md), and configure the priors for the
 
 ### Addiitional Resources
 You can learn more about multi-armed bandits from the following resources:
+
 1. [Multi-armed Bandits with Thompson Sampling](https://www.youtube.com/watch?v=TdjOAfk7iVA)
-2. [Reinforcement Learning: An Introduction, Sutton and Barto, CHapter 2](http://www.incompleteideas.net/book/RLbook2020.pdf)
+
+2. [Reinforcement Learning: An Introduction, Sutton and Barto, Chapter 2](http://www.incompleteideas.net/book/RLbook2020.pdf)
