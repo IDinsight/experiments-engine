@@ -63,6 +63,7 @@ nav:
         - Multi-Armed Bandits:
           - Overview: getting-started/experiments/mabs/index.md
           - Setting up a MAB: getting-started/experiments/mabs/setting-up.md
+          - Running a MAB experiment: getting-started/experiments/mabs/run-experiment.md
         # - Contextual Bandits: getting-started/experiments/cmabs/index.md
         # - Bayesian A/B Testing: getting-started/experiments/bayes_ab/index.md
   - Blog: blog/index.md

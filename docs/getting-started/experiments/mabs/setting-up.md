@@ -27,8 +27,6 @@ Enter details for each arm. The `Name` and `Description` fields are both mandato
 
 If you chose the Beta prior for the arms, the priors are defined through the `alpha` and `beta` parameters of the Beta distribution: the default values are `1` and `1` respectively. The higher the `alpha` value, the more certain the arm is of achieving "success", while the reverse is true for the `beta` parameter (1).{ .annotate }
 
-1. We know this is unintuitive for non-statisticians -- we're working on visual for configuring priors!
-
 ![Beta prior arms](./images/mab_arms_config_2.png)
 
 Similarly, for the Normal prior for the arms, the priors are defined through the `mean` and `standard deviation` parameters of the Gaussian distributions: the default values are `0` and `1` respectively. A higher `mean` value indicates a higher expected outcome for the corresponding arm, while a higher `standard deviation` indicates higher variability in the outcome for this arm.
@@ -39,3 +37,5 @@ Similarly, for the Normal prior for the arms, the priors are defined through the
 Click on the `Next` button to proceed.
 
 Once you've set up notfications and created the experiment, you can now [run the experiment](./run-experiment.md) with your users.
+
+1. We know this is unintuitive for non-statisticians -- we're working on visual for configuring priors!
