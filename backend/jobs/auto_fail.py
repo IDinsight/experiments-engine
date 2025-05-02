@@ -248,7 +248,8 @@ async def main() -> None:
         print(f"Auto-failed MABs: {failed_count} draws")
         failed_count = await auto_fail_cmab(asession)
         print(f"Auto-failed CMABs: {failed_count} draws")
-
+        failed_count = await auto_fail_bayes_ab(asession)
+        print(f"Auto-failed Bayes ABs: {failed_count} draws")
         break
 
 
