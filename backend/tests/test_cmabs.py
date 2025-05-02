@@ -2,6 +2,7 @@ import copy
 import os
 from typing import Generator
 
+import numpy as np
 from fastapi.testclient import TestClient
 from pytest import FixtureRequest, fixture, mark
 from sqlalchemy.orm import Session
@@ -271,23 +272,20 @@ class TestCMab:
     ) -> None:
         id = create_cmabs[0]["experiment_id"]
         api_key = os.environ.get("ADMIN_API_KEY", "")
-        response1 = client.post(
-            f"/contextual_mab/{id}/draw?client_id=123",
-            headers={"Authorization": f"Bearer {api_key}"},
-            json=[
-                {"context_id": 1, "context_value": 0},
-                {"context_id": 2, "context_value": 1},
-            ],
-        )
-        response2 = client.post(
-            f"/contextual_mab/{id}/draw?client_id=123",
-            headers={"Authorization": f"Bearer {api_key}"},
-            json=[
-                {"context_id": 1, "context_value": 1},
-                {"context_id": 2, "context_value": 1},
-            ],
-        )
-        assert response1.json()["arm"]["arm_id"] == response2.json()["arm"]["arm_id"]
+        arm_ids = []
+
+        for _ in range(10):
+            response = client.post(
+                f"/contextual_mab/{id}/draw?client_id=123",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json=[
+                    {"context_id": 1, "context_value": 0},
+                    {"context_id": 2, "context_value": 1},
+                ],
+            )
+            arm_ids.append(response.json()["arm"]["arm_id"])
+
+        assert np.unique(arm_ids).size == 1
 
     @mark.parametrize("create_cmab_payload", ["base_normal"], indirect=True)
     def test_one_outcome_per_draw(

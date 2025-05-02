@@ -2,6 +2,7 @@ import copy
 import os
 from typing import Generator
 
+import numpy as np
 from fastapi.testclient import TestClient
 from pytest import FixtureRequest, fixture, mark
 from sqlalchemy.orm import Session
@@ -235,15 +236,14 @@ class TestBayesAB:
     ) -> None:
         id = create_bayes_abs[0]["experiment_id"]
         api_key = os.environ.get("ADMIN_API_KEY", "")
-        response1 = client.get(
-            f"/bayes_ab/{id}/draw?client_id=123",
-            headers={"Authorization": f"Bearer {api_key}"},
-        )
-        response2 = client.get(
-            f"/bayes_ab/{id}/draw?client_id=123",
-            headers={"Authorization": f"Bearer {api_key}"},
-        )
-        assert response1.json()["arm"]["arm_id"] == response2.json()["arm"]["arm_id"]
+        arm_ids = []
+        for _ in range(10):
+            response = client.get(
+                f"/bayes_ab/{id}/draw?client_id=123",
+                headers={"Authorization": f"Bearer {api_key}"},
+            )
+            arm_ids.append(response.json()["arm"]["arm_id"])
+        assert np.unique(arm_ids).size == 1
 
 
 class TestNotifications:

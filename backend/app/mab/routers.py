@@ -208,8 +208,6 @@ async def draw_arm(
             detail=f"Error saving draw to database: {e}",
         ) from e
 
-    print([arm for arm in experiment.arms])
-
     return MABDrawResponse.model_validate(
         {
             "draw_id": draw_id,
