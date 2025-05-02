@@ -64,7 +64,9 @@ nav:
             - Overview: getting-started/experiments/cmabs/index.md
             - Setting up a CMAB: getting-started/experiments/cmabs/setting-up.md
             - Running a CMAB experiment: getting-started/experiments/cmabs/run-experiment.md
-        - Bayesian A/B Testing: getting-started/experiments/bayes_ab/index.md
+        - Bayesian A/B Testing:
+            - Overview: getting-started/experiments/bayes_ab/index.md
+            - Setting up a Bayesian A/B Test: getting-started/experiments/bayes_ab/setting-up.md
   - Blog: blog/index.md
 
 markdown_extensions:
