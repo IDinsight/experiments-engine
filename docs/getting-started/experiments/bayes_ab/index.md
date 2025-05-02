@@ -45,3 +45,10 @@ $$
 $$
 
 We obtain the posterior parameters at the _end_ of the experiment, by using MAPE with the joint likelihood of all the observations.
+
+
+## Additional Resources
+
+1. [Bayesian A/B testing](https://www.youtube.com/watch?v=nRLI_KbvZTQ)
+
+2. [The Bayesian Approach to A/B Testing](https://www.dynamicyield.com/lesson/bayesian-approach-to-ab-testing/)

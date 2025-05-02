@@ -33,7 +33,7 @@ Click on the `+ Add Arm` button to add arms to the experiment. You can add as ma
 
 Enter details for each arm. The `Name` and `Description` fields are both mandatory.
 
-The priors are defined through the `mean` and `standard deviation` parameters of the Gaussian distributions: the default values are `0` and `1` respectively.
+The priors are defined through the `Mean` and `Standard Deviation` parameters of the Gaussian distributions: the default values are `0` and `1` respectively.
 
 ![Configure arms](./images/cmab_configure_arms.png)
 
