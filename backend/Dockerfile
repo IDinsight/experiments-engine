@@ -9,7 +9,10 @@ ARG HOME_DIR=/usr/src/${NAME}
 
 # Set up the build environment
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc libpq-dev python3-dev dos2unix \
+    gcc \
+    libpq-dev \
+    python3-dev \
+    dos2unix \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up the home directory and permissions
@@ -49,6 +52,13 @@ COPY --from=build /tmp/prometheus /tmp/prometheus
 # Set environment variables
 ENV PYTHONPATH="${PYTHONPATH}:${HOME_DIR}"
 ENV PORT=${PORT}
+
+# Install additional dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    libpq-dev \
+    cron \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory and expose the port
 WORKDIR ${HOME_DIR}
