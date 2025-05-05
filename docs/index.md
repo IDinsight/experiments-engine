@@ -50,8 +50,9 @@ When the outcome is observed your platform, the platform will send the outcome d
 sequenceDiagram
     autonumber
     actor User
-    Your app->>ExE: User visits platform
-    ExE->>Your app: Assign user to arm
+    User->>Your app: Visit platform
+    Your app->>ExE: Get arm assignment
+    ExE->>Your app: Assign an arm to user
     Your app->>User: Show arm content
     User->>Your app: Interact with platform
     Your app->>ExE: Send outcome data
