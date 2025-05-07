@@ -1,6 +1,6 @@
 # Bayesian A/B Testing
 
-Bayesian A/B testing is compares two variants: treatment (e.g. a new feature) and control (e.g. an existing feature). The two variants are shown to users at random. Unlike frequentist A/B testing, this method requires you to set prior probabilities for the treatment and control arms, similarly to the bandit experiments. However, unlike the bandit methods, the posterior is computed at the _end_ of the experiment, and not with every observed outcome. Consequently, this means that the probability with which arms are served to the user are also fixed by the user-defined priors throughout the experiment.
+Bayesian A/B testing compares two variants: treatment (e.g. a new feature) and control (e.g. an existing feature). The two variants are shown to users at random. Unlike frequentist A/B testing, this method lets you set prior probabilities for the treatment and control arms, similarly to the bandit experiments. However, unlike the bandit methods, the posterior is computed at the _end_ of the experiment, and not with every observed outcome. Consequently, this means that the probability with which arms are served to the user are also fixed by the user-defined priors throughout the experiment.
 
 ## What is Bayesian A/B testing?
 
