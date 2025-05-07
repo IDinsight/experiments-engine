@@ -17,6 +17,6 @@ You can optionally turn on this feature when you configure the basic information
 
 ![Sticky assignment](../images/sticky_assignment.png)
 
-You also need to provide a unique `client_id` for each user when you call the `draw_arm` endpoint.
+If sticky assignments are enabled, you also need to provide a unique `client_id` for each user when you call the `draw_arm` endpoint.
 
 ![Draw arm sticky assignment](../images/sticky_assignment_backend.png)
