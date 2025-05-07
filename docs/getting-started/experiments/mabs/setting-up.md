@@ -12,7 +12,7 @@ Click on the `Next` button to proceed.
 
 ## Choose your prior and outcome type
 
-Choose the prior distribution and the corresponding outcome. We only support conjugate distributions, this means that the allowed prior-outcome combos are "Beta" / "Binary" and "Normal" / "Real-values"
+Choose the prior distribution and the corresponding outcome. Currently, we only support conjugate distributions, this means that the allowed prior-outcome combos are "Beta" / "Binary" and "Normal" / "Real-valued".
 
 ![Prior-Outcome Configuration 1](./images/mab_prior_outcome.png)
 ![Prior-Outcome Configuration 2](./images/mab_prior_outcome_2.png)
@@ -25,7 +25,9 @@ Click on the `+ Add Arm` button to add arms to the experiment. You can add as ma
 
 Enter details for each arm. The `Name` and `Description` fields are both mandatory.
 
-If you chose the Beta prior for the arms, the priors are defined through the `alpha` and `beta` parameters of the Beta distribution: the default values are `1` and `1` respectively. The higher the `alpha` value, the more certain the arm is of achieving "success", while the reverse is true for the `beta` parameter (1).{ .annotate }
+If you chose the Beta prior for the arms, the priors are defined through the `alpha` and `beta` parameters of the Beta distribution: the default values are `1` and `1` respectively. The higher the `alpha` value, the more certain your prior on the arm achieving "success", while the reverse is true for the `beta` parameter[^1].
+
+[^1] We know this is unintuitive for non-statisticians -- we're working on visual for configuring priors!
 
 ![Beta prior arms](./images/mab_arms_config_2.png)
 
@@ -37,5 +39,3 @@ Similarly, for the Normal prior for the arms, the priors are defined through the
 Click on the `Next` button to proceed.
 
 Once you've set up notfications and created the experiment, you can now [run the experiment](./run-experiment.md) with your users.
-
-1. We know this is unintuitive for non-statisticians -- we're working on visual for configuring priors!

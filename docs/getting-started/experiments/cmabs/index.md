@@ -1,11 +1,11 @@
 # Contextual Bandits
-
-Contextual bandits (CMABs), similarly to [multi-armed bandits (MABs)](../mabs/index.md), are useful for running experiments where you have multiple variants of a feature / implementation that you want to test. However, the key difference is that contextual bandits take information about the end-user (e.g. gender, age, ethnicity) into account while converging to the best-performing variant.
+Contextual bandits (CMABs), similarly to [multi-armed bandits (MABs)](../mabs/index.md), are useful for running experiments where you have multiple variants of a feature / implementation that you want to test. However, the key difference is that contextual bandits take information about the end-user (e.g. gender, age, engagement history) into account while converging to the best-performing variant.
 
 ## What are Contextual Bandits (CMABs)?
 Contextual bandits work more or less in the same way as MABs do. You have $N$ variants of a feature / implementation, with corresponding probability of achieving a desired outcome. As you serve beneficiaries these variants and observe the outcome of their interaction with it, you update these probabilities.
 
-The strategy for updating these probabilities is also similar: you can optimize for exploration or exploitation (*though our current implementation only supports Thompson sampling -- we're working on adding more!*). Crucially, we take user information into account while updating these probabilities for contextual bandits. Thus, rather than having a single best-performing variant at the end of an experiment, you instead have the best-performing variant that depends on the user context.
+The strategy for updating these probabilities is also similar. The crucial difference is that we take user information into account while updating these probabilities for contextual bandits. Thus, rather than having a single best-performing variant at the end of an experiment, you instead have the best-performing variant that depends on the user context.
+
 
 ## Show me some math!
 In our current implementation of CMABs, we use Gaussian priors and support either real-valued or binary outcomes. We also allow for either real-valued or binary context values.
@@ -37,7 +37,7 @@ j = \text{argmax}\ \[ f(\theta_i \cdot \mathbf{x}\]^N_{i = 1}
 $$
 after sampling $\theta_i$ from the corresponding Gaussian distribution.
 
-Once we have observed an outcome $y$ for a given variant and user context $\mathbf{x}$, we can obtain the posterior distribution for that variant. In the case of the real-valued outcomes, the likelihood and priors are conjugate, so the update is straightfoward update: i.e. given an observation $y$,
+Once we have observed an outcome $y$ for a given variant and user context $\mathbf{x}$, we can obtain the posterior distribution for that variant. In the case of the real-valued outcomes, the likelihood and priors are conjugate, so the update is straightforward update: i.e. given an observation $y$,
 $$
   {\Sigma }^{(\text{post})}_i = (\Sigma_i + \mathbf{x}^T \mathbf{x}) ^ {-1}
 $$
@@ -54,7 +54,7 @@ This is now the new prior from which we sample while choosing variants or arms t
 ## Laplace approximation for posterior updates with binary outcomes
 When the outcome $y$ is binary valued (and therefore has a Bernoulli likelihood), the Gaussian priors for $\theta_i$ and the likelihood are non-conjugate. This means that we cannot update the posteriors in closed form as in the equations above.
 
-We will instead use the Laplace approximation i.e. we will _assume_ that the posterior distribution is a Gaussian whose mean is given by the _maximum a posteriori_ (MAP) estimate $\theta_i^*$, and whose covariance is given by the inverse Hessian of the Bernoulli log likelihood, evaluate at $\theta_i^*$ i.e. for $M$ context-observations pairs $\{\mathbf{x}, y\}_{j=1}^M$ the log likelihood can be written down as follows:
+We will instead use the Laplace approximation i.e. we will _assume_ that the posterior distribution is a Gaussian whose mean is given by the _maximum a posteriori_ (MAP) estimate $\theta_i^*$, and whose covariance is given by the inverse Hessian of the Bernoulli log likelihood, evaluated at $\theta_i^*$ i.e. for $M$ context-observations pairs $\{\mathbf{x}, y\}_{j=1}^M$ the log likelihood can be written down as follows:
 
 $$
 \begin{align*}
