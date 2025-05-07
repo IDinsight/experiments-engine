@@ -4,7 +4,7 @@ Once you've logged in and chosen to create new experiment from the landing page 
 
 ## Fill out the experiment details
 
-Enter the details for the experiment. Both `Experiment Name` field and `Description` are mandatory. Select `CMAB` as the experiment type.
+Enter the details for the experiment. Both `Experiment Name` field and `Description` are mandatory. Select `Contextual Bandit` as the experiment type.
 
 ![Experiment Details](./images/cmab_basic_info.png)
 
