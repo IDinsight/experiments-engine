@@ -25,7 +25,7 @@ w_{(\cdot)} \sim \mathcal{N} (\mathbf{\mu}_{(\cdot)}, \Sigma_{(\cdot)})
 \end{equation}
 $$
 
-During the course of the experiment, we choose the variant to present to the user with 50\% probability for either arm.
+During the course of the experiment, we choose the variant to present to the user with 50% probability for either arm.
 
 Once we have observed all the outcomes $\[y\]_{j=1}^M$, we can obtain the posterior distribution for the treatment and control arms using the Laplace approximation i.e. the log likelihood can be written down as follows:
 
