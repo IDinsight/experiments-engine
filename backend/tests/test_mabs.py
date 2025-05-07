@@ -2,6 +2,7 @@ import copy
 import os
 from typing import Generator
 
+import numpy as np
 from fastapi.testclient import TestClient
 from pytest import FixtureRequest, fixture, mark
 from sqlalchemy.orm import Session
@@ -14,6 +15,7 @@ base_beta_binom_payload = {
     "description": "Test description",
     "prior_type": "beta",
     "reward_type": "binary",
+    "sticky_assignment": False,
     "arms": [
         {
             "name": "arm 1",
@@ -122,6 +124,9 @@ class TestMab:
         if request.param == "invalid_sigma":
             payload_normal["arms"][0]["sigma_init"] = 0.0
             return payload_normal
+        if request.param == "with_sticky_assignment":
+            payload_beta_binom["sticky_assignment"] = True
+            return payload_beta_binom
         else:
             raise ValueError("Invalid parameter")
 
@@ -161,14 +166,18 @@ class TestMab:
 
     @fixture
     def create_mabs(
-        self, client: TestClient, admin_token: str, request: FixtureRequest
+        self,
+        client: TestClient,
+        admin_token: str,
+        request: FixtureRequest,
+        create_mab_payload: dict,
     ) -> Generator:
         mabs = []
         n_mabs = request.param if hasattr(request, "param") else 1
         for _ in range(n_mabs):
             response = client.post(
                 "/mab",
-                json=base_beta_binom_payload,
+                json=create_mab_payload,
                 headers={"Authorization": f"Bearer {admin_token}"},
             )
             mabs.append(response.json())
@@ -180,12 +189,21 @@ class TestMab:
             )
 
     @mark.parametrize(
-        "create_mabs, n_expected",
-        [(0, 0), (2, 2), (5, 5)],
-        indirect=["create_mabs"],
+        "create_mabs, create_mab_payload, n_expected",
+        [
+            (0, "base_beta_binom", 0),
+            (2, "base_beta_binom", 2),
+            (5, "base_beta_binom", 5),
+        ],
+        indirect=["create_mabs", "create_mab_payload"],
     )
     def test_get_all_mabs(
-        self, client: TestClient, admin_token: str, n_expected: int, create_mabs: list
+        self,
+        client: TestClient,
+        admin_token: str,
+        n_expected: int,
+        create_mabs: list,
+        create_mab_payload: dict,
     ) -> None:
         response = client.get(
             "/mab", headers={"Authorization": f"Bearer {admin_token}"}
@@ -194,15 +212,16 @@ class TestMab:
         assert len(response.json()) == n_expected
 
     @mark.parametrize(
-        "create_mabs, expected_response",
-        [(0, 404), (2, 200)],
-        indirect=["create_mabs"],
+        "create_mabs, create_mab_payload, expected_response",
+        [(0, "base_beta_binom", 404), (2, "base_beta_binom", 200)],
+        indirect=["create_mabs", "create_mab_payload"],
     )
     def test_get_mab(
         self,
         client: TestClient,
         admin_token: str,
         create_mabs: list,
+        create_mab_payload: dict,
         expected_response: int,
     ) -> None:
         id = create_mabs[0]["experiment_id"] if create_mabs else 999
@@ -212,8 +231,9 @@ class TestMab:
         )
         assert response.status_code == expected_response
 
+    @mark.parametrize("create_mab_payload", ["base_beta_binom"], indirect=True)
     def test_draw_arm_draw_id_provided(
-        self, client: TestClient, create_mabs: list
+        self, client: TestClient, create_mabs: list, create_mab_payload: dict
     ) -> None:
         id = create_mabs[0]["experiment_id"]
         api_key = os.environ.get("ADMIN_API_KEY", "")
@@ -225,8 +245,9 @@ class TestMab:
         assert response.status_code == 200
         assert response.json()["draw_id"] == "test_draw"
 
+    @mark.parametrize("create_mab_payload", ["base_beta_binom"], indirect=True)
     def test_draw_arm_no_draw_id_provided(
-        self, client: TestClient, create_mabs: list
+        self, client: TestClient, create_mabs: list, create_mab_payload: dict
     ) -> None:
         id = create_mabs[0]["experiment_id"]
         api_key = os.environ.get("ADMIN_API_KEY", "")
@@ -237,7 +258,74 @@ class TestMab:
         assert response.status_code == 200
         assert len(response.json()["draw_id"]) == 36
 
-    def test_one_outcome_per_draw(self, client: TestClient, create_mabs: list) -> None:
+    @mark.parametrize(
+        "create_mab_payload, client_id, expected_response",
+        [
+            ("with_sticky_assignment", None, 400),
+            ("with_sticky_assignment", "test_client_id", 200),
+        ],
+        indirect=["create_mab_payload"],
+    )
+    def test_draw_arm_sticky_assignment_with_client_id(
+        self,
+        client: TestClient,
+        admin_token: str,
+        create_mab_payload: dict,
+        create_mabs: list,
+        client_id: str | None,
+        expected_response: int,
+    ) -> None:
+        mabs = create_mabs
+        id = mabs[0]["experiment_id"]
+        api_key = os.environ.get("ADMIN_API_KEY", "")
+        response = client.get(
+            f"/mab/{id}/draw{'?client_id=' + client_id if client_id else ''}",
+            headers={"Authorization": f"Bearer {api_key}"},
+        )
+        assert response.status_code == expected_response
+
+    @mark.parametrize("create_mab_payload", ["with_sticky_assignment"], indirect=True)
+    def test_draw_arm_sticky_assignment_client_id_provided(
+        self,
+        client: TestClient,
+        admin_token: str,
+        create_mab_payload: dict,
+        create_mabs: list,
+    ) -> None:
+        mabs = create_mabs
+        id = mabs[0]["experiment_id"]
+        api_key = os.environ.get("ADMIN_API_KEY", "")
+        response = client.get(
+            f"/mab/{id}/draw?client_id=123",
+            headers={"Authorization": f"Bearer {api_key}"},
+        )
+        assert response.status_code == 200
+
+    @mark.parametrize("create_mab_payload", ["with_sticky_assignment"], indirect=True)
+    def test_draw_arm_sticky_assignment_similar_arms(
+        self,
+        client: TestClient,
+        admin_token: str,
+        create_mab_payload: dict,
+        create_mabs: list,
+    ) -> None:
+        mabs = create_mabs
+        id = mabs[0]["experiment_id"]
+        api_key = os.environ.get("ADMIN_API_KEY", "")
+
+        arm_ids = []
+        for _ in range(10):
+            response = client.get(
+                f"/mab/{id}/draw?client_id=123",
+                headers={"Authorization": f"Bearer {api_key}"},
+            )
+            arm_ids.append(response.json()["arm"]["arm_id"])
+        assert np.unique(arm_ids).size == 1
+
+    @mark.parametrize("create_mab_payload", ["base_beta_binom"], indirect=True)
+    def test_one_outcome_per_draw(
+        self, client: TestClient, create_mabs: list, create_mab_payload: dict
+    ) -> None:
         id = create_mabs[0]["experiment_id"]
         api_key = os.environ.get("ADMIN_API_KEY", "")
         response = client.get(
@@ -261,9 +349,17 @@ class TestMab:
 
         assert response.status_code == 400
 
-    @mark.parametrize("n_draws", [0, 1, 5])
+    @mark.parametrize(
+        "n_draws, create_mab_payload",
+        [(0, "base_beta_binom"), (1, "base_beta_binom"), (5, "base_beta_binom")],
+        indirect=["create_mab_payload"],
+    )
     def test_get_outcomes(
-        self, client: TestClient, create_mabs: list, n_draws: int
+        self,
+        client: TestClient,
+        create_mabs: list,
+        n_draws: int,
+        create_mab_payload: dict,
     ) -> None:
         id = create_mabs[0]["experiment_id"]
         api_key = os.environ.get("ADMIN_API_KEY", "")

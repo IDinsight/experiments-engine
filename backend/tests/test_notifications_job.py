@@ -9,8 +9,8 @@ from pytest import FixtureRequest, MonkeyPatch, fixture, mark
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from backend import create_notifications
-from backend.create_notifications import process_notifications
+from backend.jobs import create_notifications
+from backend.jobs.create_notifications import process_notifications
 
 base_mab_payload = {
     "name": "Test",

@@ -33,6 +33,9 @@ import { apiCalls } from "@/utils/api";
 import { useRouter } from "next/navigation";
 
 import { useToast } from "@/hooks/use-toast";
+import logoLight from "@/public/logo_light.svg";
+import logoDark from "@/public/logo_dark.svg";
+import Image from "next/image";
 
 const formSchema = z.object({
   firstName: z.string().min(1, {
@@ -114,7 +117,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-purple-50 to-blue-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-purple-50 to-blue-100 dark:from-black dark:to-blue-950 p-4">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -124,7 +127,23 @@ export default function LoginPage() {
       >
         <Card className="lg:min-w-2xl">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">
+            <CardTitle className="text-2xl font-semibold text-center">
+              <div className="mb-5 flex justify-center">
+                <Image
+                  src={logoLight}
+                  alt="Logo"
+                  className="dark:hidden"
+                  width={400}
+                  height={81}
+                />
+                <Image
+                  src={logoDark}
+                  alt="Logo"
+                  className="hidden dark:block"
+                  width={400}
+                  height={81}
+                />
+              </div>
               Welcome
             </CardTitle>
             <CardDescription className="text-center">

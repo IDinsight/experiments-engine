@@ -145,6 +145,7 @@ class MABDrawDB(DrawsBaseDB):
         """
         return {
             "draw_id": self.draw_id,
+            "client_id": self.client_id,
             "draw_datetime_utc": self.draw_datetime_utc,
             "arm_id": self.arm_id,
             "experiment_id": self.experiment_id,
@@ -249,9 +250,8 @@ async def delete_mab_by_id(
     )
 
     await asession.execute(
-        delete(MABDrawDB).where(
+        delete(DrawsBaseDB).where(
             and_(
-                MABDrawDB.draw_id == DrawsBaseDB.draw_id,
                 DrawsBaseDB.user_id == user_id,
                 DrawsBaseDB.experiment_id == experiment_id,
             )
@@ -330,10 +330,28 @@ async def get_draw_by_id(
     return result.unique().scalar_one_or_none()
 
 
+async def get_draw_by_client_id(
+    client_id: str, user_id: int, asession: AsyncSession
+) -> MABDrawDB | None:
+    """
+    Get a draw by its ID
+    """
+    statement = (
+        select(MABDrawDB)
+        .where(MABDrawDB.client_id == client_id)
+        .where(MABDrawDB.client_id.is_not(None))
+        .where(MABDrawDB.user_id == user_id)
+    )
+    result = await asession.execute(statement)
+
+    return result.unique().scalars().first()
+
+
 async def save_draw_to_db(
     experiment_id: int,
     arm_id: int,
     draw_id: str,
+    client_id: str | None,
     user_id: int,
     asession: AsyncSession,
 ) -> MABDrawDB:
@@ -345,6 +363,7 @@ async def save_draw_to_db(
 
     draw = MABDrawDB(
         draw_id=draw_id,
+        client_id=client_id,
         experiment_id=experiment_id,
         user_id=user_id,
         arm_id=arm_id,
@@ -362,7 +381,7 @@ async def save_observation_to_db(
     draw: MABDrawDB,
     reward: float,
     asession: AsyncSession,
-    observation_type: ObservationType = ObservationType.AUTO,
+    observation_type: ObservationType,
 ) -> MABDrawDB:
     """
     Save an observation to the database

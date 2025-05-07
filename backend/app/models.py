@@ -109,6 +109,8 @@ class DrawsBaseDB(Base):
         String, primary_key=True, default=lambda x: str(uuid.uuid4())
     )
 
+    client_id: Mapped[str] = mapped_column(String, nullable=True)
+
     arm_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("arms_base.arm_id"), nullable=False
     )

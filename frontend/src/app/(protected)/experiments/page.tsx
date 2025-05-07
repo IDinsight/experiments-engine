@@ -1,7 +1,11 @@
 "use client";
 import React, { useEffect } from "react";
 import EmptyPage from "./components/EmptyPage";
-import { getAllMABExperiments, getAllCMABExperiments, getAllBayesianABExperiments } from "./api";
+import {
+  getAllMABExperiments,
+  getAllCMABExperiments,
+  getAllBayesianABExperiments,
+} from "./api";
 import { MABBeta, MABNormal, CMAB, BayesianAB, MethodType } from "./types";
 import ExperimentCard from "./components/ExperimentCard";
 import Hourglass from "@/components/Hourglass";
@@ -14,9 +18,11 @@ export default function Experiments() {
   const [haveExperiments, setHaveExperiments] = React.useState(false);
   const [mabExperiments, setMABExperiments] = React.useState<MABBeta[]>([]);
   const [cmabExperiments, setCMABExperiments] = React.useState<CMAB[]>([]);
-  const [bayesExperiments, setBayesExperiments] = React.useState<BayesianAB[]>([]);
+  const [bayesExperiments, setBayesExperiments] = React.useState<BayesianAB[]>(
+    []
+  );
   const [loading, setLoading] = React.useState(true);
-  const [loadingError, setLoadingError] = React.useState("")
+  const [loadingError, setLoadingError] = React.useState("");
 
   const { token } = useAuth();
 
@@ -24,31 +30,32 @@ export default function Experiments() {
     if (!token) return;
     setLoading(true);
 
-    const fetchData = async() => {
-    try {
-      const [mabData, cmabData, bayesabData] = await Promise.all([
-        getAllMABExperiments(token),
-        getAllCMABExperiments(token),
-        getAllBayesianABExperiments(token),
-      ]);
-      setMABExperiments(mabData);
-      setCMABExperiments(cmabData);
-      setBayesExperiments(bayesabData);
-    }
-    catch (error) {
-      console.error("Error fetching experiments:", error);
-      setLoadingError("Error fetching experiments: " + error)
-    }
-    finally {
-      setLoading(false);
-
-    }
-  };
-  fetchData();
+    const fetchData = async () => {
+      try {
+        const [mabData, cmabData, bayesabData] = await Promise.all([
+          getAllMABExperiments(token),
+          getAllCMABExperiments(token),
+          getAllBayesianABExperiments(token),
+        ]);
+        setMABExperiments(mabData);
+        setCMABExperiments(cmabData);
+        setBayesExperiments(bayesabData);
+      } catch (error) {
+        console.error("Error fetching experiments:", error);
+        setLoadingError("Error fetching experiments: " + error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, [token]);
 
   useEffect(() => {
-    if (mabExperiments.length > 0 || cmabExperiments.length > 0 || bayesExperiments.length > 0) {
+    if (
+      mabExperiments.length > 0 ||
+      cmabExperiments.length > 0 ||
+      bayesExperiments.length > 0
+    ) {
       setHaveExperiments(true);
     } else {
       setHaveExperiments(false);
@@ -56,8 +63,8 @@ export default function Experiments() {
   }, [mabExperiments, cmabExperiments, bayesExperiments]);
 
   return loading ? (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white dark:bg-zinc-950 rounded-lg p-6 sm:p-8 md:p-10 flex flex-col items-center justify-center space-y-4 w-full max-w-sm mx-auto">
+    <div className="flex items-center justify-center min-h-screen w-full">
+      <div className="rounded-lg bg-secondary p-6 sm:p-8 md:p-10 flex flex-col items-center justify-center space-y-4 w-full max-w-sm mx-auto">
         <Hourglass />
         <span className="text-primary font-medium text-center">Loading...</span>
       </div>

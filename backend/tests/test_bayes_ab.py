@@ -2,6 +2,7 @@ import copy
 import os
 from typing import Generator
 
+import numpy as np
 from fastapi.testclient import TestClient
 from pytest import FixtureRequest, fixture, mark
 from sqlalchemy.orm import Session
@@ -14,6 +15,7 @@ base_normal_payload = {
     "description": "Test description",
     "prior_type": "normal",
     "reward_type": "real-valued",
+    "sticky_assignment": False,
     "arms": [
         {
             "name": "arm 1",
@@ -96,19 +98,26 @@ class TestBayesAB:
             payload_normal["arms"][0]["is_treatment_arm"] = True
             payload_normal["arms"][1]["is_treatment_arm"] = True
             return payload_normal
+        if request.param == "with_sticky_assignment":
+            payload_normal["sticky_assignment"] = True
+            return payload_normal
         else:
             raise ValueError("Invalid parameter")
 
     @fixture
     def create_bayes_abs(
-        self, client: TestClient, admin_token: str, request: FixtureRequest
+        self,
+        client: TestClient,
+        admin_token: str,
+        create_bayes_ab_payload: dict,
+        request: FixtureRequest,
     ) -> Generator:
         bayes_abs = []
         n_bayes_abs = request.param if hasattr(request, "param") else 1
         for _ in range(n_bayes_abs):
             response = client.post(
                 "/bayes_ab",
-                json=base_binary_normal_payload,
+                json=create_bayes_ab_payload,
                 headers={"Authorization": f"Bearer {admin_token}"},
             )
             bayes_abs.append(response.json())
@@ -153,9 +162,9 @@ class TestBayesAB:
         assert response.status_code == expected_response
 
     @mark.parametrize(
-        "create_bayes_abs, n_expected",
-        [(1, 1), (2, 2), (5, 5)],
-        indirect=["create_bayes_abs"],
+        "create_bayes_abs, n_expected, create_bayes_ab_payload",
+        [(1, 1, "base_normal"), (2, 2, "base_normal"), (5, 5, "base_normal")],
+        indirect=["create_bayes_abs", "create_bayes_ab_payload"],
     )
     def test_get_bayes_abs(
         self,
@@ -163,6 +172,7 @@ class TestBayesAB:
         n_expected: int,
         admin_token: str,
         create_bayes_abs: list,
+        create_bayes_ab_payload: dict,
     ) -> None:
         """
         Test the retrieval of Bayesian A/B tests.
@@ -174,14 +184,66 @@ class TestBayesAB:
         assert response.status_code == 200
         assert len(response.json()) == n_expected
 
-    def test_draw_arm(self, client: TestClient, create_bayes_abs: list) -> None:
+    @mark.parametrize(
+        "create_bayes_abs, expected_response, create_bayes_ab_payload",
+        [(1, 200, "base_normal"), (2, 200, "base_normal"), (5, 200, "base_normal")],
+        indirect=["create_bayes_abs", "create_bayes_ab_payload"],
+    )
+    def test_draw_arm(
+        self,
+        client: TestClient,
+        create_bayes_abs: list,
+        create_bayes_ab_payload: dict,
+        expected_response: int,
+    ) -> None:
         id = create_bayes_abs[0]["experiment_id"]
         api_key = os.environ.get("ADMIN_API_KEY", "")
         response = client.get(
             f"/bayes_ab/{id}/draw",
             headers={"Authorization": f"Bearer {api_key}"},
         )
-        assert response.status_code == 200
+        assert response.status_code == expected_response
+
+    @mark.parametrize(
+        "create_bayes_ab_payload, client_id, expected_response",
+        [
+            ("with_sticky_assignment", None, 400),
+            ("with_sticky_assignment", "test_client_id", 200),
+        ],
+        indirect=["create_bayes_ab_payload"],
+    )
+    def test_draw_arm_with_client_id(
+        self,
+        client: TestClient,
+        create_bayes_abs: list,
+        create_bayes_ab_payload: dict,
+        client_id: str | None,
+        expected_response: int,
+    ) -> None:
+        id = create_bayes_abs[0]["experiment_id"]
+        api_key = os.environ.get("ADMIN_API_KEY", "")
+        response = client.get(
+            f"/bayes_ab/{id}/draw{'?client_id=' + client_id if client_id else ''}",
+            headers={"Authorization": f"Bearer {api_key}"},
+        )
+        assert response.status_code == expected_response
+
+    @mark.parametrize(
+        "create_bayes_ab_payload", ["with_sticky_assignment"], indirect=True
+    )
+    def test_draw_arm_with_sticky_assignment(
+        self, client: TestClient, create_bayes_abs: list, create_bayes_ab_payload: dict
+    ) -> None:
+        id = create_bayes_abs[0]["experiment_id"]
+        api_key = os.environ.get("ADMIN_API_KEY", "")
+        arm_ids = []
+        for _ in range(10):
+            response = client.get(
+                f"/bayes_ab/{id}/draw?client_id=123",
+                headers={"Authorization": f"Bearer {api_key}"},
+            )
+            arm_ids.append(response.json()["arm"]["arm_id"])
+        assert np.unique(arm_ids).size == 1
 
 
 class TestNotifications:

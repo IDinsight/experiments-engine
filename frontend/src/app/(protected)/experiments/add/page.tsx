@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { createNewExperiment } from "../api";
 import type { StepComponentProps, StepValidation } from "../types";
 import { AnimatePresence, motion } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
 
 export default function NewExperiment() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -30,6 +31,8 @@ export default function NewExperiment() {
 
   const [steps, setSteps] = useState(AllSteps[experimentState.methodType]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { toast } = useToast();
 
   useEffect(() => {
     resetState();
@@ -65,9 +68,19 @@ export default function NewExperiment() {
       createNewExperiment({ experimentData: experimentState, token })
         .then((response) => {
           console.log("Experiment created", response);
+          toast({
+            title: `Experiment #${response.experiment_id} created`,
+            description: "Your experiment has been successfully created.",
+            variant: "success",
+          });
           router.push("/experiments");
         })
         .catch((error) => {
+          toast({
+            title: "Error creating experiment",
+            description: "An error occurred while creating the experiment.",
+            variant: "destructive",
+          });
           console.error(error);
         });
     } else {

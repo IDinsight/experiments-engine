@@ -143,6 +143,7 @@ class BayesianABDrawDB(DrawsBaseDB):
         """
         return {
             "draw_id": self.draw_id,
+            "client_id": self.client_id,
             "draw_datetime_utc": self.draw_datetime_utc,
             "arm_id": self.arm_id,
             "experiment_id": self.experiment_id,
@@ -303,6 +304,7 @@ async def save_bayes_ab_draw_to_db(
     experiment_id: int,
     arm_id: int,
     draw_id: str,
+    client_id: str | None,
     user_id: int,
     asession: AsyncSession,
 ) -> BayesianABDrawDB:
@@ -314,6 +316,7 @@ async def save_bayes_ab_draw_to_db(
 
     draw = BayesianABDrawDB(
         draw_id=draw_id,
+        client_id=client_id,
         experiment_id=experiment_id,
         user_id=user_id,
         arm_id=arm_id,
@@ -391,3 +394,20 @@ async def get_bayes_ab_draw_by_id(
     result = await asession.execute(statement)
 
     return result.unique().scalar_one_or_none()
+
+
+async def get_bayes_ab_draw_by_client_id(
+    client_id: str, user_id: int, asession: AsyncSession
+) -> BayesianABDrawDB | None:
+    """
+    Get a draw by its ID
+    """
+    statement = (
+        select(BayesianABDrawDB)
+        .where(BayesianABDrawDB.client_id == client_id)
+        .where(BayesianABDrawDB.client_id.is_not(None))
+        .where(BayesianABDrawDB.user_id == user_id)
+    )
+    result = await asession.execute(statement)
+
+    return result.unique().scalars().first()

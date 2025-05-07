@@ -2,6 +2,7 @@ import copy
 import os
 from typing import Generator
 
+import numpy as np
 from fastapi.testclient import TestClient
 from pytest import FixtureRequest, fixture, mark
 from sqlalchemy.orm import Session
@@ -18,6 +19,7 @@ base_normal_payload = {
     "description": "Test description",
     "prior_type": "normal",
     "reward_type": "real-valued",
+    "sticky_assignment": False,
     "arms": [
         {
             "name": "arm 1",
@@ -98,6 +100,9 @@ class TestCMab:
         if request.param == "invalid_sigma":
             payload_normal["arms"][0]["sigma_init"] = 0
             return payload_normal
+        if request.param == "with_sticky_assignment":
+            payload_normal["sticky_assignment"] = True
+            return payload_normal
 
         else:
             raise ValueError("Invalid parameter")
@@ -133,14 +138,18 @@ class TestCMab:
 
     @fixture
     def create_cmabs(
-        self, client: TestClient, admin_token: str, request: FixtureRequest
+        self,
+        client: TestClient,
+        admin_token: str,
+        request: FixtureRequest,
+        create_cmab_payload: dict,
     ) -> Generator:
         cmabs = []
         n_cmabs = request.param if hasattr(request, "param") else 1
         for _ in range(n_cmabs):
             response = client.post(
                 "/contextual_mab",
-                json=base_normal_payload,
+                json=create_cmab_payload,
                 headers={"Authorization": f"Bearer {admin_token}"},
             )
             cmabs.append(response.json())
@@ -152,12 +161,17 @@ class TestCMab:
             )
 
     @mark.parametrize(
-        "create_cmabs, n_expected",
-        [(0, 0), (2, 2), (5, 5)],
-        indirect=["create_cmabs"],
+        "create_cmabs, n_expected, create_cmab_payload",
+        [(0, 0, "base_normal"), (2, 2, "base_normal"), (5, 5, "base_normal")],
+        indirect=["create_cmabs", "create_cmab_payload"],
     )
     def test_get_all_cmabs(
-        self, client: TestClient, admin_token: str, n_expected: int, create_cmabs: list
+        self,
+        client: TestClient,
+        admin_token: str,
+        n_expected: int,
+        create_cmab_payload: dict,
+        create_cmabs: list,
     ) -> None:
         response = client.get(
             "/contextual_mab", headers={"Authorization": f"Bearer {admin_token}"}
@@ -166,14 +180,15 @@ class TestCMab:
         assert len(response.json()) == n_expected
 
     @mark.parametrize(
-        "create_cmabs, expected_response",
-        [(0, 404), (2, 200)],
-        indirect=["create_cmabs"],
+        "create_cmabs, expected_response, create_cmab_payload",
+        [(0, 404, "base_normal"), (2, 200, "base_normal")],
+        indirect=["create_cmabs", "create_cmab_payload"],
     )
     def test_get_cmab(
         self,
         client: TestClient,
         admin_token: str,
+        create_cmab_payload: dict,
         create_cmabs: list,
         expected_response: int,
     ) -> None:
@@ -184,8 +199,9 @@ class TestCMab:
         )
         assert response.status_code == expected_response
 
+    @mark.parametrize("create_cmab_payload", ["base_normal"], indirect=True)
     def test_draw_arm_draw_id_provided(
-        self, client: TestClient, create_cmabs: list
+        self, client: TestClient, create_cmabs: list, create_cmab_payload: dict
     ) -> None:
         id = create_cmabs[0]["experiment_id"]
         api_key = os.environ.get("ADMIN_API_KEY", "")
@@ -201,8 +217,9 @@ class TestCMab:
         assert response.status_code == 200
         assert response.json()["draw_id"] == "test_draw_id"
 
+    @mark.parametrize("create_cmab_payload", ["base_normal"], indirect=True)
     def test_draw_arm_no_draw_id_provided(
-        self, client: TestClient, create_cmabs: list
+        self, client: TestClient, create_cmabs: list, create_cmab_payload: dict
     ) -> None:
         id = create_cmabs[0]["experiment_id"]
         api_key = os.environ.get("ADMIN_API_KEY", "")
@@ -217,7 +234,63 @@ class TestCMab:
         assert response.status_code == 200
         assert len(response.json()["draw_id"]) == 36
 
-    def test_one_outcome_per_draw(self, client: TestClient, create_cmabs: list) -> None:
+    @mark.parametrize(
+        "create_cmab_payload, client_id, expected_response",
+        [
+            ("with_sticky_assignment", None, 400),
+            ("with_sticky_assignment", "test_client_id", 200),
+        ],
+        indirect=["create_cmab_payload"],
+    )
+    def test_draw_arm_sticky_assignment_client_id_provided(
+        self,
+        client: TestClient,
+        create_cmabs: list,
+        create_cmab_payload: dict,
+        client_id: str | None,
+        expected_response: int,
+    ) -> None:
+        id = create_cmabs[0]["experiment_id"]
+        api_key = os.environ.get("ADMIN_API_KEY", "")
+        url = f"/contextual_mab/{id}/draw"
+        if client_id:
+            url += f"?client_id={client_id}"
+
+        response = client.post(
+            url,
+            headers={"Authorization": f"Bearer {api_key}"},
+            json=[
+                {"context_id": 1, "context_value": 0},
+                {"context_id": 2, "context_value": 0.5},
+            ],
+        )
+        assert response.status_code == expected_response
+
+    @mark.parametrize("create_cmab_payload", ["with_sticky_assignment"], indirect=True)
+    def test_draw_arm_with_sticky_assignment(
+        self, client: TestClient, create_cmabs: list, create_cmab_payload: dict
+    ) -> None:
+        id = create_cmabs[0]["experiment_id"]
+        api_key = os.environ.get("ADMIN_API_KEY", "")
+        arm_ids = []
+
+        for _ in range(10):
+            response = client.post(
+                f"/contextual_mab/{id}/draw?client_id=123",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json=[
+                    {"context_id": 1, "context_value": 0},
+                    {"context_id": 2, "context_value": 1},
+                ],
+            )
+            arm_ids.append(response.json()["arm"]["arm_id"])
+
+        assert np.unique(arm_ids).size == 1
+
+    @mark.parametrize("create_cmab_payload", ["base_normal"], indirect=True)
+    def test_one_outcome_per_draw(
+        self, client: TestClient, create_cmabs: list, create_cmab_payload: dict
+    ) -> None:
         id = create_cmabs[0]["experiment_id"]
         api_key = os.environ.get("ADMIN_API_KEY", "")
         response = client.post(
@@ -245,9 +318,17 @@ class TestCMab:
 
         assert response.status_code == 400
 
-    @mark.parametrize("n_draws", [0, 1, 5])
+    @mark.parametrize(
+        "n_draws, create_cmab_payload",
+        [(0, "base_normal"), (1, "base_normal"), (5, "base_normal")],
+        indirect=["create_cmab_payload"],
+    )
     def test_get_outcomes(
-        self, client: TestClient, create_cmabs: list, n_draws: int
+        self,
+        client: TestClient,
+        create_cmabs: list,
+        n_draws: int,
+        create_cmab_payload: dict,
     ) -> None:
         id = create_cmabs[0]["experiment_id"]
         api_key = os.environ.get("ADMIN_API_KEY", "")

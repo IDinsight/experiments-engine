@@ -8,8 +8,8 @@
 </style>
 
 <div align="center" style="text-align:center; background:none; margin: 0 auto;">
-  <img src="images/ExE_logo_dark.svg#only-dark" alt="ExE logo dark mode" width="100%" style="max-width: 100%; height: auto;" />
-  <img src="images/ExE_logo_light.svg#only-light" alt="ExE logo light mode" width="100%" style="max-width: 100%; height: auto;" />
+  <img src="images/ExperimentsEngine-DarkBG.svg#only-dark" alt="ExE logo dark mode" width="100%" style="max-width: 100%; height: auto;" />
+  <img src="images/ExperimentsEngine-White.svg#only-light" alt="ExE logo light mode" width="100%" style="max-width: 100%; height: auto;" />
 </div>
 
 ## What is the Experiments Engine?
@@ -20,6 +20,48 @@ Experiments Engine (ExE) enables social sector orgs with digital offerings to cr
         <source src="./images/ExE_mab_recording.mp4" type="video/mp4">
     </video>
 </figure>
+
+## How does it work?
+
+### Creating an experiment
+
+You can create a new experiment in ExE and generate an API key. There are two places where you need to integrate ExE:
+(a) when a user visits your platform and you need to decide which arm to assign to them
+(b) when the desired outcome is observed (e.g. user clicks a button, user completes a task, etc.)
+
+
+``` mermaid
+sequenceDiagram
+    autonumber
+    actor Admin
+    Admin->>ExE: Create experiment
+    Admin->>ExE: Generate API key
+    ExE-->>Admin: API key
+    Admin->>Your app: Integrate endpoint with platform
+```
+
+### Running the experiment
+
+With integration complete, you are ready to run the experiment. When a user visits your platform, your app will call the ExE API to get the arm assigned to them. You can then show them the content for that arm.
+
+When the outcome is observed your platform, the platform will send the outcome data back to ExE. ExE will then update the weights and results of the experiment.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    User->>Your app: Visit platform
+    Your app->>ExE: Get arm assignment
+    ExE->>Your app: Assign an arm to user
+    Your app->>User: Show arm content
+    User->>Your app: Interact with platform
+    Your app->>ExE: Send outcome data
+    ExE->>ExE: Update weights and results
+    actor Admin
+    Admin->>ExE: Monitor experiment
+```
+
+See [Setup your first experiment](./first-experiment/index.md) for a step-by-step guide.
 
 ### Features
 
@@ -63,7 +105,7 @@ Here are some ideas our partners are interested in testing out:
 - [x] What is the best time to send messages to ensure users engage with it?
 - [x] Will this new feature lead to greater time spent on the platform?
 
-    ## Design principles
+## Design principles
 
 Here are the principles that guide the design of ExE:
 

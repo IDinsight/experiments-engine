@@ -4,8 +4,8 @@ site_url: https://experiments-engine.idinsight.github.io
 repo_url: https://github.com/IDinsight/experiments-engine
 theme:
   name: material
-  icon:
-    logo: material/test-tube
+  logo: images/ExperimentsEngine-favicon-icon.svg
+  favicon: images/ExperimentsEngine-favicon-icon.svg
   palette:
     - scheme: default
       toggle:

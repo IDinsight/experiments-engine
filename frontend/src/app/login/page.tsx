@@ -29,6 +29,9 @@ import { Flex } from "@radix-ui/themes";
 import GoogleLogin, {
   NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID,
 } from "@/components/auth/GoogleLogin";
+import Image from "next/image";
+import logoDark from "@/public/logo_dark.svg";
+import logoLight from "@/public/logo_light.svg";
 
 const formSchema = z.object({
   email: z.string().email({
@@ -67,7 +70,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-purple-50 to-blue-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-purple-50 to-blue-100 dark:from-black dark:to-blue-950 p-4">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -78,6 +81,22 @@ export default function LoginPage() {
         <Card>
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center">
+              <div className="mb-5">
+                <Image
+                  src={logoLight}
+                  alt="Logo"
+                  className="dark:hidden"
+                  width={400}
+                  height={81}
+                />
+                <Image
+                  src={logoDark}
+                  alt="Logo"
+                  className="hidden dark:block"
+                  width={400}
+                  height={81}
+                />
+              </div>
               Welcome back
             </CardTitle>
             <CardDescription className="text-center">
