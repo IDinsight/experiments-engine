@@ -20,14 +20,13 @@ Learn abouth the types of experiments we have implemented, and how to configure 
 
     [:octicons-arrow-right-24: Contextual Bandits](./cmabs/index.md)
 
--   :fontawesome-solid-square-binary:{ .lg .middle } __Bayesian A/B Testing__
+-   :octicons-file-binary-24:{ .lg .middle } __Bayesian A/B Testing__
 
     ---
 
     Check the effect of a "treatment" variant, accounting for prior knowledge
 
     [:octicons-arrow-right-24: Bayesian A/B Testing](./bayes_ab/index.md)
-
 
 
 </div>
