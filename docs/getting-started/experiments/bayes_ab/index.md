@@ -4,7 +4,7 @@ Bayesian A/B testing compares two variants: treatment (e.g. a new feature) and c
 
 ## What is Bayesian A/B testing?
 
-With A/B testing, you have 2 variants of a feature / implementation (one is ideally a baseline / existing feature that you want to compare the other against), with corresponding probability of achieving a desired outcome. You serve beneficiaries either variant at a random but _fixed_ probability throughout the experiment and observe the outcome of their interaction with it. You update these probabilities for each variant _after_ the experiment is over and all te observations are in.
+With A/B testing, you have 2 variants of a feature / implementation (one is ideally a baseline / existing feature that you want to compare the other, a new feature, against). You present users with one of the variants at a random but with a _fixed_ probability throughout the experiment and observe the outcome of their interaction with it. You update these probabilities for each variant _after_ the experiment is over and all the observations are in.
 
 ## Show me some math!
 In our current implementation of Bayesian A/B testing, we use Gaussian priors and support either real-valued or binary outcomes.
