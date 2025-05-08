@@ -16,9 +16,7 @@ git clone git@github.com:IDinsight/experiments-engine.git
 cd deployment/docker-compose/
 ```
 
-**Step 3:** Edit the `template.base.env` file to set the `POSTGRES_HOST` environment variable to `relational_db`.
-
-**Step 4:** Copy `template.*.env` files to `.*.env`:
+**Step 3:** Copy `template.*.env` files to `.*.env`:
 
 ```shell
 cp template.base.env .base.env
@@ -27,7 +25,7 @@ cp template.backend.env .backend.env
 
 Edit the `.base.env` and `.backend.env` files to set the environment variables.
 
-**Step 5:** Run docker-compose
+**Step 4:** Run docker-compose
 
 ```shell
 docker compose -f docker-compose.yml -p exe-stack up -d --build
@@ -36,7 +34,7 @@ docker compose -f docker-compose.yml -p exe-stack up -d --build
 You can now view the ExE app at `https://$DOMAIN/` (by default, this should be [https://localhost/](https://localhost/)) and the API documentation at
 `https://$DOMAIN/api/docs` (you can also test the endpoints here).
 
-**Step 6:** Shutdown containers
+**Step 5:** Shutdown containers
 
 ```shell
 docker compose -f docker-compose.yml -f docker-compose.dev.yml -p exe-stack down
