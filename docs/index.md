@@ -61,7 +61,7 @@ sequenceDiagram
     Admin->>ExE: Monitor experiment
 ```
 
-See [Setup your first experiment](./first-experiment/index.md) for a step-by-step guide.
+See [Setup your first experiment](./getting-started/first-experiment/index.md) for a step-by-step guide.
 
 ### Features
 

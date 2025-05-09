@@ -4,7 +4,7 @@
 
 If you have deployed the docker containers locally as per the instructions [here](../../deploying.md), you should see a login screen when you navigate to `https://localhost/`
 
-![Login Screen](../images/create_experiment/login.png)
+![Login Screen](../../images/login.png)
 
 The credentials are what you set in your `.backend.env` file.
 
@@ -13,7 +13,7 @@ The credentials are what you set in your `.backend.env` file.
 
 Once you have logged in, you should see a screen like this:
 
-![New Experiment](../images/create_experiment/new_experiment.png)
+![New Experiment](../../images/create_experiment/new_experiment.png)
 
 Click on the `+ New Experiment` button to create a new experiment.
 
@@ -21,7 +21,7 @@ Click on the `+ New Experiment` button to create a new experiment.
 
 Enter the details for the experiment. Both `Experiment Name` field and `Description` are mandatory. Select `MAB` as the experiment type.
 
-![Experiment Details](../images/create_experiment/basic_details.png)
+![Experiment Details](../../images/create_experiment/basic_details.png)
 
 Click on the `Next` button to proceed.
 
@@ -29,13 +29,13 @@ Click on the `Next` button to proceed.
 
 Here you specify if your outcome is binary (e.g. Yes/No, Upvote/Downvote) or continuous (e.g. time spent)
 
-![Treatment and Outcome Type](../images/create_experiment/priors.png)
+![Treatment and Outcome Type](../../images/create_experiment/priors.png)
 
 ## Create experiment arms
 
 Click on the `+ Add Arm` button to add arms to the experiment. You can add as many arms as you like but must have a minimum of 2 arms.
 
-![Arms](../images/create_experiment/arms.png)
+![Arms](../../images/create_experiment/arms.png)
 
 Enter details for each arm. The `Name` and `Description` fields are both mandatory. You can also change the prior (1) for the arms.
 { .annotate }
@@ -48,7 +48,7 @@ Click on the `Next` button to proceed.
 
 You can select events when you should be notified. Let's select the first two and set values as in the image below.
 
-![Notifications](../images/create_experiment/notifications.png)
+![Notifications](../../images/create_experiment/notifications.png)
 
 Click on the `+ Create Experiment` to create the experiment.
 
@@ -56,11 +56,11 @@ Click on the `+ Create Experiment` to create the experiment.
 
 You will be taken to the home page where you can see the details of the experiment and the arms you created.
 
-![Experiment Created](../images/create_experiment/experiment_created.png)
+![Experiment Created](../../images/create_experiment/experiment_created.png)
 
 You can also click on the card to get a detailed view of the experiment.
 
-![Experiment Details](../images/create_experiment/view_experiment.png)
+![Experiment Details](../../images/create_experiment/view_experiment.png)
 
 ## Next steps
 

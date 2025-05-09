@@ -15,4 +15,4 @@ We've cleaned up our docker deployments now, so you can do a dev version with ho
 
 We've also added `Makefile` commands to make it easier to manage the Docker deplyments.
 
-There are more detailed instructions in the [README file](../../../README.md).
+There are more detailed instructions in the [README file](https://github.com/IDinsight/experiments-engine/blob/main/README.md).
