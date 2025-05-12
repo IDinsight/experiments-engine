@@ -1,3 +1,22 @@
+# Experiments Engine
+
+Experiments Engine (ExE) enables social sector orgs with digital offerings to create and monitor experiments.
+
+📌 For more information about the Experiments Engine, check out our [docs here](https://idinsight.github.io/experiments-engine/).
+
+
+## How do I contribute to this repo as a developer?
+We'd love to have people contribute to this repo. You can use the [instructions for set-up](#instructions-for-set-up) to get started!
+
+Please note that **this repo is under active development** -- so to prevent redundant PRs / issues, please follow the following steps:
+1. If you've found a bug you want to fix or want to implement a new feature, please check if it is [an existing issue](https://github.com/IDinsight/experiments-engine/issues) on the repo.
+    - If it is an existing issue that has been assigned an owner, it means someone is likely already working on it, and so please wait for updates!
+    - If there are no existing issues, please do create one with the appropriate labels.
+2. For existing and unassigned issues, **please wait until they are marked as `priority` to start working on them**! -- since, we are actively implementing features and doing deployments for partners, we sometimes choose to take on tech debt to ensure we can push out important updates more quickly and efficiently.
+3. If an unassigned issue has been marked as `priority`, assign it to yourself. Then make a feature branch and raise a PR (after making sure that the code works and relevant tests pass). **Please make sure to also fill out the details in the PR template**.
+
+Thanks again for contributing!
+
 ## Instructions for set-up
 ### 1. Clone this repository:
 ```
@@ -46,5 +65,5 @@ Navigate to the root of this repository and run `make fresh-env`
 
   There's no hot reload for prod deployments.
 
-### 4. Explore!
+### 5. Explore!
 Log in with the admin credentials and experiment :)
