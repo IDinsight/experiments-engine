@@ -224,20 +224,22 @@ async def get_all_bayes_ab_experiments(
 
 async def get_bayes_ab_experiment_by_id(
     experiment_id: int,
-    user_id: int,
+    user_id: int | None,
     workspace_id: int,
     asession: AsyncSession,
 ) -> BayesianABDB | None:
     """
     Get the A/B experiment by id from a specific workspace.
+    If user_id is provided, further filters to experiments owned by that user.
     """
-    stmt = select(BayesianABDB).where(
-        and_(
-            BayesianABDB.user_id == user_id,
-            BayesianABDB.workspace_id == workspace_id,
-            BayesianABDB.experiment_id == experiment_id,
-        )
-    )
+    conditions = [
+        BayesianABDB.workspace_id == workspace_id,
+        BayesianABDB.experiment_id == experiment_id,
+    ]
+    if user_id is not None:
+        conditions.append(BayesianABDB.user_id == user_id)
+
+    stmt = select(BayesianABDB).where(and_(*conditions))
     result = await asession.execute(stmt)
     return result.unique().scalar_one_or_none()
 
@@ -315,12 +317,28 @@ async def save_bayes_ab_draw_to_db(
     arm_id: int,
     draw_id: str,
     client_id: str | None,
-    user_id: int,
+    user_id: int | None,
     asession: AsyncSession,
+    workspace_id: int | None,
 ) -> BayesianABDrawDB:
     """
     Save a draw to the database
     """
+    # If user_id is not provided but needed, get it from the experiment
+    if user_id is None and workspace_id is not None:
+        experiment = await get_bayes_ab_experiment_by_id(
+            experiment_id=experiment_id,
+            user_id=None,
+            workspace_id=workspace_id,
+            asession=asession,
+        )
+        if experiment:
+            user_id = experiment.user_id
+        else:
+            raise ValueError(f"Experiment with id {experiment_id} not found")
+
+    if user_id is None:
+        raise ValueError("User ID must be provided or derivable from experiment")
 
     draw_datetime_utc: datetime = datetime.now(timezone.utc)
 
@@ -343,17 +361,15 @@ async def save_bayes_ab_draw_to_db(
 async def get_bayes_ab_obs_by_experiment_arm_id(
     experiment_id: int,
     arm_id: int,
-    user_id: int,
     asession: AsyncSession,
 ) -> Sequence[BayesianABDrawDB]:
     """
-    Get the observations of the A/B experiment by id.
+    Get the observations of a specific arm in an A/B experiment.
     """
     stmt = (
         select(BayesianABDrawDB)
         .where(
             and_(
-                BayesianABDrawDB.user_id == user_id,
                 BayesianABDrawDB.experiment_id == experiment_id,
                 BayesianABDrawDB.arm_id == arm_id,
                 BayesianABDrawDB.reward.is_not(None),
@@ -368,17 +384,30 @@ async def get_bayes_ab_obs_by_experiment_arm_id(
 
 async def get_bayes_ab_obs_by_experiment_id(
     experiment_id: int,
-    user_id: int,
+    workspace_id: int,
     asession: AsyncSession,
 ) -> Sequence[BayesianABDrawDB]:
     """
-    Get the observations of the A/B experiment by id.
+    Get the observations of the A/B experiment.
+    Verified to belong to the specified workspace.
     """
+    # First, verify experiment belongs to the workspace
+    experiment = await get_bayes_ab_experiment_by_id(
+        experiment_id=experiment_id,
+        user_id=None,
+        workspace_id=workspace_id,
+        asession=asession,
+    )
+
+    if experiment is None:
+        # Return empty list if experiment doesn't exist or doesn't belong to workspace
+        return []
+
+    # Get observations for this experiment
     stmt = (
         select(BayesianABDrawDB)
         .where(
             and_(
-                BayesianABDrawDB.user_id == user_id,
                 BayesianABDrawDB.experiment_id == experiment_id,
                 BayesianABDrawDB.reward.is_not(None),
             )
@@ -391,32 +420,29 @@ async def get_bayes_ab_obs_by_experiment_id(
 
 
 async def get_bayes_ab_draw_by_id(
-    draw_id: str, user_id: int, asession: AsyncSession
+    draw_id: str, asession: AsyncSession
 ) -> BayesianABDrawDB | None:
     """
     Get a draw by its ID
     """
-    statement = (
-        select(BayesianABDrawDB)
-        .where(BayesianABDrawDB.draw_id == draw_id)
-        .where(BayesianABDrawDB.user_id == user_id)
-    )
+    statement = select(BayesianABDrawDB).where(BayesianABDrawDB.draw_id == draw_id)
     result = await asession.execute(statement)
 
     return result.unique().scalar_one_or_none()
 
 
 async def get_bayes_ab_draw_by_client_id(
-    client_id: str, user_id: int, asession: AsyncSession
+    client_id: str, experiment_id: int, asession: AsyncSession
 ) -> BayesianABDrawDB | None:
     """
-    Get a draw by its ID
+    Get a draw by its client ID for a specific experiment.
     """
-    statement = (
-        select(BayesianABDrawDB)
-        .where(BayesianABDrawDB.client_id == client_id)
-        .where(BayesianABDrawDB.client_id.is_not(None))
-        .where(BayesianABDrawDB.user_id == user_id)
+    statement = select(BayesianABDrawDB).where(
+        and_(
+            BayesianABDrawDB.client_id == client_id,
+            BayesianABDrawDB.client_id.is_not(None),
+            BayesianABDrawDB.experiment_id == experiment_id,
+        )
     )
     result = await asession.execute(statement)
 

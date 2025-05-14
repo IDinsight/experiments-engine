@@ -316,7 +316,7 @@ async def check_if_user_has_default_workspace(
 
 async def get_user_default_workspace(
     *, asession: AsyncSession, user_db: "UserDB"
-) -> WorkspaceDB:
+) -> WorkspaceDB | None:
     """Retrieve the default workspace for a given user."""
     stmt = (
         select(WorkspaceDB)
@@ -329,7 +329,7 @@ async def get_user_default_workspace(
     )
 
     result = await asession.execute(stmt)
-    default_workspace_db = result.scalar_one()
+    default_workspace_db = result.scalar_one_or_none()
     return default_workspace_db
 
 

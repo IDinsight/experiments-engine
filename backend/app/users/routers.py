@@ -31,6 +31,7 @@ email_service = EmailService()
 
 
 @router.post("/", response_model=UserCreate)
+@router.post("/", response_model=UserCreate)
 async def create_user(
     user: UserCreateWithPassword,
     request: Request,
@@ -41,17 +42,17 @@ async def create_user(
     """
     Create user endpoint.
     """
-    try:
-        # Import workspace functionality to avoid circular imports
-        from ..workspaces.models import (
-            UserRoles,
-            create_user_workspace_role,
-            delete_pending_invitation,
-            get_pending_invitations_by_email,
-        )
-        from ..workspaces.utils import create_workspace, get_workspace_by_workspace_id
+    # Import workspace functionality to avoid circular imports
+    from ..workspaces.models import (
+        UserRoles,
+        create_user_workspace_role,
+        delete_pending_invitation,
+        get_pending_invitations_by_email,
+    )
+    from ..workspaces.utils import create_workspace, get_workspace_by_workspace_id
 
-        # Create the user
+    # Create the user
+    try:
         new_api_key = generate_key()
         user_new = await save_user_to_db(
             user=user,
@@ -59,83 +60,78 @@ async def create_user(
             asession=asession,
             is_verified=False,
         )
-        await update_api_limits(redis, user_new.username, user_new.api_daily_quota)
-
-        # Create default workspace for the user
-        default_workspace_name = f"{user_new.username}'s Workspace"
-        workspace_api_key = generate_key()
-
-        workspace_db, _ = await create_workspace(
-            api_daily_quota=DEFAULT_API_QUOTA,
-            asession=asession,
-            content_quota=DEFAULT_EXPERIMENTS_QUOTA,
-            user=UserCreate(
-                role=UserRoles.ADMIN,
-                username=user_new.username,
-                first_name=user_new.first_name,
-                last_name=user_new.last_name,
-                workspace_name=default_workspace_name,
-            ),
-            is_default=True,
-            api_key=workspace_api_key,
-        )
-
-        # Add user to workspace as admin
-        await create_user_workspace_role(
-            asession=asession,
-            is_default_workspace=True,
-            user_db=user_new,
-            user_role=UserRoles.ADMIN,
-            workspace_db=workspace_db,
-        )
-
-        # Check for pending invitations
-        pending_invitations = await get_pending_invitations_by_email(
-            asession=asession, email=user_new.username
-        )
-
-        # Process pending invitations
-        for invitation in pending_invitations:
-            invite_workspace = await get_workspace_by_workspace_id(
-                asession=asession, workspace_id=invitation.workspace_id
-            )
-
-            # Add user to the invited workspace
-            await create_user_workspace_role(
-                asession=asession,
-                is_default_workspace=False,
-                user_db=user_new,
-                user_role=invitation.role,
-                workspace_db=invite_workspace,
-            )
-
-            # Delete the invitation
-            await delete_pending_invitation(asession=asession, invitation=invitation)
-
-        # Send verification email
-        token = await generate_verification_token(
-            user_new.user_id, user_new.username, redis
-        )
-
-        background_tasks.add_task(
-            email_service.send_verification_email,
-            user_new.username,
-            user_new.first_name,
-            token,
-        )
-
-        return UserCreate(
-            username=user_new.username,
-            first_name=user_new.first_name,
-            last_name=user_new.last_name,
-            experiments_quota=user_new.experiments_quota,
-            api_daily_quota=user_new.api_daily_quota,
-        )
     except UserAlreadyExistsError as e:
         logger.error(f"Error creating user: {e}")
         raise HTTPException(
             status_code=400, detail="User with that username already exists."
         ) from e
+
+    # Update API limits - no special exception handling needed
+    await update_api_limits(redis, user_new.username, user_new.api_daily_quota)
+
+    # Create default workspace for the user
+    default_workspace_name = f"{user_new.username}'s Workspace"
+    workspace_api_key = generate_key()
+
+    workspace_db, _ = await create_workspace(
+        api_daily_quota=DEFAULT_API_QUOTA,
+        asession=asession,
+        content_quota=DEFAULT_EXPERIMENTS_QUOTA,
+        workspace_name=default_workspace_name,
+        is_default=True,
+        api_key=workspace_api_key,
+    )
+
+    # Add user to workspace as admin
+    await create_user_workspace_role(
+        asession=asession,
+        is_default_workspace=True,
+        user_db=user_new,
+        user_role=UserRoles.ADMIN,
+        workspace_db=workspace_db,
+    )
+
+    # Process pending invitations
+    pending_invitations = await get_pending_invitations_by_email(
+        asession=asession, email=user_new.username
+    )
+
+    for invitation in pending_invitations:
+        invite_workspace = await get_workspace_by_workspace_id(
+            asession=asession, workspace_id=invitation.workspace_id
+        )
+
+        # Add user to the invited workspace
+        await create_user_workspace_role(
+            asession=asession,
+            is_default_workspace=False,
+            user_db=user_new,
+            user_role=invitation.role,
+            workspace_db=invite_workspace,
+        )
+
+        # Delete the invitation
+        await delete_pending_invitation(asession=asession, invitation=invitation)
+
+    # Send verification email
+    token = await generate_verification_token(
+        user_new.user_id, user_new.username, redis
+    )
+
+    background_tasks.add_task(
+        email_service.send_verification_email,
+        user_new.username,
+        user_new.first_name,
+        token,
+    )
+
+    return UserCreate(
+        username=user_new.username,
+        first_name=user_new.first_name,
+        last_name=user_new.last_name,
+        experiments_quota=user_new.experiments_quota,
+        api_daily_quota=user_new.api_daily_quota,
+    )
 
 
 @router.get("/", response_model=UserRetrieve)

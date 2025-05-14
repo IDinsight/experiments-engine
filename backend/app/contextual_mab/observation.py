@@ -9,7 +9,6 @@ from ..schemas import (
     ObservationType,
     RewardLikelihood,
 )
-from ..users.models import UserDB
 from .models import (
     ContextualArmDB,
     ContextualBanditDB,
@@ -29,11 +28,10 @@ async def update_based_on_outcome(
     draw: ContextualDrawDB,
     reward: float,
     asession: AsyncSession,
-    user_db: UserDB,
     observation_type: ObservationType,
 ) -> ContextualArmResponse:
     """
-    Update the arm based on the outcome of the outcome.
+    Update the arm based on the outcome of the draw.
 
     This is a helper function to allow `auto_fail` job to call
     it as well.
@@ -54,7 +52,7 @@ async def update_based_on_outcome(
 
     # Get data for arm update
     all_obs, contexts, rewards = await prepare_data_for_arm_update(
-        experiment.experiment_id, arm.arm_id, user_db.user_id, asession, draw, reward
+        experiment.experiment_id, arm.arm_id, asession, draw, reward
     )
 
     experiment_data = ContextualBanditSample.model_validate(experiment)
@@ -92,7 +90,6 @@ def get_arm_from_experiment(
 async def prepare_data_for_arm_update(
     experiment_id: int,
     arm_id: int,
-    user_id: int,
     asession: AsyncSession,
     draw: ContextualDrawDB,
     reward: float,
@@ -101,7 +98,6 @@ async def prepare_data_for_arm_update(
     all_obs = await get_contextual_obs_by_experiment_arm_id(
         experiment_id=experiment_id,
         arm_id=arm_id,
-        user_id=user_id,
         asession=asession,
     )
 

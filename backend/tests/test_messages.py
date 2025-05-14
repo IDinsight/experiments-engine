@@ -51,27 +51,6 @@ def admin_token(client: TestClient) -> str:
 
 
 @fixture
-def workspace_api_key(client: TestClient, admin_token: str) -> str:
-    """Get the current workspace API key for testing"""
-    # Get the current workspace
-    response = client.get(
-        "/workspace/current",
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    assert response.status_code == 200
-
-    # Rotate the workspace API key to get a fresh one
-    response = client.put(
-        "/workspace/rotate-key",
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    assert response.status_code == 200
-    workspace_api_key = response.json()["new_api_key"]
-
-    return workspace_api_key
-
-
-@fixture
 def experiment_id(client: TestClient, admin_token: str) -> Generator[int, None, None]:
     response = client.post(
         "/mab",

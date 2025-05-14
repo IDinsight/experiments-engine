@@ -6,7 +6,6 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..users.models import UserDB
-from ..users.schemas import UserCreate
 from ..utils import get_key_hash
 from .models import ApiKeyRotationHistoryDB, WorkspaceDB
 from .schemas import WorkspaceUpdate
@@ -28,7 +27,7 @@ async def create_workspace(
     api_daily_quota: Optional[int] = None,
     asession: AsyncSession,
     content_quota: Optional[int] = None,
-    user: UserCreate,
+    workspace_name: str,
     is_default: bool = False,
     api_key: Optional[str] = None,
 ) -> tuple[WorkspaceDB, bool]:
@@ -39,7 +38,7 @@ async def create_workspace(
     assert content_quota is None or content_quota >= 0
 
     result = await asession.execute(
-        select(WorkspaceDB).where(WorkspaceDB.workspace_name == user.workspace_name)
+        select(WorkspaceDB).where(WorkspaceDB.workspace_name == workspace_name)
     )
     workspace_db = result.scalar_one_or_none()
     new_workspace = False
@@ -51,7 +50,7 @@ async def create_workspace(
             content_quota=content_quota,
             created_datetime_utc=datetime.now(timezone.utc),
             updated_datetime_utc=datetime.now(timezone.utc),
-            workspace_name=user.workspace_name,
+            workspace_name=workspace_name,
             is_default=is_default,
         )
 

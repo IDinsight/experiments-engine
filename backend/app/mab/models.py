@@ -228,17 +228,23 @@ async def get_all_mabs(
 
 
 async def get_mab_by_id(
-    experiment_id: int, user_id: int, workspace_id: int, asession: AsyncSession
+    experiment_id: int,
+    user_id: int | None,
+    workspace_id: int,
+    asession: AsyncSession,
 ) -> MultiArmedBanditDB | None:
     """
-    Get the experiment by id.
+    Get the experiment by id from a specific workspace.
+    If user_id is provided, further filters to experiments owned by that user.
     """
-    result = await asession.execute(
-        select(MultiArmedBanditDB)
-        .where(MultiArmedBanditDB.user_id == user_id)
-        .where(MultiArmedBanditDB.workspace_id == workspace_id)
-        .where(MultiArmedBanditDB.experiment_id == experiment_id)
-    )
+    conditions = [
+        MultiArmedBanditDB.workspace_id == workspace_id,
+        MultiArmedBanditDB.experiment_id == experiment_id,
+    ]
+    if user_id is not None:
+        conditions.append(MultiArmedBanditDB.user_id == user_id)
+
+    result = await asession.execute(select(MultiArmedBanditDB).where(and_(*conditions)))
 
     return result.unique().scalar_one_or_none()
 
@@ -287,14 +293,13 @@ async def delete_mab_by_id(
 
 
 async def get_obs_by_experiment_arm_id(
-    experiment_id: int, arm_id: int, user_id: int, asession: AsyncSession
+    experiment_id: int, arm_id: int, asession: AsyncSession
 ) -> Sequence[MABDrawDB]:
     """
     Get the observations for the experiment and arm.
     """
     statement = (
         select(MABDrawDB)
-        .where(MABDrawDB.user_id == user_id)
         .where(MABDrawDB.experiment_id == experiment_id)
         .where(MABDrawDB.reward.is_not(None))
         .where(MABDrawDB.arm_id == arm_id)
@@ -305,14 +310,27 @@ async def get_obs_by_experiment_arm_id(
 
 
 async def get_all_obs_by_experiment_id(
-    experiment_id: int, user_id: int, asession: AsyncSession
+    experiment_id: int,
+    workspace_id: int,
+    asession: AsyncSession,
 ) -> Sequence[MABDrawDB]:
     """
-    Get the observations for the experiment and arm.
+    Get the observations for the experiment.
     """
+    # First, verify experiment belongs to the workspace
+    experiment = await get_mab_by_id(
+        experiment_id=experiment_id,
+        user_id=None,
+        workspace_id=workspace_id,
+        asession=asession,
+    )
+
+    if experiment is None:
+        # Return empty list if experiment doesn't exist or doesn't belong to workspace
+        return []
+
     statement = (
         select(MABDrawDB)
-        .where(MABDrawDB.user_id == user_id)
         .where(MABDrawDB.experiment_id == experiment_id)
         .where(MABDrawDB.reward.is_not(None))
         .order_by(MABDrawDB.observed_datetime_utc)
@@ -321,33 +339,29 @@ async def get_all_obs_by_experiment_id(
     return (await asession.execute(statement)).unique().scalars().all()
 
 
-async def get_draw_by_id(
-    draw_id: str, user_id: int, asession: AsyncSession
-) -> MABDrawDB | None:
+async def get_draw_by_id(draw_id: str, asession: AsyncSession) -> MABDrawDB | None:
     """
-    Get a draw by its ID
+    Get a draw by its ID, which should be unique across the system.
     """
-    statement = (
-        select(MABDrawDB)
-        .where(MABDrawDB.draw_id == draw_id)
-        .where(MABDrawDB.user_id == user_id)
-    )
+    statement = select(MABDrawDB).where(MABDrawDB.draw_id == draw_id)
     result = await asession.execute(statement)
 
     return result.unique().scalar_one_or_none()
 
 
 async def get_draw_by_client_id(
-    client_id: str, user_id: int, asession: AsyncSession
+    client_id: str,
+    experiment_id: int,
+    asession: AsyncSession,
 ) -> MABDrawDB | None:
     """
-    Get a draw by its ID
+    Get a draw by its client ID for a specific experiment.
     """
     statement = (
         select(MABDrawDB)
         .where(MABDrawDB.client_id == client_id)
         .where(MABDrawDB.client_id.is_not(None))
-        .where(MABDrawDB.user_id == user_id)
+        .where(MABDrawDB.experiment_id == experiment_id)
     )
     result = await asession.execute(statement)
 
@@ -359,12 +373,29 @@ async def save_draw_to_db(
     arm_id: int,
     draw_id: str,
     client_id: str | None,
-    user_id: int,
+    user_id: int | None,
     asession: AsyncSession,
+    workspace_id: int | None = None,
 ) -> MABDrawDB:
     """
     Save a draw to the database
     """
+    # If user_id is not provided but needed, get it from the experiment
+    if user_id is None and workspace_id is not None:
+        experiment = await get_mab_by_id(
+            experiment_id=experiment_id,
+            user_id=None,
+            workspace_id=workspace_id,
+            asession=asession,
+        )
+
+        if experiment:
+            user_id = experiment.user_id
+        else:
+            raise ValueError(f"Experiment with id {experiment_id} not found")
+
+    if user_id is None:
+        raise ValueError("User ID must be provided or derivable from experiment")
 
     draw_datetime_utc: datetime = datetime.now(timezone.utc)
 

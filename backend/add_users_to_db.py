@@ -1,12 +1,8 @@
 import asyncio
 import os
 from datetime import datetime, timezone
-from typing import Optional, Union
 
 from redis import asyncio as aioredis
-from sqlalchemy import select
-from sqlalchemy.exc import MultipleResultsFound, NoResultFound
-from sqlalchemy.orm import Session
 
 from app.config import REDIS_HOST
 from app.database import get_session
@@ -31,35 +27,16 @@ ADMIN_EXPERIMENT_QUOTA = os.environ.get("ADMIN_EXPERIMENT_QUOTA", None)
 ADMIN_API_DAILY_QUOTA = os.environ.get("ADMIN_API_DAILY_QUOTA", None)
 
 
-user_db = UserDB(
-    username=ADMIN_USERNAME,
-    first_name=ADMIN_FIRST_NAME,
-    last_name=ADMIN_LAST_NAME,
-    hashed_password=get_password_salted_hash(ADMIN_PASSWORD),
-    hashed_api_key=get_key_hash(ADMIN_API_KEY),
-    api_key_first_characters=ADMIN_API_KEY[:5],
-    api_key_updated_datetime_utc=datetime.now(timezone.utc),
-    experiments_quota=ADMIN_EXPERIMENT_QUOTA,
-    api_daily_quota=ADMIN_API_DAILY_QUOTA,
-    created_datetime_utc=datetime.now(timezone.utc),
-    updated_datetime_utc=datetime.now(timezone.utc),
-    is_active=True,
-    is_verified=True,
-)
-
-
-async def async_redis_operations(key: str, value: Optional[int]) -> None:
+async def async_redis_operations(key: str, value: int | None) -> None:
     """
     Asynchronous Redis operations to set the remaining API calls for a user.
     """
     redis = await aioredis.from_url(REDIS_HOST)
-
     await redis.set(key, encode_api_limit(value))
-
     await redis.aclose()
 
 
-def run_redis_async_tasks(key: str, value: Union[int, str]) -> None:
+def run_redis_async_tasks(key: str, value: int | str) -> None:
     """
     Run asynchronous Redis operations to set the remaining API calls for a user.
     """
@@ -69,68 +46,43 @@ def run_redis_async_tasks(key: str, value: Union[int, str]) -> None:
     loop.run_until_complete(async_redis_operations(key, value_int))
 
 
-def ensure_default_workspace(db_session: Session, user_db: UserDB) -> None:
-    """
-    Ensure that a user has a default workspace.
+if __name__ == "__main__":
+    db_session = next(get_session())
 
-    Parameters
-    ----------
-    db_session
-        The database session.
-    user_db
-        The user DB record.
-    """
-    # Check if user already has a workspace
-    stmt = select(UserWorkspaceDB).where(UserWorkspaceDB.user_id == user_db.user_id)
-    result = db_session.execute(stmt)
-    existing_workspace = result.scalar_one_or_none()
+    try:
+        # Check if any users already exist
+        user_count = db_session.query(UserDB).count()
 
-    if existing_workspace:
-        logger.info(
-            f"User {user_db.username} already has workspace relationship: "
-            f"{existing_workspace.workspace_id}"
-        )
-        # Check if any workspace is set as default
-        stmt = select(UserWorkspaceDB).where(
-            UserWorkspaceDB.user_id == user_db.user_id,
-            UserWorkspaceDB.default_workspace,
-        )
-        result = db_session.execute(stmt)
-        default_workspace = result.scalar_one_or_none()
-
-        if default_workspace:
+        if user_count > 0:
             logger.info(
-                f"User {user_db.username} already has default workspace: "
-                f"{default_workspace.workspace_id}"
+                "Users already exist in the database. Skipping admin user creation."
             )
-            return
-        else:
-            # Set first workspace as default
-            existing_workspace.default_workspace = True
-            db_session.add(existing_workspace)
-            db_session.commit()
-            logger.info(
-                f"Set workspace {existing_workspace.workspace_id} as default for "
-                f"{user_db.username}"
-            )
-            return
+            exit(0)
 
-    # Create a default workspace for the user
-    workspace_name = f"{user_db.username}'s Workspace"
-
-    # Check if workspace with this name already exists
-    stmt = select(WorkspaceDB).where(WorkspaceDB.workspace_name == workspace_name)
-    result = db_session.execute(stmt)
-    existing_workspace_db = result.scalar_one_or_none()
-
-    if existing_workspace_db:
-        workspace_db = existing_workspace_db
-        logger.info(
-            f"Workspace '{workspace_name}' already exists with ID "
-            f"{workspace_db.workspace_id}"
+        # Create the admin user
+        user_db = UserDB(
+            username=ADMIN_USERNAME,
+            first_name=ADMIN_FIRST_NAME,
+            last_name=ADMIN_LAST_NAME,
+            hashed_password=get_password_salted_hash(ADMIN_PASSWORD),
+            hashed_api_key=get_key_hash(ADMIN_API_KEY),
+            api_key_first_characters=ADMIN_API_KEY[:5],
+            api_key_updated_datetime_utc=datetime.now(timezone.utc),
+            experiments_quota=ADMIN_EXPERIMENT_QUOTA,
+            api_daily_quota=ADMIN_API_DAILY_QUOTA,
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
+            is_active=True,
+            is_verified=True,
+            access_level="fullaccess",
         )
-    else:
-        # Create new workspace
+
+        db_session.add(user_db)
+        db_session.flush()  # Generate user_id
+        logger.info(f"Created admin user: {ADMIN_USERNAME}")
+
+        # Create default workspace
+        workspace_name = f"{ADMIN_USERNAME}'s Workspace"
         workspace_db = WorkspaceDB(
             workspace_name=workspace_name,
             api_daily_quota=100,
@@ -143,52 +95,34 @@ def ensure_default_workspace(db_session: Session, user_db: UserDB) -> None:
             api_key_updated_datetime_utc=datetime.now(timezone.utc),
             api_key_rotated_by_user_id=user_db.user_id,
         )
+
         db_session.add(workspace_db)
-        db_session.commit()
-        logger.info(
-            f"Created workspace '{workspace_name}' with ID {workspace_db.workspace_id}"
+        db_session.flush()  # Generate workspace_id
+        logger.info(f"Created default workspace: {workspace_name}")
+
+        # Create user-workspace relationship
+        user_workspace = UserWorkspaceDB(
+            user_id=user_db.user_id,
+            workspace_id=workspace_db.workspace_id,
+            user_role=UserRoles.ADMIN,
+            default_workspace=True,
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
         )
 
-    # Create user-workspace relationship
-    user_workspace = UserWorkspaceDB(
-        user_id=user_db.user_id,
-        workspace_id=workspace_db.workspace_id,
-        user_role=UserRoles.ADMIN,
-        default_workspace=True,
-        created_datetime_utc=datetime.now(timezone.utc),
-        updated_datetime_utc=datetime.now(timezone.utc),
-    )
-    db_session.add(user_workspace)
-    db_session.commit()
-    logger.info(
-        f"Created workspace relationship for user {user_db.username} with workspace "
-        f"{workspace_db.workspace_id}"
-    )
+        db_session.add(user_workspace)
+        db_session.commit()
+        logger.info("Associated admin user with workspace")
 
-
-if __name__ == "__main__":
-    db_session = next(get_session())
-    stmt = select(UserDB).where(UserDB.username == user_db.username)
-    result = db_session.execute(stmt)
-    try:
-        existing_user = result.one()
-        logger.info(f"User with username {user_db.username} already exists.")
-        user_db = existing_user[0]
-    except NoResultFound:
-        db_session.add(user_db)
-        db_session.flush()
-        logger.info(f"User with username {user_db.username} added to local database.")
+        # Set API limit in Redis
         run_redis_async_tasks(
             f"remaining-calls:{user_db.username}", user_db.api_daily_quota
         )
-    except MultipleResultsFound:
-        logger.error(
-            f"Multiple users with username {user_db.username} found in local database."
-        )
-        existing_users = result.all()
-        user_db = existing_users[0][0]
+        logger.info("Admin user setup completed successfully")
 
-    # Ensure the user has a default workspace
-    ensure_default_workspace(db_session, user_db)
-
-    db_session.commit()
+    except Exception as e:
+        db_session.rollback()
+        logger.error(f"Error creating admin user: {str(e)}")
+        raise
+    finally:
+        db_session.close()
