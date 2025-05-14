@@ -227,7 +227,7 @@ class TestMab:
         id = create_mabs[0]["experiment_id"] if create_mabs else 999
 
         response = client.get(
-            f"/mab/{id}", headers={"Authorization": f"Bearer {admin_token}"}
+            f"/mab/{id}/", headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == expected_response
 

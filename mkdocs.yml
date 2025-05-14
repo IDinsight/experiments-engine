@@ -29,20 +29,52 @@ theme:
     - navigation.sections
     - navigation.indexes
     - navigation.top
+    - content.footnote.tooltips
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+# extra:
+#   katex_options: >
+#     katex.render = (function(oldRender) {
+#       return function(tex, element, options) {
+#         element.classList.add('katex-block');
+#         return oldRender(tex, element, options);
+#       };
+#     })(katex.render);
 
 nav:
   - Welcome to ExE: index.md
   - Deploying: deploying.md
-  - Set up your first experiment:
-    - first-experiment/index.md
-    - Create an experiment: first-experiment/create.md
-    - Integrate with your application: first-experiment/integrate.md
-    - Monitor your experiment: first-experiment/monitor.md
+  - Getting Started:
+    - Overview: getting-started/index.md
+    - Setup your first experiment:
+        - Overview: getting-started/first-experiment/index.md
+        - Create an experiment: getting-started/first-experiment/create.md
+        - Integrate with your application: getting-started/first-experiment/integrate.md
+        - Monitor your experiment: getting-started/first-experiment/monitor.md
+    - Experiments:
+        - Overview: getting-started/experiments/index.md
+        - Multi-Armed Bandits:
+          - Overview: getting-started/experiments/mabs/index.md
+          - Setting up a MAB: getting-started/experiments/mabs/setting-up.md
+          - Running a MAB experiment: getting-started/experiments/mabs/run-experiment.md
+        - Contextual Bandits:
+            - Overview: getting-started/experiments/cmabs/index.md
+            - Setting up a CMAB: getting-started/experiments/cmabs/setting-up.md
+            - Running a CMAB experiment: getting-started/experiments/cmabs/run-experiment.md
+        - Bayesian A/B Testing:
+            - Overview: getting-started/experiments/bayes_ab/index.md
+            - Setting up a Bayesian A/B Test: getting-started/experiments/bayes_ab/setting-up.md
   - Blog: blog/index.md
 
 markdown_extensions:
   - admonition
   - pymdownx.details
+  - pymdownx.arithmatex:
+      generic: true
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
@@ -53,6 +85,7 @@ markdown_extensions:
   - attr_list
   - md_in_html
   - def_list
+  - footnotes
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg

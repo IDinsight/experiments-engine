@@ -67,7 +67,7 @@ export function WorkspaceSwitcher() {
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg z-100 bg-popover shadow-md"
             align="start"
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}

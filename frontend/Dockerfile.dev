@@ -1,0 +1,20 @@
+FROM node:18-slim
+
+# Install dependencies
+# RUN apk add --no-cache libc6-compat python3 make g++
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+
+# Set environment variables
+ENV NODE_ENV development
+ENV NEXT_TELEMETRY_DISABLED 1
+
+# Expose the application port
+EXPOSE 3000
+
+# Set the default command to run the development server
+CMD ["npm", "run", "dev"]

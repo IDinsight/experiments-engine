@@ -27,6 +27,7 @@ fresh-env:
 		pip install psycopg2-binary==2.9.9; \
 	fi
 
+# --- Local development commands ---
 setup-dev: setup-redis setup-db
 
 setup-db: guard-POSTGRES_USER guard-POSTGRES_PASSWORD guard-POSTGRES_DB
@@ -79,3 +80,45 @@ run-backend:
 
 run-frontend:
 	cd frontend && npm run dev
+
+
+# --- Prod instance (with no hot reload) commands, use for deployment ---
+server-start:
+	cd deployment/docker-compose && docker-compose -f docker-compose.yml -p exe-prod up --build -d --remove-orphans
+
+server-stop:
+	cd deployment/docker-compose && docker-compose -f docker-compose.yml -p exe-prod down
+
+server-restart:
+	cd deployment/docker-compose && docker-compose -f docker-compose.yml -p exe-prod restart
+
+server-status:
+	cd deployment/docker-compose && docker-compose ps
+
+server-prune:
+	cd deployment/docker-compose && docker system prune -f --force
+
+server-soft-reset: # delete all containers and images
+	make server-stop
+	make server-prune
+	make server-start
+
+# -- Dev instance (with hot reload) commands ---
+dev-inst-start:
+	cd deployment/docker-compose && docker-compose -f docker-compose-dev.yml -p exe-dev up --build -d --remove-orphans
+
+dev-inst-stop:
+	cd deployment/docker-compose && docker-compose -f docker-compose-dev.yml -p exe-dev down
+
+dev-inst-restart:
+	cd deployment/docker-compose && docker-compose -f docker-compose-dev.yml -p exe-dev restart
+
+dev-inst-soft-reset: # delete all containers and images
+	make dev-inst-stop
+	make server-prune
+	make dev-inst-start
+
+dev-inst-hard-reset: # delete all containers, images and volumes
+	make dev-inst-stop
+	@docker system prune -f --volumes --force
+	make dev-inst-start

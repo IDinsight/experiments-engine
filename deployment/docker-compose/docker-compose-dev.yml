@@ -1,14 +1,17 @@
 services:
   backend:
-    image: idinsight/experiment_engine_backend:latest
+    image: idinsight/experiment_engine_backend_dev:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
     command: >
-      /bin/sh startup.sh
+      python -m alembic upgrade head && python add_users_to_db.py && uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     restart: always
+    ports:
+      - "8000:8000"
     volumes:
-      - temp:/usr/src/experiment_engine_backend/temp
+      # - temp:/usr/src/experiment_engine_backend/temp
+      - ../../backend:/usr/src/experiment_engine_backend
     env_file:
       - .base.env
       - .backend.env
@@ -20,21 +23,23 @@ services:
       - REDIS_HOST=redis://redis:6379
 
   frontend:
-    image: idinsight/experiment_engine_frontend:latest
-    env_file:
-      - .base.env
-      - .backend.env
+    image: idinsight/experiment_engine_frontend_dev:latest
     build:
       context: ../../frontend
-      dockerfile: Dockerfile
-      # args:
-      #   - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
-      #   - NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID}
+      dockerfile: Dockerfile.dev
     command: >
-      node server.js
+      npm run dev
     depends_on:
       - backend
     restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .base.env
+      - .backend.env
+    volumes:
+      - ../../frontend:/app
+      - /app/node_modules
 
   relational_db:
     image: postgres:16.4
@@ -68,4 +73,4 @@ volumes:
   db_volume:
   caddy_data:
   caddy_config:
-  temp:
+  # temp:

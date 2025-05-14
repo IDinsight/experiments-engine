@@ -123,7 +123,7 @@ async def get_mabs(
     return all_experiments
 
 
-@router.get("/{experiment_id}", response_model=MultiArmedBanditResponse)
+@router.get("/{experiment_id}/", response_model=MultiArmedBanditResponse)
 async def get_mab(
     experiment_id: int,
     user_db: Annotated[UserDB, Depends(get_verified_user)],

@@ -1,9 +1,16 @@
 "use client";
 import * as React from "react";
 import {
+  AudioWaveform,
+  ArrowLeftRightIcon,
   LayoutDashboardIcon,
-  FlaskConicalIcon,
+  Command,
+  Frame,
+  GalleryVerticalEnd,
+  Map,
+  PieChart,
   Settings2,
+  FlaskConicalIcon,
 } from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavRecentExperiments } from "@/components/nav-recent-experiments";
@@ -16,14 +23,51 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 
-const AppSidebar = React.memo(function AppSidebar({
-  ...props
-}: React.ComponentProps<typeof Sidebar>) {
-  const { user, firstName, lastName } = useAuth();
+type UserDetails = {
+  username: string;
+  firstName: string;
+  lastName: string;
+  isActive: boolean;
+  isVerified: boolean;
+};
 
-  const navMain = [
+const getUserDetails = async (token: string | null) => {
+  try {
+    if (token) {
+      const response = await apiCalls.getUser(token);
+      if (!response) {
+        throw new Error("No response from server");
+      }
+      return {
+        username: response.username,
+        firstName: response.first_name,
+        lastName: response.last_name,
+        isActive: response.is_active,
+        isVerified: response.is_verified,
+      } as UserDetails;
+  } else {
+    throw new Error("No token provided");
+  }
+} catch (error: unknown) {
+    if (error instanceof Error) {
+      throw new Error(`Error fetching user details: ${error.message}`);
+    } else {
+      throw new Error("Error fetching user details");
+    }
+  }
+};
+
+// This is sample data.
+const data = {
+  user: {
+    name: "shadcn",
+    email: "m@example.com",
+    avatar: "/avatars/shadcn.jpg",
+  },
+  navMain: [
     {
       title: "Experiments",
       url: "/experiments",
@@ -39,40 +83,48 @@ const AppSidebar = React.memo(function AppSidebar({
       url: "#",
       icon: Settings2,
     },
-  ];
-
-  const recentExperiments = [
+  ],
+  recentExperiments: [
     {
       name: "New onboarding flows",
       url: "#",
-      icon: FlaskConicalIcon,
+      icon: Frame,
     },
     {
       name: "3 different voices",
       url: "#",
-      icon: FlaskConicalIcon,
+      icon: PieChart,
     },
     {
       name: "AI responses",
       url: "#",
-      icon: FlaskConicalIcon,
+      icon: Map,
     },
-  ];
+  ],
+};
+const AppSidebar = React.memo(function AppSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
+  const { token } = useAuth();
+  const [userDetails, setUserDetails] = React.useState<UserDetails | null>(
+    null
+  );
 
-  const userDetails = {
-    firstName: firstName || "?",
-    lastName: lastName || "?",
-    username: user || "loading",
-  };
-
+  React.useEffect(() => {
+    if (token) {
+      getUserDetails(token)
+        .then((data) => setUserDetails(data))
+        .catch((error) => console.error(error));
+    }
+  }, [token]);
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <WorkspaceSwitcher />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navMain} />
-        <NavRecentExperiments experiments={recentExperiments} />
+        <NavMain items={data.navMain} />
+        <NavRecentExperiments experiments={data.recentExperiments} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userDetails} />
