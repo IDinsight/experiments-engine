@@ -213,9 +213,7 @@ async def get_all_bayes_ab_experiments(
     """
     stmt = (
         select(BayesianABDB)
-        .where(
-            BayesianABDB.user_id == user_id, BayesianABDB.workspace_id == workspace_id
-        )
+        .where(BayesianABDB.workspace_id == workspace_id)
         .order_by(BayesianABDB.experiment_id)
     )
     result = await asession.execute(stmt)
@@ -230,14 +228,11 @@ async def get_bayes_ab_experiment_by_id(
 ) -> BayesianABDB | None:
     """
     Get the A/B experiment by id from a specific workspace.
-    If user_id is provided, further filters to experiments owned by that user.
     """
     conditions = [
         BayesianABDB.workspace_id == workspace_id,
         BayesianABDB.experiment_id == experiment_id,
     ]
-    if user_id is not None:
-        conditions.append(BayesianABDB.user_id == user_id)
 
     stmt = select(BayesianABDB).where(and_(*conditions))
     result = await asession.execute(stmt)

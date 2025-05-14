@@ -235,14 +235,11 @@ async def get_mab_by_id(
 ) -> MultiArmedBanditDB | None:
     """
     Get the experiment by id from a specific workspace.
-    If user_id is provided, further filters to experiments owned by that user.
     """
     conditions = [
         MultiArmedBanditDB.workspace_id == workspace_id,
         MultiArmedBanditDB.experiment_id == experiment_id,
     ]
-    if user_id is not None:
-        conditions.append(MultiArmedBanditDB.user_id == user_id)
 
     result = await asession.execute(select(MultiArmedBanditDB).where(and_(*conditions)))
 

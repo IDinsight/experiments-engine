@@ -266,10 +266,7 @@ async def get_all_contextual_mabs(
     """
     statement = (
         select(ContextualBanditDB)
-        .where(
-            ContextualBanditDB.user_id == user_id,
-            ContextualBanditDB.workspace_id == workspace_id,
-        )
+        .where(ContextualBanditDB.workspace_id == workspace_id)
         .order_by(ContextualBanditDB.experiment_id)
     )
 
@@ -286,8 +283,6 @@ async def get_contextual_mab_by_id(
         ContextualBanditDB.experiment_id == experiment_id,
         ContextualBanditDB.workspace_id == workspace_id,
     ]
-    if user_id is not None:
-        condition.append(ContextualBanditDB.user_id == user_id)
 
     statement = select(ContextualBanditDB).where(*condition)
     result = await asession.execute(statement)
