@@ -31,7 +31,6 @@ email_service = EmailService()
 
 
 @router.post("/", response_model=UserCreate)
-@router.post("/", response_model=UserCreate)
 async def create_user(
     user: UserCreateWithPassword,
     request: Request,

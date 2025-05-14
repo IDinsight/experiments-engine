@@ -6,6 +6,12 @@ from google.oauth2 import id_token
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.app.workspaces.models import (
+    delete_pending_invitation,
+    get_pending_invitations_by_email,
+)
+from backend.app.workspaces.utils import get_workspace_by_workspace_id
+
 from ..config import DEFAULT_API_QUOTA, DEFAULT_EXPERIMENTS_QUOTA
 from ..database import get_async_session, get_redis
 from ..email import EmailService
@@ -127,6 +133,27 @@ async def login_google(
         )
 
     user_db = await get_user_by_username(username=user_email, asession=asession)
+
+    pending_invitations = await get_pending_invitations_by_email(
+        asession=asession, email=user_email
+    )
+
+    for invitation in pending_invitations:
+        invite_workspace = await get_workspace_by_workspace_id(
+            asession=asession, workspace_id=invitation.workspace_id
+        )
+
+        # Add user to the invited workspace
+        await create_user_workspace_role(
+            asession=asession,
+            is_default_workspace=False,
+            user_db=user_db,
+            user_role=invitation.role,
+            workspace_db=invite_workspace,
+        )
+
+        # Delete the invitation
+        await delete_pending_invitation(asession=asession, invitation=invitation)
 
     # Create default workspace if user is new (has no workspaces)
     default_workspace = await get_user_default_workspace(

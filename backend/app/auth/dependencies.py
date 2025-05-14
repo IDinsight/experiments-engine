@@ -262,7 +262,7 @@ async def require_admin_role(
     return user_db
 
 
-def create_access_token(username: str, workspace_name: Optional[str] = None) -> str:
+def create_access_token(username: str, workspace_name: str | None = None) -> str:
     """
     Create an access token for the user
     """
