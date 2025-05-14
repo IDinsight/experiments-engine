@@ -6,12 +6,6 @@ from google.oauth2 import id_token
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.app.workspaces.models import (
-    delete_pending_invitation,
-    get_pending_invitations_by_email,
-)
-from backend.app.workspaces.utils import get_workspace_by_workspace_id
-
 from ..config import DEFAULT_API_QUOTA, DEFAULT_EXPERIMENTS_QUOTA
 from ..database import get_async_session, get_redis
 from ..email import EmailService
@@ -28,6 +22,11 @@ from ..users.schemas import (
     PasswordResetRequest,
 )
 from ..utils import setup_logger
+from ..workspaces.models import (
+    delete_pending_invitation,
+    get_pending_invitations_by_email,
+)
+from ..workspaces.utils import get_workspace_by_workspace_id
 from .config import NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID
 from .dependencies import (
     authenticate_credentials,
