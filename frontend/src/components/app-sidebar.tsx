@@ -1,12 +1,8 @@
 "use client";
 import * as React from "react";
 import {
-  AudioWaveform,
-  ArrowLeftRightIcon,
   LayoutDashboardIcon,
-  Command,
   Frame,
-  GalleryVerticalEnd,
   Map,
   PieChart,
   Settings2,

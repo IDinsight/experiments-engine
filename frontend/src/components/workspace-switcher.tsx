@@ -87,7 +87,7 @@ export function WorkspaceSwitcher() {
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">
-                  {currentWorkspace.workspace_name}
+                  {currentWorkspace?.workspace_name || "No Workspace"}
                 </span>
                 <span className="truncate text-xs">
                   {isLoading ? "Switching..." : "Workspace"}
@@ -109,7 +109,7 @@ export function WorkspaceSwitcher() {
               <DropdownMenuItem
                 key={workspace.workspace_id}
                 onClick={() => handleWorkspaceSwitch(workspace.workspace_name)}
-                className={`gap-2 p-2 ${workspace.workspace_id === currentWorkspace.workspace_id ? "bg-accent" : ""}`}
+                className={`gap-2 p-2 ${currentWorkspace && workspace.workspace_id === currentWorkspace.workspace_id ? "bg-accent" : ""}`}
               >
                 <div className="flex size-6 items-center justify-center rounded-sm border">
                   <FlaskConical className="size-4 shrink-0" />
