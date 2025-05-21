@@ -22,9 +22,6 @@ ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin@idinsight.org")
 ADMIN_FIRST_NAME = os.environ.get("ADMIN_FIRST_NAME", "Admin")
 ADMIN_LAST_NAME = os.environ.get("ADMIN_LAST_NAME", "User")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "12345")
-ADMIN_API_KEY = os.environ.get("ADMIN_API_KEY", "admin-key")
-ADMIN_EXPERIMENT_QUOTA = os.environ.get("ADMIN_EXPERIMENT_QUOTA", None)
-ADMIN_API_DAILY_QUOTA = os.environ.get("ADMIN_API_DAILY_QUOTA", None)
 
 
 async def async_redis_operations(key: str, value: int | None) -> None:
@@ -65,11 +62,6 @@ if __name__ == "__main__":
             first_name=ADMIN_FIRST_NAME,
             last_name=ADMIN_LAST_NAME,
             hashed_password=get_password_salted_hash(ADMIN_PASSWORD),
-            hashed_api_key=get_key_hash(ADMIN_API_KEY),
-            api_key_first_characters=ADMIN_API_KEY[:5],
-            api_key_updated_datetime_utc=datetime.now(timezone.utc),
-            experiments_quota=ADMIN_EXPERIMENT_QUOTA,
-            api_daily_quota=ADMIN_API_DAILY_QUOTA,
             created_datetime_utc=datetime.now(timezone.utc),
             updated_datetime_utc=datetime.now(timezone.utc),
             is_active=True,
@@ -83,6 +75,7 @@ if __name__ == "__main__":
 
         # Create default workspace
         workspace_name = f"{ADMIN_USERNAME}'s Workspace"
+        hashed_workspace_key = get_key_hash("workspace-api-key-" + workspace_name)
         workspace_db = WorkspaceDB(
             workspace_name=workspace_name,
             api_daily_quota=100,
@@ -90,8 +83,8 @@ if __name__ == "__main__":
             created_datetime_utc=datetime.now(timezone.utc),
             updated_datetime_utc=datetime.now(timezone.utc),
             is_default=True,
-            hashed_api_key=get_key_hash("workspace-api-key-" + workspace_name),
-            api_key_first_characters="works",
+            hashed_api_key=hashed_workspace_key,
+            api_key_first_characters=hashed_workspace_key[:5],
             api_key_updated_datetime_utc=datetime.now(timezone.utc),
             api_key_rotated_by_user_id=user_db.user_id,
         )
@@ -116,7 +109,7 @@ if __name__ == "__main__":
 
         # Set API limit in Redis
         run_redis_async_tasks(
-            f"remaining-calls:{user_db.username}", user_db.api_daily_quota
+            f"remaining-calls:{workspace_db.workspace_id}", workspace_db.api_daily_quota
         )
         logger.info("Admin user setup completed successfully")
 

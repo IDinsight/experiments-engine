@@ -208,7 +208,6 @@ async def save_mab_to_db(
 
 
 async def get_all_mabs(
-    user_id: int,
     workspace_id: int,
     asession: AsyncSession,
 ) -> Sequence[MultiArmedBanditDB]:
@@ -218,7 +217,6 @@ async def get_all_mabs(
     statement = (
         select(MultiArmedBanditDB)
         .where(
-            MultiArmedBanditDB.user_id == user_id,
             MultiArmedBanditDB.workspace_id == workspace_id,
         )
         .order_by(MultiArmedBanditDB.experiment_id)
@@ -229,7 +227,6 @@ async def get_all_mabs(
 
 async def get_mab_by_id(
     experiment_id: int,
-    user_id: int | None,
     workspace_id: int,
     asession: AsyncSession,
 ) -> MultiArmedBanditDB | None:
@@ -247,30 +244,23 @@ async def get_mab_by_id(
 
 
 async def delete_mab_by_id(
-    experiment_id: int, user_id: int, workspace_id: int, asession: AsyncSession
+    experiment_id: int, workspace_id: int, asession: AsyncSession
 ) -> None:
     """
     Delete the experiment by id.
     """
     await asession.execute(
-        delete(NotificationsDB)
-        .where(NotificationsDB.user_id == user_id)
-        .where(NotificationsDB.experiment_id == experiment_id)
+        delete(NotificationsDB).where(NotificationsDB.experiment_id == experiment_id)
     )
 
     await asession.execute(
-        delete(DrawsBaseDB).where(
-            and_(
-                DrawsBaseDB.user_id == user_id,
-                DrawsBaseDB.experiment_id == experiment_id,
-            )
-        )
+        delete(DrawsBaseDB).where(DrawsBaseDB.experiment_id == experiment_id)
     )
+
     await asession.execute(
         delete(MABArmDB).where(
             and_(
                 MABArmDB.arm_id == ArmBaseDB.arm_id,
-                ArmBaseDB.user_id == user_id,
                 ArmBaseDB.experiment_id == experiment_id,
             )
         )
@@ -280,7 +270,6 @@ async def delete_mab_by_id(
             and_(
                 MultiArmedBanditDB.experiment_id == experiment_id,
                 MultiArmedBanditDB.experiment_id == ExperimentBaseDB.experiment_id,
-                MultiArmedBanditDB.user_id == user_id,
                 MultiArmedBanditDB.workspace_id == workspace_id,
             )
         )
@@ -317,7 +306,6 @@ async def get_all_obs_by_experiment_id(
     # First, verify experiment belongs to the workspace
     experiment = await get_mab_by_id(
         experiment_id=experiment_id,
-        user_id=None,
         workspace_id=workspace_id,
         asession=asession,
     )
@@ -381,7 +369,6 @@ async def save_draw_to_db(
     if user_id is None and workspace_id is not None:
         experiment = await get_mab_by_id(
             experiment_id=experiment_id,
-            user_id=None,
             workspace_id=workspace_id,
             asession=asession,
         )

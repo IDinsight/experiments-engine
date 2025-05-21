@@ -204,7 +204,6 @@ async def save_bayes_ab_to_db(
 
 
 async def get_all_bayes_ab_experiments(
-    user_id: int,
     workspace_id: int,
     asession: AsyncSession,
 ) -> Sequence[BayesianABDB]:
@@ -222,7 +221,6 @@ async def get_all_bayes_ab_experiments(
 
 async def get_bayes_ab_experiment_by_id(
     experiment_id: int,
-    user_id: int | None,
     workspace_id: int,
     asession: AsyncSession,
 ) -> BayesianABDB | None:
@@ -241,7 +239,6 @@ async def get_bayes_ab_experiment_by_id(
 
 async def delete_bayes_ab_experiment_by_id(
     experiment_id: int,
-    user_id: int,
     workspace_id: int,
     asession: AsyncSession,
 ) -> None:
@@ -250,7 +247,6 @@ async def delete_bayes_ab_experiment_by_id(
     """
     stmt = delete(BayesianABDB).where(
         and_(
-            BayesianABDB.user_id == user_id,
             BayesianABDB.workspace_id == workspace_id,
             BayesianABDB.experiment_id == experiment_id,
             BayesianABDB.experiment_id == ExperimentBaseDB.experiment_id,
@@ -259,17 +255,13 @@ async def delete_bayes_ab_experiment_by_id(
     await asession.execute(stmt)
 
     stmt = delete(NotificationsDB).where(
-        and_(
-            NotificationsDB.user_id == user_id,
-            NotificationsDB.experiment_id == experiment_id,
-        )
+        NotificationsDB.experiment_id == experiment_id,
     )
     await asession.execute(stmt)
 
     stmt = delete(BayesianABDrawDB).where(
         and_(
             BayesianABDrawDB.draw_id == DrawsBaseDB.draw_id,
-            DrawsBaseDB.user_id == user_id,
             BayesianABDrawDB.experiment_id == experiment_id,
         )
     )
@@ -278,7 +270,6 @@ async def delete_bayes_ab_experiment_by_id(
     stmt = delete(BayesianABArmDB).where(
         and_(
             BayesianABArmDB.arm_id == ArmBaseDB.arm_id,
-            BayesianABArmDB.user_id == user_id,
             BayesianABArmDB.experiment_id == experiment_id,
         )
     )
@@ -323,7 +314,6 @@ async def save_bayes_ab_draw_to_db(
     if user_id is None and workspace_id is not None:
         experiment = await get_bayes_ab_experiment_by_id(
             experiment_id=experiment_id,
-            user_id=None,
             workspace_id=workspace_id,
             asession=asession,
         )
@@ -389,7 +379,6 @@ async def get_bayes_ab_obs_by_experiment_id(
     # First, verify experiment belongs to the workspace
     experiment = await get_bayes_ab_experiment_by_id(
         experiment_id=experiment_id,
-        user_id=None,
         workspace_id=workspace_id,
         asession=asession,
     )

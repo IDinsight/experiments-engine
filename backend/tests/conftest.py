@@ -97,11 +97,6 @@ def regular_user(client: TestClient, db_session: Session) -> Generator:
         hashed_password=get_password_salted_hash(TEST_PASSWORD),
         first_name=TEST_FIRST_NAME,
         last_name=TEST_LAST_NAME,
-        hashed_api_key=get_key_hash(unique_api_key),
-        api_key_first_characters=unique_api_key[:5],
-        api_key_updated_datetime_utc=datetime.now(UTC),
-        experiments_quota=TEST_EXPERIMENTS_QUOTA,
-        api_daily_quota=TEST_API_QUOTA,
         created_datetime_utc=datetime.now(UTC),
         updated_datetime_utc=datetime.now(UTC),
         is_verified=True,  # Make user verified for testing

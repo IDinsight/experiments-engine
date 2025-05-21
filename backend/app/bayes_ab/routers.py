@@ -95,7 +95,7 @@ async def get_bayes_abs(
         )
 
     experiments = await get_all_bayes_ab_experiments(
-        user_db.user_id, workspace_db.workspace_id, asession
+        workspace_db.workspace_id, asession
     )
 
     all_experiments = []
@@ -138,7 +138,7 @@ async def get_bayes_ab(
         )
 
     experiment = await get_bayes_ab_experiment_by_id(
-        experiment_id, user_db.user_id, workspace_db.workspace_id, asession
+        experiment_id, workspace_db.workspace_id, asession
     )
 
     if experiment is None:
@@ -178,7 +178,7 @@ async def delete_bayes_ab(
             )
 
         experiment = await get_bayes_ab_experiment_by_id(
-            experiment_id, user_db.user_id, workspace_db.workspace_id, asession
+            experiment_id, workspace_db.workspace_id, asession
         )
         if experiment is None:
             raise HTTPException(
@@ -186,7 +186,7 @@ async def delete_bayes_ab(
             )
 
         await delete_bayes_ab_experiment_by_id(
-            experiment_id, user_db.user_id, workspace_db.workspace_id, asession
+            experiment_id, workspace_db.workspace_id, asession
         )
 
         return {"message": f"Experiment with id {experiment_id} deleted successfully."}
@@ -209,7 +209,7 @@ async def draw_arm(
     workspace_id = workspace_db.workspace_id
 
     experiment = await get_bayes_ab_experiment_by_id(
-        experiment_id, None, workspace_id, asession
+        experiment_id, workspace_id, asession
     )
 
     if experiment is None:
@@ -323,7 +323,7 @@ async def get_outcomes(
     workspace_id = workspace_db.workspace_id
 
     experiment = await get_bayes_ab_experiment_by_id(
-        experiment_id, None, workspace_id, asession
+        experiment_id, workspace_id, asession
     )
     if not experiment:
         raise HTTPException(
@@ -356,7 +356,7 @@ async def update_arms(
 
     # Check experiment params
     experiment = await get_bayes_ab_experiment_by_id(
-        experiment_id, None, workspace_id, asession
+        experiment_id, workspace_id, asession
     )
     if not experiment:
         raise HTTPException(
@@ -403,7 +403,7 @@ async def validate_experiment_and_draw(
 ) -> tuple[BayesianABDB, BayesianABDrawDB]:
     """Validate the experiment and draw"""
     experiment = await get_bayes_ab_experiment_by_id(
-        experiment_id, None, workspace_id, asession
+        experiment_id, workspace_id, asession
     )
     if experiment is None:
         raise HTTPException(

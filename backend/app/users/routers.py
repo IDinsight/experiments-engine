@@ -15,7 +15,7 @@ from ..users.models import (
     UserDB,
     save_user_to_db,
 )
-from ..utils import generate_key, setup_logger, update_api_limits
+from ..utils import generate_key, setup_logger
 from .schemas import UserCreate, UserCreateWithPassword, UserRetrieve
 
 # Router setup
@@ -64,9 +64,6 @@ async def create_user(
         raise HTTPException(
             status_code=400, detail="User with that username already exists."
         ) from e
-
-    # Update API limits - no special exception handling needed
-    await update_api_limits(redis, user_new.username, user_new.api_daily_quota)
 
     # Create default workspace for the user
     default_workspace_name = f"{user_new.username}'s Workspace"
@@ -128,8 +125,6 @@ async def create_user(
         username=user_new.username,
         first_name=user_new.first_name,
         last_name=user_new.last_name,
-        experiments_quota=user_new.experiments_quota,
-        api_daily_quota=user_new.api_daily_quota,
     )
 
 

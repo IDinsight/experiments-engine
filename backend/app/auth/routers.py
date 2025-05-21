@@ -72,7 +72,6 @@ async def login(
 
     return AuthenticationDetails(
         access_token=create_access_token(user.username),
-        api_key_first_characters=user.api_key_first_characters,
         token_type="bearer",
         access_level=user.access_level,
         username=user.username,
@@ -184,7 +183,6 @@ async def login_google(
 
     return AuthenticationDetails(
         access_token=create_access_token(user.username, default_workspace_name),
-        api_key_first_characters=user.api_key_first_characters,
         token_type="bearer",
         access_level=user.access_level,
         username=user.username,

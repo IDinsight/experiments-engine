@@ -64,6 +64,7 @@ export default function WorkspaceDetailPage() {
   const [isRotatingKey, setIsRotatingKey] = useState(false);
   const [newApiKey, setNewApiKey] = useState<string | null>(null);
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
+  const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
 
   const workspaceId = Number(params.workspaceId);
 
@@ -84,6 +85,10 @@ export default function WorkspaceDetailPage() {
         const usersData = await apiCalls.getWorkspaceUsers(token, workspaceId);
         setWorkspaceUsers(usersData);
 
+        // Check if current user is admin
+        const currentUserData = usersData.find((user: WorkspaceUser) => user.username === currentUser);
+        setIsCurrentUserAdmin(currentUserData?.role === "admin");
+
         await loadKeyRotationHistory();
       } catch (error) {
         console.error("Error loading workspace data:", error);
@@ -98,7 +103,7 @@ export default function WorkspaceDetailPage() {
     };
 
     loadWorkspaceData();
-  }, [token, workspaceId, toast]);
+  }, [token, workspaceId, currentUser, toast]);
 
   const loadKeyRotationHistory = async () => {
     if (!token) return;
@@ -384,7 +389,7 @@ export default function WorkspaceDetailPage() {
               <CardHeader>
                 <CardTitle className="flex justify-between items-center">
                   <span>Workspace Users</span>
-                  {!workspace.is_default && (
+                  {isCurrentUserAdmin && !workspace.is_default && (
                     <Button
                       size="sm"
                       onClick={() =>
@@ -410,7 +415,9 @@ export default function WorkspaceDetailPage() {
                     <p className="text-sm text-muted-foreground">
                       {workspace.is_default
                         ? "Default workspaces automatically include all users."
-                        : "Invite users to collaborate in this workspace"}
+                        : isCurrentUserAdmin
+                          ? "Invite users to collaborate in this workspace"
+                          : null}
                     </p>
                   </div>
                 ) : (
@@ -421,87 +428,74 @@ export default function WorkspaceDetailPage() {
                       <div className="col-span-3">Joined</div>
                       <div className="col-span-2">Actions</div>
                     </div>
-                    {workspaceUsers.map((user) => {
-                      // Find the current user to determine if they have admin rights
-                      const isCurrentUserAdmin =
-                        workspaceUsers.find(
-                          (u) => u.username === currentUser
-                        )?.role === "admin";
-
-                      return (
-                        <div
-                          key={user.user_id}
-                          className="grid grid-cols-12 gap-4 p-4 border-t"
-                        >
-                          <div className="col-span-4 flex items-center">
-                            <div className="font-medium">
-                              {user.first_name} {user.last_name}
-                            </div>
-                            <div className="ml-2 text-sm text-muted-foreground">
-                              {user.username}
-                            </div>
+                    {workspaceUsers.map((user) => (
+                      <div
+                        key={user.user_id}
+                        className="grid grid-cols-12 gap-4 p-4 border-t"
+                      >
+                        <div className="col-span-4 flex items-center">
+                          <div className="font-medium">
+                            {user.first_name} {user.last_name}
                           </div>
-                          <div className="col-span-3 capitalize">
-                            {user.role.toLowerCase()}
-                            {user.is_default_workspace && (
-                              <span className="ml-2 text-xs bg-muted px-2 py-1 rounded-full">
-                                Default
-                              </span>
-                            )}
-                          </div>
-                          <div className="col-span-3 text-sm text-muted-foreground">
-                            {new Date(
-                              user.created_datetime_utc
-                            ).toLocaleDateString()}
-                          </div>
-                          <div className="col-span-2">
-                            {!workspace.is_default && isCurrentUserAdmin && (
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
-                                  >
-                                    Remove
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                      Remove user?
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to remove{" "}
-                                      {user.first_name} {user.last_name} from
-                                      this workspace?
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                      }}
-                                    >
-                                      Cancel
-                                    </AlertDialogCancel>
-                                    <AlertDialogAction
-                                      className="bg-red-600 hover:bg-red-700"
-                                      onClick={() =>
-                                        handleRemoveUser(user.username)
-                                      }
-                                    >
-                                      Remove
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            )}
+                          <div className="ml-2 text-sm text-muted-foreground">
+                            {user.username}
                           </div>
                         </div>
-                      );
-                    })}
+                        <div className="col-span-3 capitalize">
+                          {user.role.toLowerCase()}
+                          {user.is_default_workspace && (
+                            <span className="ml-2 text-xs bg-muted px-2 py-1 rounded-full">
+                              Default
+                            </span>
+                          )}
+                        </div>
+                        <div className="col-span-3 text-sm text-muted-foreground">
+                          {new Date(
+                            user.created_datetime_utc
+                          ).toLocaleDateString()}
+                        </div>
+                        <div className="col-span-2">
+                          {isCurrentUserAdmin && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
+                                >
+                                  Remove
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Remove user?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to remove{" "}
+                                    {user.first_name} {user.last_name} from
+                                    this workspace?
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>
+                                    Cancel
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    className="bg-red-600 hover:bg-red-700"
+                                    onClick={() =>
+                                      handleRemoveUser(user.username)
+                                    }
+                                  >
+                                    Remove
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>
@@ -513,14 +507,16 @@ export default function WorkspaceDetailPage() {
               <CardHeader>
                 <CardTitle className="flex justify-between items-center">
                   <span>API Configuration</span>
-                  <Button
-                    size="sm"
-                    onClick={handleRotateApiKey}
-                    disabled={isRotatingKey}
-                  >
-                    <Key className="h-4 w-4 mr-2" />
-                    {isRotatingKey ? "Rotating..." : "Rotate API Key"}
-                  </Button>
+                  {isCurrentUserAdmin && (
+                    <Button
+                      size="sm"
+                      onClick={handleRotateApiKey}
+                      disabled={isRotatingKey}
+                    >
+                      <Key className="h-4 w-4 mr-2" />
+                      {isRotatingKey ? "Rotating..." : "Rotate API Key"}
+                    </Button>
+                  )}
                 </CardTitle>
                 <CardDescription>
                   Manage API settings for this workspace
@@ -617,18 +613,20 @@ export default function WorkspaceDetailPage() {
 
                 <Separator />
 
-                <div className="p-4 border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-900/20 rounded-md">
-                  <h4 className="text-md font-medium text-amber-800 dark:text-amber-400">
-                    About API Key Rotation
-                  </h4>
-                  <p className="text-sm text-amber-700 dark:text-amber-300 mt-2">
-                    When you rotate your API key, the old key will be
-                    immediately invalidated. Any services or applications using
-                    the old key will need to be updated with the new key. Make
-                    sure to copy and save your new key as it will only be shown
-                    once.
-                  </p>
-                </div>
+                {isCurrentUserAdmin && (
+                  <div className="p-4 border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-900/20 rounded-md">
+                    <h4 className="text-md font-medium text-amber-800 dark:text-amber-400">
+                      About API Key Rotation
+                    </h4>
+                    <p className="text-sm text-amber-700 dark:text-amber-300 mt-2">
+                      When you rotate your API key, the old key will be
+                      immediately invalidated. Any services or applications using
+                      the old key will need to be updated with the new key. Make
+                      sure to copy and save your new key as it will only be shown
+                      once.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

@@ -281,7 +281,6 @@ async def switch_workspace(
         token_type="bearer",
         username=calling_user_db.username,
         is_verified=calling_user_db.is_verified,
-        api_key_first_characters=calling_user_db.api_key_first_characters,
     )
 
 
