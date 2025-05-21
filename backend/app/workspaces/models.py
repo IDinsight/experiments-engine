@@ -254,8 +254,31 @@ async def remove_user_from_workspace(
             f"'{workspace_db.workspace_name}'."
         )
 
+    was_default = user_workspace.default_workspace
+
     # Delete the relationship
     await asession.delete(user_workspace)
+
+    # If this was their default workspace, reset to their personal default workspace
+    if was_default:
+        stmt = (
+            select(UserWorkspaceDB)
+            .join(WorkspaceDB, UserWorkspaceDB.workspace_id == WorkspaceDB.workspace_id)
+            .where(
+                and_(
+                    UserWorkspaceDB.user_id == user_db.user_id,
+                    WorkspaceDB.is_default.is_(True),
+                )
+            )
+        )
+        result = await asession.execute(stmt)
+        personal_workspace = result.scalar_one_or_none()
+
+        if personal_workspace:
+            personal_workspace.default_workspace = True
+            personal_workspace.updated_datetime_utc = datetime.now(timezone.utc)
+            asession.add(personal_workspace)
+
     await asession.commit()
 
 

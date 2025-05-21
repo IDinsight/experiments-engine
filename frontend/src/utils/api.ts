@@ -18,7 +18,19 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       const currentPath = window.location.pathname;
       const sourcePage = encodeURIComponent(currentPath);
+
+      // Check if this is a workspace access error and we have a token
+      if (localStorage.getItem("ee-token") &&
+          (error.config?.url?.includes("/workspace/") ||
+           currentPath.includes("/workspace"))) {
+
+        window.location.href = "/workspaces";
+        return Promise.resolve();
+      }
+
       localStorage.removeItem("ee-token");
+      localStorage.removeItem("ee-username");
+
       if (currentPath.includes("/login")) {
         return Promise.reject(error);
       } else {
