@@ -27,6 +27,9 @@ fresh-env:
 		pip install psycopg2-binary==2.9.9; \
 	fi
 
+	@echo "Installing frontend dependencies..."
+	cd frontend && npm install
+
 # --- Local development commands ---
 setup-dev: setup-redis setup-db
 
