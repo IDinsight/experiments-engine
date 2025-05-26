@@ -179,67 +179,6 @@ def regular_user(client: TestClient, db_session: Session) -> Generator:
     db_session.delete(regular_user)
     db_session.commit()
 
-    # Create user workspace relationship
-    user_workspace = UserWorkspaceDB(
-        user_id=regular_user.user_id,
-        workspace_id=default_workspace.workspace_id,
-        user_role=UserRoles.ADMIN,
-        default_workspace=True,
-        created_datetime_utc=datetime.now(UTC),
-        updated_datetime_utc=datetime.now(UTC),
-    )
-
-    db_session.add(user_workspace)
-    db_session.commit()
-
-    yield regular_user.user_id, unique_username, unique_api_key
-
-    # Clean up - need to handle foreign key relationships properly
-    try:
-        # 1. Clean up pending invitations that reference this user as inviter
-        db_session.execute(
-            text(
-                "DELETE FROM pending_invitations WHERE inviter_id = "
-                f"{regular_user.user_id}"
-            )
-        )
-        db_session.commit()
-
-        # 2. Clean up API key rotation history records that reference this user
-        db_session.execute(
-            text(
-                "DELETE FROM api_key_rotation_history WHERE rotated_by_user_id = "
-                f"{regular_user.user_id}"
-            )
-        )
-        db_session.commit()
-
-        # 3. Remove the user-workspace relationship
-        db_session.query(UserWorkspaceDB).filter(
-            UserWorkspaceDB.user_id == regular_user.user_id
-        ).delete()
-        db_session.commit()
-
-        # 4. Remove the reference from workspace.api_key_rotated_by_user_id
-        db_session.query(WorkspaceDB).filter(
-            WorkspaceDB.api_key_rotated_by_user_id == regular_user.user_id
-        ).update({WorkspaceDB.api_key_rotated_by_user_id: None})
-        db_session.commit()
-
-        # 5. Now delete the workspace
-        db_session.query(WorkspaceDB).filter(
-            WorkspaceDB.workspace_name == f"{unique_username}'s Workspace"
-        ).delete()
-        db_session.commit()
-
-        # 6. Finally delete the user
-        db_session.delete(regular_user)
-        db_session.commit()
-    except Exception as e:
-        # Log the error but don't fail the test
-        print(f"Error during cleanup: {e}")
-        db_session.rollback()
-
 
 @pytest.fixture(scope="session")
 def user1(client: TestClient, db_session: Session) -> Generator:
