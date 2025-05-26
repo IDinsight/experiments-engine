@@ -104,8 +104,8 @@ class ExperimentDB(Base):
         "ContextDB",
         back_populates="experiment",
         lazy="joined",
-        primaryjoin="and_(ExperimentDB.experiment_id==ContextDB.experiment_id, "
-        "ExperimentDB.exp_type=='cmab')",
+        primaryjoin="and_(ExperimentDB.experiment_id==ContextDB.experiment_id,"
+        + "ExperimentDB.exp_type=='cmab')",
     )
 
     __mapper_args__ = {
