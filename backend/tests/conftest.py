@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from typing import AsyncGenerator, Generator
 
 import pytest
+import sqlalchemy
 from fastapi.testclient import TestClient
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
@@ -96,11 +97,6 @@ def regular_user(client: TestClient, db_session: Session) -> Generator:
         hashed_password=get_password_salted_hash(TEST_PASSWORD),
         first_name=TEST_FIRST_NAME,
         last_name=TEST_LAST_NAME,
-        hashed_api_key=get_key_hash(unique_api_key),
-        api_key_first_characters=unique_api_key[:5],
-        api_key_updated_datetime_utc=datetime.now(UTC),
-        experiments_quota=TEST_EXPERIMENTS_QUOTA,
-        api_daily_quota=TEST_API_QUOTA,
         created_datetime_utc=datetime.now(UTC),
         updated_datetime_utc=datetime.now(UTC),
         is_verified=True,  # Make user verified for testing
@@ -125,6 +121,62 @@ def regular_user(client: TestClient, db_session: Session) -> Generator:
     )
 
     db_session.add(default_workspace)
+    db_session.commit()
+
+    # Create user workspace relationship
+    user_workspace = UserWorkspaceDB(
+        user_id=regular_user.user_id,
+        workspace_id=default_workspace.workspace_id,
+        user_role=UserRoles.ADMIN,
+        default_workspace=True,
+        created_datetime_utc=datetime.now(UTC),
+        updated_datetime_utc=datetime.now(UTC),
+    )
+
+    db_session.add(user_workspace)
+    db_session.commit()
+
+    yield regular_user.user_id, unique_username, unique_api_key
+
+    # Clean up - handle foreign key relationships properly
+    # 1. Clean up pending invitations that reference this user as inviter
+    db_session.execute(
+        text(
+            "DELETE FROM pending_invitations WHERE inviter_id = "
+            f"{regular_user.user_id}"
+        )
+    )
+    db_session.commit()
+
+    # 2. Clean up API key rotation history records that reference this user
+    db_session.execute(
+        text(
+            "DELETE FROM api_key_rotation_history WHERE rotated_by_user_id = "
+            f"{regular_user.user_id}"
+        )
+    )
+    db_session.commit()
+
+    # 3. Remove the user-workspace relationship
+    db_session.query(UserWorkspaceDB).filter(
+        UserWorkspaceDB.user_id == regular_user.user_id
+    ).delete()
+    db_session.commit()
+
+    # 4. Remove the reference from workspace.api_key_rotated_by_user_id
+    db_session.query(WorkspaceDB).filter(
+        WorkspaceDB.api_key_rotated_by_user_id == regular_user.user_id
+    ).update({WorkspaceDB.api_key_rotated_by_user_id: None})
+    db_session.commit()
+
+    # 5. Now delete the workspace
+    db_session.query(WorkspaceDB).filter(
+        WorkspaceDB.workspace_name == f"{unique_username}'s Workspace"
+    ).delete()
+    db_session.commit()
+
+    # 6. Finally delete the user
+    db_session.delete(regular_user)
     db_session.commit()
 
     # Create user workspace relationship
@@ -196,8 +248,8 @@ def user1(client: TestClient, db_session: Session) -> Generator:
     try:
         user = result.scalar_one()
         yield user.user_id
-    except Exception:
-        # Handle the case where the user doesn't exist
+    except sqlalchemy.exc.NoResultFound:
+        print(f"User with username {TEST_USERNAME} not found in the database")
         yield None
 
 
@@ -208,8 +260,8 @@ def user2(client: TestClient, db_session: Session) -> Generator:
     try:
         user = result.scalar_one()
         yield user.user_id
-    except Exception:
-        # Handle the case where the user doesn't exist
+    except sqlalchemy.exc.NoResultFound:
+        print(f"User with username {TEST_USERNAME_2} not found in the database")
         yield None
 
 
@@ -224,3 +276,24 @@ def admin_token(client: TestClient) -> str:
     )
     token = response.json()["access_token"]
     return token
+
+
+@pytest.fixture(scope="function")
+def workspace_api_key(client: TestClient, admin_token: str) -> str:
+    """Get the current workspace API key for testing"""
+    # Get the current workspace
+    response = client.get(
+        "/workspace/current",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert response.status_code == 200
+
+    # Rotate the workspace API key to get a fresh one
+    response = client.put(
+        "/workspace/rotate-key",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert response.status_code == 200
+    workspace_api_key = response.json()["new_api_key"]
+
+    return workspace_api_key

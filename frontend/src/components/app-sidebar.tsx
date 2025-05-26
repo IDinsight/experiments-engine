@@ -2,8 +2,11 @@
 import * as React from "react";
 import {
   LayoutDashboardIcon,
-  FlaskConicalIcon,
+  Frame,
+  Map,
+  PieChart,
   Settings2,
+  FlaskConicalIcon
 } from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavRecentExperiments } from "@/components/nav-recent-experiments";
@@ -18,12 +21,19 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/utils/auth";
 
-const AppSidebar = React.memo(function AppSidebar({
+const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = React.memo(function AppSidebar({
   ...props
-}: React.ComponentProps<typeof Sidebar>) {
-  const { user, firstName, lastName } = useAuth();
+}) {
+  const { user, firstName, lastName} = useAuth();
 
-  const navMain = [
+// This is sample data.
+const data = {
+  user: {
+    name: "shadcn",
+    email: "m@example.com",
+    avatar: "/avatars/shadcn.jpg",
+  },
+  navMain: [
     {
       title: "Experiments",
       url: "/experiments",
@@ -39,30 +49,31 @@ const AppSidebar = React.memo(function AppSidebar({
       url: "#",
       icon: Settings2,
     },
-  ];
+  ]
+};
 
   const recentExperiments = [
     {
-      name: "New onboarding flows",
+      name: "Recent Experiment",
       url: "#",
-      icon: FlaskConicalIcon,
+      icon: FlaskConicalIcon
     },
     {
       name: "3 different voices",
       url: "#",
-      icon: FlaskConicalIcon,
+      icon: FlaskConicalIcon
     },
     {
       name: "AI responses",
       url: "#",
-      icon: FlaskConicalIcon,
-    },
+      icon: FlaskConicalIcon
+    }
   ];
 
   const userDetails = {
     firstName: firstName || "?",
     lastName: lastName || "?",
-    username: user || "loading",
+    username: user || "loading"
   };
 
   return (
@@ -71,7 +82,7 @@ const AppSidebar = React.memo(function AppSidebar({
         <WorkspaceSwitcher />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navMain} />
+        <NavMain items={data.navMain} />
         <NavRecentExperiments experiments={recentExperiments} />
       </SidebarContent>
       <SidebarFooter>

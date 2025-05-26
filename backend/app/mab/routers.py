@@ -5,14 +5,20 @@ from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import authenticate_workspace_key, get_verified_user
+from ..auth.dependencies import (
+    authenticate_workspace_key,
+    get_verified_user,
+    require_admin_role,
+)
 from ..database import get_async_session
 from ..models import get_notifications_from_db, save_notifications_to_db
 from ..schemas import NotificationsResponse, ObservationType
-from ..users.models import UserDB, UserDBWithWorkspace
+from ..users.models import UserDB
 from ..utils import setup_logger
-from ..workspaces.models import get_user_default_workspace, get_user_role_in_workspace
-from ..workspaces.schemas import UserRoles
+from ..workspaces.models import (
+    WorkspaceDB,
+    get_user_default_workspace,
+)
 from .models import (
     MABDrawDB,
     MultiArmedBanditDB,
@@ -44,7 +50,7 @@ logger = setup_logger(__name__)
 @router.post("/", response_model=MultiArmedBanditResponse)
 async def create_mab(
     experiment: MultiArmedBandit,
-    user_db: Annotated[UserDB, Depends(get_verified_user)],
+    user_db: Annotated[UserDB, Depends(require_admin_role)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> MultiArmedBanditResponse:
     """
@@ -52,14 +58,10 @@ async def create_mab(
     """
     workspace_db = await get_user_default_workspace(asession=asession, user_db=user_db)
 
-    user_role = await get_user_role_in_workspace(
-        asession=asession, user_db=user_db, workspace_db=workspace_db
-    )
-
-    if user_role != UserRoles.ADMIN:
+    if workspace_db is None:
         raise HTTPException(
-            status_code=403,
-            detail="Only workspace administrators can create experiments.",
+            status_code=404,
+            detail="Workspace not found. Please create a workspace first.",
         )
 
     mab = await save_mab_to_db(
@@ -89,9 +91,13 @@ async def get_mabs(
     """
     workspace_db = await get_user_default_workspace(asession=asession, user_db=user_db)
 
-    experiments = await get_all_mabs(
-        user_db.user_id, workspace_db.workspace_id, asession
-    )
+    if workspace_db is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Workspace not found. Please create a workspace first.",
+        )
+
+    experiments = await get_all_mabs(workspace_db.workspace_id, asession)
 
     all_experiments = []
     for exp in experiments:
@@ -126,9 +132,13 @@ async def get_mab(
     """
     workspace_db = await get_user_default_workspace(asession=asession, user_db=user_db)
 
-    experiment = await get_mab_by_id(
-        experiment_id, user_db.user_id, workspace_db.workspace_id, asession
-    )
+    if workspace_db is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Workspace not found. Please create a workspace first.",
+        )
+
+    experiment = await get_mab_by_id(experiment_id, workspace_db.workspace_id, asession)
 
     if experiment is None:
         raise HTTPException(
@@ -149,7 +159,7 @@ async def get_mab(
 @router.delete("/{experiment_id}", response_model=dict)
 async def delete_mab(
     experiment_id: int,
-    user_db: Annotated[UserDB, Depends(get_verified_user)],
+    user_db: Annotated[UserDB, Depends(require_admin_role)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> dict:
     """
@@ -160,26 +170,20 @@ async def delete_mab(
             asession=asession, user_db=user_db
         )
 
-        user_role = await get_user_role_in_workspace(
-            asession=asession, user_db=user_db, workspace_db=workspace_db
-        )
-
-        if user_role != UserRoles.ADMIN:
+        if workspace_db is None:
             raise HTTPException(
-                status_code=403,
-                detail="Only workspace administrators can delete experiments.",
+                status_code=404,
+                detail="Workspace not found. Please create a workspace first.",
             )
 
         experiment = await get_mab_by_id(
-            experiment_id, user_db.user_id, workspace_db.workspace_id, asession
+            experiment_id, workspace_db.workspace_id, asession
         )
         if experiment is None:
             raise HTTPException(
                 status_code=404, detail=f"Experiment with id {experiment_id} not found"
             )
-        await delete_mab_by_id(
-            experiment_id, user_db.user_id, workspace_db.workspace_id, asession
-        )
+        await delete_mab_by_id(experiment_id, workspace_db.workspace_id, asession)
         return {"message": f"Experiment with id {experiment_id} deleted successfully."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {e}") from e
@@ -190,18 +194,16 @@ async def draw_arm(
     experiment_id: int,
     draw_id: Optional[str] = None,
     client_id: Optional[str] = None,
-    user_db: UserDBWithWorkspace = Depends(authenticate_workspace_key),
+    workspace_db: WorkspaceDB = Depends(authenticate_workspace_key),
     asession: AsyncSession = Depends(get_async_session),
 ) -> MABDrawResponse:
     """
     Draw an arm for the provided experiment.
     """
     # Get workspace from user context
-    workspace_id = user_db.current_workspace.workspace_id
+    workspace_id = workspace_db.workspace_id
 
-    experiment = await get_mab_by_id(
-        experiment_id, user_db.user_id, workspace_id, asession
-    )
+    experiment = await get_mab_by_id(experiment_id, workspace_id, asession)
     if experiment is None:
         raise HTTPException(
             status_code=404, detail=f"Experiment with id {experiment_id} not found"
@@ -217,7 +219,7 @@ async def draw_arm(
     if draw_id is None:
         draw_id = str(uuid4())
 
-    existing_draw = await get_draw_by_id(draw_id, user_db.user_id, asession)
+    existing_draw = await get_draw_by_id(draw_id, asession)
     if existing_draw:
         raise HTTPException(
             status_code=400,
@@ -232,7 +234,7 @@ async def draw_arm(
     if experiment.sticky_assignment and client_id:
         previous_draw = await get_draw_by_client_id(
             client_id=client_id,
-            user_id=user_db.user_id,
+            experiment_id=experiment.experiment_id,
             asession=asession,
         )
         if previous_draw:
@@ -245,8 +247,9 @@ async def draw_arm(
             arm_id=chosen_arm_id,
             draw_id=draw_id,
             client_id=client_id,
-            user_id=user_db.user_id,
+            user_id=None,
             asession=asession,
+            workspace_id=workspace_id,
         )
     except Exception as e:
         raise HTTPException(
@@ -270,7 +273,7 @@ async def update_arm(
     experiment_id: int,
     draw_id: str,
     outcome: float,
-    user_db: UserDBWithWorkspace = Depends(authenticate_workspace_key),
+    workspace_db: WorkspaceDB = Depends(authenticate_workspace_key),
     asession: AsyncSession = Depends(get_async_session),
 ) -> ArmResponse:
     """
@@ -278,10 +281,10 @@ async def update_arm(
     `experiment_id` based on the `outcome`.
     """
     # Get workspace from user context
-    workspace_id = user_db.current_workspace.workspace_id
+    workspace_id = workspace_db.workspace_id
 
     experiment, draw = await validate_experiment_and_draw(
-        experiment_id, draw_id, user_db.user_id, workspace_id, asession
+        experiment_id, draw_id, workspace_id, asession
     )
 
     return await update_based_on_outcome(
@@ -295,18 +298,16 @@ async def update_arm(
 )
 async def get_outcomes(
     experiment_id: int,
-    user_db: UserDBWithWorkspace = Depends(authenticate_workspace_key),
+    workspace_db: WorkspaceDB = Depends(authenticate_workspace_key),
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[MABObservationResponse]:
     """
     Get the outcomes for the experiment.
     """
     # Get workspace from user context
-    workspace_id = user_db.current_workspace.workspace_id
+    workspace_id = workspace_db.workspace_id
 
-    experiment = await get_mab_by_id(
-        experiment_id, user_db.user_id, workspace_id, asession
-    )
+    experiment = await get_mab_by_id(experiment_id, workspace_id, asession)
     if not experiment:
         raise HTTPException(
             status_code=404, detail=f"Experiment with id {experiment_id} not found"
@@ -314,7 +315,7 @@ async def get_outcomes(
 
     rewards = await get_all_obs_by_experiment_id(
         experiment_id=experiment.experiment_id,
-        user_id=user_db.user_id,
+        workspace_id=workspace_id,
         asession=asession,
     )
 
@@ -324,18 +325,17 @@ async def get_outcomes(
 async def validate_experiment_and_draw(
     experiment_id: int,
     draw_id: str,
-    user_id: int,
     workspace_id: int,
     asession: AsyncSession,
 ) -> tuple[MultiArmedBanditDB, MABDrawDB]:
     """Validate the experiment and draw"""
-    experiment = await get_mab_by_id(experiment_id, user_id, workspace_id, asession)
+    experiment = await get_mab_by_id(experiment_id, workspace_id, asession)
     if experiment is None:
         raise HTTPException(
             status_code=404, detail=f"Experiment with id {experiment_id} not found"
         )
 
-    draw = await get_draw_by_id(draw_id=draw_id, user_id=user_id, asession=asession)
+    draw = await get_draw_by_id(draw_id=draw_id, asession=asession)
     if draw is None:
         raise HTTPException(status_code=404, detail=f"Draw with id {draw_id} not found")
 

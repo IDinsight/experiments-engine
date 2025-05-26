@@ -5,7 +5,6 @@ from typing import Optional, Union
 
 from redis import asyncio as aioredis
 from sqlalchemy import select
-from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 from sqlalchemy.orm import Session
 
 from app.config import REDIS_HOST
@@ -26,26 +25,6 @@ ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin@idinsight.org")
 ADMIN_FIRST_NAME = os.environ.get("ADMIN_FIRST_NAME", "Admin")
 ADMIN_LAST_NAME = os.environ.get("ADMIN_LAST_NAME", "User")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "12345")
-ADMIN_API_KEY = os.environ.get("ADMIN_API_KEY", "admin-key")
-ADMIN_EXPERIMENT_QUOTA = os.environ.get("ADMIN_EXPERIMENT_QUOTA", None)
-ADMIN_API_DAILY_QUOTA = os.environ.get("ADMIN_API_DAILY_QUOTA", None)
-
-
-user_db = UserDB(
-    username=ADMIN_USERNAME,
-    first_name=ADMIN_FIRST_NAME,
-    last_name=ADMIN_LAST_NAME,
-    hashed_password=get_password_salted_hash(ADMIN_PASSWORD),
-    hashed_api_key=get_key_hash(ADMIN_API_KEY),
-    api_key_first_characters=ADMIN_API_KEY[:5],
-    api_key_updated_datetime_utc=datetime.now(timezone.utc),
-    experiments_quota=ADMIN_EXPERIMENT_QUOTA,
-    api_daily_quota=ADMIN_API_DAILY_QUOTA,
-    created_datetime_utc=datetime.now(timezone.utc),
-    updated_datetime_utc=datetime.now(timezone.utc),
-    is_active=True,
-    is_verified=True,
-)
 
 
 async def async_redis_operations(key: str, value: Optional[int]) -> None:
@@ -53,9 +32,7 @@ async def async_redis_operations(key: str, value: Optional[int]) -> None:
     Asynchronous Redis operations to set the remaining API calls for a user.
     """
     redis = await aioredis.from_url(REDIS_HOST)
-
     await redis.set(key, encode_api_limit(value))
-
     await redis.aclose()
 
 
@@ -168,27 +145,77 @@ def ensure_default_workspace(db_session: Session, user_db: UserDB) -> None:
 
 if __name__ == "__main__":
     db_session = next(get_session())
-    stmt = select(UserDB).where(UserDB.username == user_db.username)
-    result = db_session.execute(stmt)
+
     try:
-        existing_user = result.one()
-        logger.info(f"User with username {user_db.username} already exists.")
-        user_db = existing_user[0]
-    except NoResultFound:
+        # Check if any users already exist
+        user_count = db_session.query(UserDB).count()
+
+        if user_count > 0:
+            logger.info(
+                "Users already exist in the database. Skipping admin user creation."
+            )
+            exit(0)
+
+        # Create the admin user
+        user_db = UserDB(
+            username=ADMIN_USERNAME,
+            first_name=ADMIN_FIRST_NAME,
+            last_name=ADMIN_LAST_NAME,
+            hashed_password=get_password_salted_hash(ADMIN_PASSWORD),
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
+            is_active=True,
+            is_verified=True,
+            access_level="fullaccess",
+        )
+
         db_session.add(user_db)
-        db_session.flush()
-        logger.info(f"User with username {user_db.username} added to local database.")
+        db_session.flush()  # Generate user_id
+        logger.info(f"Created admin user: {ADMIN_USERNAME}")
+
+        # Create default workspace
+        workspace_name = f"{ADMIN_USERNAME}'s Workspace"
+        hashed_workspace_key = get_key_hash("workspace-api-key-" + workspace_name)
+        workspace_db = WorkspaceDB(
+            workspace_name=workspace_name,
+            api_daily_quota=100,
+            content_quota=10,
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
+            is_default=True,
+            hashed_api_key=hashed_workspace_key,
+            api_key_first_characters=hashed_workspace_key[:5],
+            api_key_updated_datetime_utc=datetime.now(timezone.utc),
+            api_key_rotated_by_user_id=user_db.user_id,
+        )
+
+        db_session.add(workspace_db)
+        db_session.flush()  # Generate workspace_id
+        logger.info(f"Created default workspace: {workspace_name}")
+
+        # Create user-workspace relationship
+        user_workspace = UserWorkspaceDB(
+            user_id=user_db.user_id,
+            workspace_id=workspace_db.workspace_id,
+            user_role=UserRoles.ADMIN,
+            default_workspace=True,
+            created_datetime_utc=datetime.now(timezone.utc),
+            updated_datetime_utc=datetime.now(timezone.utc),
+        )
+
+        db_session.add(user_workspace)
+        db_session.commit()
+        logger.info("Associated admin user with workspace")
+
+        # Set API limit in Redis
         run_redis_async_tasks(
-            f"remaining-calls:{user_db.username}", user_db.api_daily_quota
+            f"remaining-calls:{workspace_db.workspace_id}", workspace_db.api_daily_quota
         )
-    except MultipleResultsFound:
-        logger.error(
-            f"Multiple users with username {user_db.username} found in local database."
-        )
-        existing_users = result.all()
-        user_db = existing_users[0][0]
+        logger.info("Admin user setup completed successfully")
 
-    # Ensure the user has a default workspace
-    ensure_default_workspace(db_session, user_db)
-
-    db_session.commit()
+    except Exception as e:
+        db_session.rollback()
+        logger.error(f"Error creating admin user: {str(e)}")
+        raise
+    finally:
+        db_session.close()

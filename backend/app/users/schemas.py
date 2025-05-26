@@ -12,8 +12,6 @@ class UserCreate(BaseModel):
     username: str
     first_name: str
     last_name: str
-    experiments_quota: Optional[int] = None
-    api_daily_quota: Optional[int] = None
     workspace_name: Optional[str] = None
     role: Optional[str] = None
     is_default_workspace: Optional[bool] = False
@@ -27,7 +25,6 @@ class UserCreateWithPassword(UserCreate):
     """
 
     password: str
-
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -37,24 +34,12 @@ class UserRetrieve(UserCreate):
     """
 
     user_id: int
-    api_key_first_characters: str
-    api_key_updated_datetime_utc: datetime
     created_datetime_utc: datetime
     updated_datetime_utc: datetime
     is_active: bool
     is_verified: bool
     access_level: str
 
-    model_config = ConfigDict(from_attributes=True)
-
-
-class KeyResponse(BaseModel):
-    """
-    Pydantic model for key response
-    """
-
-    username: str
-    new_api_key: str
     model_config = ConfigDict(from_attributes=True)
 
 

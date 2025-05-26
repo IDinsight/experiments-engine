@@ -20,9 +20,13 @@ from ..users.schemas import (
     MessageResponse,
     PasswordResetConfirm,
     PasswordResetRequest,
-    UserCreate,
 )
 from ..utils import setup_logger
+from ..workspaces.models import (
+    delete_pending_invitation,
+    get_pending_invitations_by_email,
+)
+from ..workspaces.utils import get_workspace_by_workspace_id
 from .config import NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID
 from .dependencies import (
     authenticate_credentials,
@@ -68,7 +72,6 @@ async def login(
 
     return AuthenticationDetails(
         access_token=create_access_token(user.username),
-        api_key_first_characters=user.api_key_first_characters,
         token_type="bearer",
         access_level=user.access_level,
         username=user.username,
@@ -111,7 +114,7 @@ async def login_google(
     from ..workspaces.utils import create_workspace
 
     user_email = idinfo["email"]
-    first_name = idinfo.get("given_name", "")
+    first_name = idinfo.get("given_name") or user_email.split("@")[0]
     last_name = idinfo.get("family_name", "")
 
     user = await authenticate_or_create_google_user(
@@ -129,13 +132,35 @@ async def login_google(
 
     user_db = await get_user_by_username(username=user_email, asession=asession)
 
-    # Create default workspace if user is new (has no workspaces)
-    try:
-        default_workspace = await get_user_default_workspace(
-            asession=asession, user_db=user_db
+    pending_invitations = await get_pending_invitations_by_email(
+        asession=asession, email=user_email
+    )
+
+    for invitation in pending_invitations:
+        invite_workspace = await get_workspace_by_workspace_id(
+            asession=asession, workspace_id=invitation.workspace_id
         )
+
+        # Add user to the invited workspace
+        await create_user_workspace_role(
+            asession=asession,
+            is_default_workspace=False,
+            user_db=user_db,
+            user_role=invitation.role,
+            workspace_db=invite_workspace,
+        )
+
+        # Delete the invitation
+        await delete_pending_invitation(asession=asession, invitation=invitation)
+
+    # Create default workspace if user is new (has no workspaces)
+    default_workspace = await get_user_default_workspace(
+        asession=asession, user_db=user_db
+    )
+
+    if default_workspace:
         default_workspace_name = default_workspace.workspace_name
-    except Exception:
+    else:
         # User doesn't have a default workspace, create one
         default_workspace_name = f"{user_email}'s Workspace"
 
@@ -144,13 +169,7 @@ async def login_google(
             api_daily_quota=DEFAULT_API_QUOTA,
             asession=asession,
             content_quota=DEFAULT_EXPERIMENTS_QUOTA,
-            user=UserCreate(
-                role=UserRoles.ADMIN,
-                username=user_email,
-                first_name=first_name,
-                last_name=last_name,
-                workspace_name=default_workspace_name,
-            ),
+            workspace_name=default_workspace_name,
             is_default=True,
         )
 
@@ -164,7 +183,6 @@ async def login_google(
 
     return AuthenticationDetails(
         access_token=create_access_token(user.username, default_workspace_name),
-        api_key_first_characters=user.api_key_first_characters,
         token_type="bearer",
         access_level=user.access_level,
         username=user.username,

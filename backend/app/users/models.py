@@ -1,6 +1,4 @@
-from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any
 
 from sqlalchemy import (
     Boolean,
@@ -15,7 +13,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..models import Base
 from ..users.exceptions import UserAlreadyExistsError, UserNotFoundError
-from ..utils import get_key_hash, get_password_salted_hash, get_random_string
+from ..utils import get_password_salted_hash, get_random_string
 from ..workspaces.models import UserWorkspaceDB, WorkspaceDB
 from .schemas import UserCreate, UserCreateWithPassword
 
@@ -34,13 +32,6 @@ class UserDB(Base):
     first_name: Mapped[str] = mapped_column(String, nullable=False)
     last_name: Mapped[str] = mapped_column(String, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(96), nullable=False)
-    hashed_api_key: Mapped[str] = mapped_column(String(96), nullable=False, unique=True)
-    api_key_first_characters: Mapped[str] = mapped_column(String(5), nullable=False)
-    api_key_updated_datetime_utc: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    experiments_quota: Mapped[int] = mapped_column(Integer, nullable=True)
-    api_daily_quota: Mapped[int] = mapped_column(Integer, nullable=True)
     created_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
@@ -66,27 +57,6 @@ class UserDB(Base):
     def __repr__(self) -> str:
         """Pretty Print"""
         return f"<{self.username} mapped to #{self.user_id}>"
-
-
-@dataclass
-class UserDBWithWorkspace:
-    """
-    A wrapper class for UserDB that adds a current_workspace attribute.
-    This avoids modifying the SQLAlchemy model directly.
-    """
-
-    user: UserDB
-    current_workspace: "WorkspaceDB"
-
-    def __getattr__(self, name: str) -> Any:
-        """
-        Delegate attribute access to the wrapped UserDB instance.
-        """
-        return getattr(self.user, name)
-
-    def get_user_db(self) -> UserDB:
-        """Return the underlying UserDB instance."""
-        return self.user
 
 
 async def save_user_to_db(
@@ -120,12 +90,7 @@ async def save_user_to_db(
         username=user.username,
         first_name=user.first_name,
         last_name=user.last_name,
-        experiments_quota=user.experiments_quota,
-        api_daily_quota=user.api_daily_quota,
         hashed_password=hashed_password,
-        hashed_api_key=get_key_hash(api_key),
-        api_key_updated_datetime_utc=datetime.now(timezone.utc),
-        api_key_first_characters=api_key[:5],
         created_datetime_utc=datetime.now(timezone.utc),
         updated_datetime_utc=datetime.now(timezone.utc),
         is_active=True,
@@ -134,26 +99,6 @@ async def save_user_to_db(
     )
 
     asession.add(user_db)
-    await asession.commit()
-    await asession.refresh(user_db)
-
-    return user_db
-
-
-async def update_user_api_key(
-    user_db: UserDB,
-    new_api_key: str,
-    asession: AsyncSession,
-) -> UserDB:
-    """
-    Updates a user's API key
-    """
-
-    user_db.hashed_api_key = get_key_hash(new_api_key)
-    user_db.api_key_first_characters = new_api_key[:5]
-    user_db.api_key_updated_datetime_utc = datetime.now(timezone.utc)
-    user_db.updated_datetime_utc = datetime.now(timezone.utc)
-
     await asession.commit()
     await asession.refresh(user_db)
 
@@ -227,38 +172,3 @@ async def get_user_by_username(
         raise UserNotFoundError(
             f"User with username {username} does not exist."
         ) from err
-
-
-async def get_experiments_quota_by_userid(
-    user_id: int,
-    asession: AsyncSession,
-) -> int:
-    """
-    Retrieves a user's content quota by user_id
-    """
-    stmt = select(UserDB).where(UserDB.user_id == user_id)
-    result = await asession.execute(stmt)
-    try:
-        experiments_quota = result.scalar_one().experiments_quota
-        return experiments_quota
-    except NoResultFound as err:
-        raise UserNotFoundError(f"User with user_id {user_id} does not exist.") from err
-
-
-async def get_user_by_api_key(
-    token: str,
-    asession: AsyncSession,
-) -> UserDB:
-    """
-    Retrieves a user by token
-    """
-
-    hashed_token = get_key_hash(token)
-
-    stmt = select(UserDB).where(UserDB.hashed_api_key == hashed_token)
-    result = await asession.execute(stmt)
-    try:
-        user = result.scalar_one()
-        return user
-    except NoResultFound as err:
-        raise UserNotFoundError("User with given token does not exist.") from err

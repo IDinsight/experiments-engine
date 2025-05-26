@@ -26,12 +26,12 @@ export function WorkspaceSwitcher() {
   const { currentWorkspace, workspaces, switchWorkspace } = useAuth();
   const [isLoading, setIsLoading] = React.useState(false);
 
-  if (!currentWorkspace) {
-    return null;
-  }
-
   const handleWorkspaceSwitch = async (workspaceName: string) => {
-    if (workspaceName === currentWorkspace.workspace_name) return;
+    if (
+      currentWorkspace && workspaceName === currentWorkspace.workspace_name
+    ) {
+      return
+    }
 
     try {
       setIsLoading(true);
@@ -42,6 +42,37 @@ export function WorkspaceSwitcher() {
       setIsLoading(false);
     }
   };
+
+  if (!currentWorkspace && workspaces && workspaces.length > 0) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            size="lg"
+            onClick={() => {
+              setIsLoading(true);
+              switchWorkspace(workspaces[0].workspace_name)
+                .then(() => window.location.reload())
+                .catch(() => setIsLoading(false));
+            }}
+          >
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+              <FlaskConical className="size-4" />
+            </div>
+            <div className="grid flex-1 text-left text-sm leading-tight">
+              <span className="truncate font-semibold">
+                Select Workspace
+              </span>
+              <span className="truncate text-xs">
+                {isLoading ? "Switching..." : "Click to select"}
+              </span>
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
+
 
   return (
     <SidebarMenu>
@@ -57,7 +88,7 @@ export function WorkspaceSwitcher() {
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">
-                  {currentWorkspace.workspace_name}
+                  {currentWorkspace?.workspace_name || "No Workspace"}
                 </span>
                 <span className="truncate text-xs">
                   {isLoading ? "Switching..." : "Workspace"}
@@ -79,7 +110,7 @@ export function WorkspaceSwitcher() {
               <DropdownMenuItem
                 key={workspace.workspace_id}
                 onClick={() => handleWorkspaceSwitch(workspace.workspace_name)}
-                className={`gap-2 p-2 ${workspace.workspace_id === currentWorkspace.workspace_id ? "bg-accent" : ""}`}
+                className={`gap-2 p-2 ${currentWorkspace && workspace.workspace_id === currentWorkspace.workspace_id ? "bg-accent" : ""}`}
               >
                 <div className="flex size-6 items-center justify-center rounded-sm border">
                   <FlaskConical className="size-4 shrink-0" />

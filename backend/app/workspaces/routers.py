@@ -10,6 +10,7 @@ from ..auth.dependencies import (
     create_access_token,
     get_current_user,
     get_verified_user,
+    require_admin_role,
 )
 from ..auth.schemas import AuthenticationDetails
 from ..config import DEFAULT_API_QUOTA, DEFAULT_EXPERIMENTS_QUOTA
@@ -102,13 +103,7 @@ async def create_workspace_endpoint(
         api_daily_quota=workspace.api_daily_quota or DEFAULT_API_QUOTA,
         asession=asession,
         content_quota=workspace.content_quota or DEFAULT_EXPERIMENTS_QUOTA,
-        user=UserCreate(
-            role=UserRoles.ADMIN,
-            username=calling_user_db.username,
-            first_name=calling_user_db.first_name,
-            last_name=calling_user_db.last_name,
-            workspace_name=workspace.workspace_name,
-        ),
+        workspace_name=workspace.workspace_name,
         api_key=api_key,
     )
 
@@ -205,6 +200,12 @@ async def get_current_workspace(
             asession=asession, user_db=calling_user_db
         )
 
+        if workspace_db is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No default workspace found for the user.",
+            )
+
         # Get username of the person who rotated the key if available
         rotator_username = None
         if workspace_db.api_key_rotated_by_user_id:
@@ -280,13 +281,12 @@ async def switch_workspace(
         token_type="bearer",
         username=calling_user_db.username,
         is_verified=calling_user_db.is_verified,
-        api_key_first_characters=calling_user_db.api_key_first_characters,
     )
 
 
 @router.put("/rotate-key", response_model=WorkspaceKeyResponse)
 async def rotate_workspace_api_key(
-    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    calling_user_db: Annotated[UserDB, Depends(require_admin_role)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> WorkspaceKeyResponse:
     """Generate a new API key for the current workspace."""
@@ -296,15 +296,10 @@ async def rotate_workspace_api_key(
             asession=asession, user_db=calling_user_db
         )
 
-        # Verify user is an admin in this workspace
-        user_role = await get_user_role_in_workspace(
-            asession=asession, user_db=calling_user_db, workspace_db=workspace_db
-        )
-
-        if user_role != UserRoles.ADMIN:
+        if workspace_db is None:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only workspace administrators can rotate API keys.",
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Workspace not found.",
             )
 
         # Generate and update the API key
@@ -453,7 +448,7 @@ async def retrieve_workspace_by_workspace_id(
 async def update_workspace_endpoint(
     workspace_id: int,
     workspace_update: WorkspaceUpdate,
-    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    calling_user_db: Annotated[UserDB, Depends(require_admin_role)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> WorkspaceRetrieve:
     """Update workspace details (name, quotas)."""
@@ -462,17 +457,6 @@ async def update_workspace_endpoint(
         workspace_db = await get_workspace_by_workspace_id(
             asession=asession, workspace_id=workspace_id
         )
-
-        # Verify user is an admin in this workspace
-        user_role = await get_user_role_in_workspace(
-            asession=asession, user_db=calling_user_db, workspace_db=workspace_db
-        )
-
-        if user_role != UserRoles.ADMIN:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only workspace administrators can update workspace details.",
-            )
 
         # Check if the new workspace name is valid
         if (
@@ -522,7 +506,7 @@ async def update_workspace_endpoint(
 
 @router.post("/invite", response_model=WorkspaceInviteResponse)
 async def invite_user_to_workspace(
-    calling_user_db: Annotated[UserDB, Depends(get_current_user)],
+    calling_user_db: Annotated[UserDB, Depends(require_admin_role)],
     invite: WorkspaceInvite,
     background_tasks: BackgroundTasks,
     asession: AsyncSession = Depends(get_async_session),
@@ -541,17 +525,6 @@ async def invite_user_to_workspace(
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Users cannot be invited to default workspaces.",
-            )
-
-        # Verify caller is an admin in this workspace
-        user_role = await get_user_role_in_workspace(
-            asession=asession, user_db=calling_user_db, workspace_db=workspace_db
-        )
-
-        if user_role != UserRoles.ADMIN:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only workspace administrators can invite users.",
             )
 
         try:
@@ -690,7 +663,7 @@ async def get_workspace_users(
 async def remove_user_from_workspace_endpoint(
     workspace_id: int,
     username: str,
-    calling_user_db: Annotated[UserDB, Depends(get_verified_user)],
+    calling_user_db: Annotated[UserDB, Depends(require_admin_role)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> MessageResponse:
     """Remove a user from a workspace."""
@@ -698,16 +671,6 @@ async def remove_user_from_workspace_endpoint(
         workspace_db = await get_workspace_by_workspace_id(
             asession=asession, workspace_id=workspace_id
         )
-
-        caller_role = await get_user_role_in_workspace(
-            asession=asession, user_db=calling_user_db, workspace_db=workspace_db
-        )
-
-        if caller_role != UserRoles.ADMIN:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only workspace administrators can remove users.",
-            )
 
         if workspace_db.is_default:
             raise HTTPException(
