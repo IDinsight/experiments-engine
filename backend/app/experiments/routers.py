@@ -14,10 +14,11 @@ from ..utils import setup_logger
 from ..workspaces.models import (
     get_user_default_workspace,
 )
+from .dependencies import experiments_db_to_schema
 from .models import (
     get_all_experiment_types_from_db,
     get_all_experiments_from_db,
-    get_notifications_from_db,
+    get_experiment_by_id_from_db,
     save_experiment_to_db,
     save_notifications_to_db,
 )
@@ -25,7 +26,6 @@ from .schemas import (
     Experiment,
     ExperimentResponse,
     ExperimentsEnum,
-    NotificationsResponse,
 )
 
 router = APIRouter(prefix="/experiment", tags=["Experiments"])
@@ -33,6 +33,7 @@ router = APIRouter(prefix="/experiment", tags=["Experiments"])
 logger = setup_logger(__name__)
 
 
+# --- POST experiments routers ---
 @router.post("/", response_model=ExperimentResponse)
 async def create_experiment(
     experiment: Experiment,
@@ -68,6 +69,7 @@ async def create_experiment(
     return ExperimentResponse.model_validate(experiment_dict)
 
 
+# -- GET experiment routers ---
 @router.get("/", response_model=list[ExperimentResponse])
 async def get_all_experiments(
     user_db: Annotated[UserDB, Depends(get_verified_user)],
@@ -89,30 +91,14 @@ async def get_all_experiments(
         asession=asession,
     )
 
-    all_experiments = []
-    for exp in experiments:
-        exp_dict = exp.to_dict()
-        exp_dict["notifications"] = [
-            n.to_dict()
-            for n in await get_notifications_from_db(
-                experiment_id=exp.experiment_id, user_id=exp.user_id, asession=asession
-            )
-        ]
-        all_experiments.append(
-            ExperimentResponse.model_validate(
-                {
-                    **exp_dict,
-                    "notifications": [
-                        NotificationsResponse(**n) for n in exp_dict["notifications"]
-                    ],
-                }
-            )
-        )
-
+    all_experiments = await experiments_db_to_schema(
+        experiments_db=list(experiments),
+        asession=asession,
+    )
     return all_experiments
 
 
-@router.get("/{experiment_type}", response_model=list[ExperimentResponse])
+@router.get("/type/{experiment_type}", response_model=list[ExperimentResponse])
 async def get_all_experiments_by_type(
     experiment_type: ExperimentsEnum,
     user_db: Annotated[UserDB, Depends(get_verified_user)],
@@ -135,24 +121,45 @@ async def get_all_experiments_by_type(
         asession=asession,
     )
 
-    all_experiments = []
-    for exp in experiments:
-        exp_dict = exp.to_dict()
-        exp_dict["notifications"] = [
-            n.to_dict()
-            for n in await get_notifications_from_db(
-                experiment_id=exp.experiment_id, user_id=exp.user_id, asession=asession
-            )
-        ]
-        all_experiments.append(
-            ExperimentResponse.model_validate(
-                {
-                    **exp_dict,
-                    "notifications": [
-                        NotificationsResponse(**n) for n in exp_dict["notifications"]
-                    ],
-                }
-            )
+    all_experiments = await experiments_db_to_schema(
+        experiments_db=list(experiments),
+        asession=asession,
+    )
+    return all_experiments
+
+
+@router.get("/id/{experiment_id}", response_model=ExperimentResponse)
+async def get_experiment_by_id(
+    experiment_id: int,
+    user_db: Annotated[UserDB, Depends(get_verified_user)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> ExperimentResponse:
+    """
+    Retrieve a specific experiment by ID for the current user's workspace.
+    """
+    workspace_db = await get_user_default_workspace(asession=asession, user_db=user_db)
+
+    if workspace_db is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Workspace not found. Please create a workspace first.",
         )
 
-    return all_experiments
+    experiment = await get_experiment_by_id_from_db(
+        workspace_id=workspace_db.workspace_id,
+        experiment_id=experiment_id,
+        asession=asession,
+    )
+
+    if not experiment:
+        raise HTTPException(
+            status_code=404,
+            detail="Experiment not found.",
+        )
+
+    experiment_dict = await experiments_db_to_schema(
+        experiments_db=[experiment],
+        asession=asession,
+    )
+
+    return experiment_dict[0]
