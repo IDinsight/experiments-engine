@@ -167,6 +167,55 @@ async def get_experiment_by_id(
     return experiment_dict[0]
 
 
+@router.delete("/type/{experiment_type}", response_model=dict[str, str])
+async def delete_experiment_by_type(
+    experiment_type: ExperimentsEnum,
+    user_db: Annotated[UserDB, Depends(get_verified_user)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> dict[str, str]:
+    """
+    Retrieve a specific experiment by ID for the current user's workspace.
+    """
+    try:
+        workspace_db = await get_user_default_workspace(
+            asession=asession, user_db=user_db
+        )
+
+        if workspace_db is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Workspace not found. Please create a workspace first.",
+            )
+
+        experiments = await get_all_experiment_types_from_db(
+            workspace_id=workspace_db.workspace_id,
+            experiment_type=experiment_type.value,
+            asession=asession,
+        )
+
+        if len(experiments) == 0:
+            raise HTTPException(
+                status_code=404,
+                detail="No experiments found.",
+            )
+
+        for exp in experiments:
+            await delete_experiment_by_id_from_db(
+                workspace_id=workspace_db.workspace_id,
+                experiment_id=exp.experiment_id,
+                asession=asession,
+            )
+
+        return {
+            "message": f"Experiments of type {experiment_type} deleted successfully."
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error: {str(e)}",
+        ) from e
+
+
 @router.delete("/id/{experiment_id}", response_model=dict[str, str])
 async def delete_experiment_by_id(
     experiment_id: int,
