@@ -15,12 +15,18 @@ from ..workspaces.models import (
     get_user_default_workspace,
 )
 from .models import (
+    get_all_experiment_types_from_db,
     get_all_experiments_from_db,
     get_notifications_from_db,
     save_experiment_to_db,
     save_notifications_to_db,
 )
-from .schemas import Experiment, ExperimentResponse, NotificationsResponse
+from .schemas import (
+    Experiment,
+    ExperimentResponse,
+    ExperimentsEnum,
+    NotificationsResponse,
+)
 
 router = APIRouter(prefix="/experiment", tags=["Experiments"])
 
@@ -80,6 +86,52 @@ async def get_all_experiments(
 
     experiments = await get_all_experiments_from_db(
         workspace_id=workspace_db.workspace_id,
+        asession=asession,
+    )
+
+    all_experiments = []
+    for exp in experiments:
+        exp_dict = exp.to_dict()
+        exp_dict["notifications"] = [
+            n.to_dict()
+            for n in await get_notifications_from_db(
+                experiment_id=exp.experiment_id, user_id=exp.user_id, asession=asession
+            )
+        ]
+        all_experiments.append(
+            ExperimentResponse.model_validate(
+                {
+                    **exp_dict,
+                    "notifications": [
+                        NotificationsResponse(**n) for n in exp_dict["notifications"]
+                    ],
+                }
+            )
+        )
+
+    return all_experiments
+
+
+@router.get("/{experiment_type}", response_model=list[ExperimentResponse])
+async def get_all_experiments_by_type(
+    experiment_type: ExperimentsEnum,
+    user_db: Annotated[UserDB, Depends(get_verified_user)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> list[ExperimentResponse]:
+    """
+    Retrieve all experiments for the current user's workspace.
+    """
+    workspace_db = await get_user_default_workspace(asession=asession, user_db=user_db)
+
+    if workspace_db is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Workspace not found. Please create a workspace first.",
+        )
+
+    experiments = await get_all_experiment_types_from_db(
+        workspace_id=workspace_db.workspace_id,
+        experiment_type=experiment_type.value,
         asession=asession,
     )
 

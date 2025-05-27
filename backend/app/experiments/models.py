@@ -556,3 +556,18 @@ async def get_all_experiments_from_db(
         .order_by(ExperimentDB.created_datetime_utc.desc())
     )
     return (await asession.execute(statement)).unique().scalars().all()
+
+
+async def get_all_experiment_types_from_db(
+    workspace_id: int, experiment_type: str, asession: AsyncSession
+) -> Sequence[ExperimentDB]:
+    """
+    Get all experiments for a given workspace.
+    """
+    statement = (
+        select(ExperimentDB)
+        .where(ExperimentDB.workspace_id == workspace_id)
+        .where(ExperimentDB.exp_type == experiment_type)
+        .order_by(ExperimentDB.created_datetime_utc.desc())
+    )
+    return (await asession.execute(statement)).unique().scalars().all()
