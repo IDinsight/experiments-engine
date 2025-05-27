@@ -1,6 +1,6 @@
 import uuid
-from datetime import datetime
-from typing import TYPE_CHECKING, Optional, Sequence
+from datetime import datetime, timezone
+from typing import Optional, Sequence
 
 from sqlalchemy import (
     Boolean,
@@ -14,24 +14,16 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from ..models import Base
 from .schemas import (
     AutoFailUnitType,
     EventType,
+    Experiment,
     Notifications,
     ObservationType,
 )
-
-if TYPE_CHECKING:
-    from .workspaces.models import WorkspaceDB
-
-
-# Base class for SQLAlchemy models
-class Base(DeclarativeBase):
-    """Base class for SQLAlchemy models"""
-
-    pass
 
 
 # --- Base model for experiments ---
@@ -83,9 +75,6 @@ class ExperimentDB(Base):
     )
 
     # Relationships
-    workspace: Mapped["WorkspaceDB"] = relationship(
-        "WorkspaceDB", back_populates="experiments"
-    )
     arms: Mapped[list["ArmDB"]] = relationship(
         "ArmDB", back_populates="experiment", lazy="joined"
     )
@@ -107,11 +96,6 @@ class ExperimentDB(Base):
         primaryjoin="and_(ExperimentDB.experiment_id==ContextDB.experiment_id,"
         + "ExperimentDB.exp_type=='cmab')",
     )
-
-    __mapper_args__ = {
-        "polymorphic_identity": "experiment",
-        "polymorphic_on": "exp_type",
-    }
 
     def __repr__(self) -> str:
         """
@@ -170,11 +154,14 @@ class ArmDB(Base):
 
     # IDs
     arm_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
-    experiment_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("experiments.experiment_id"), nullable=False
-    )
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.user_id"), nullable=False
+    )
+    workspace_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("workspace.workspace_id"), nullable=False
+    )
+    experiment_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("experiments.experiment_id"), nullable=False
     )
 
     # Description
@@ -223,6 +210,7 @@ class ArmDB(Base):
             "mu_init": self.mu_init,
             "sigma_init": self.sigma_init,
             "draws": [draw.to_dict() for draw in self.draws],
+            "n_outcomes": self.n_outcomes,
         }
 
 
@@ -247,8 +235,8 @@ class DrawDB(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.user_id"), nullable=False
     )
-    client_id = Mapped[str] = mapped_column(
-        String, ForeignKey("clients.client_id"), nullable=True
+    client_id: Mapped[str] = mapped_column(
+        String(length=36), ForeignKey("clients.client_id"), nullable=False
     )
 
     # Logging
@@ -263,7 +251,7 @@ class DrawDB(Base):
         Enum(ObservationType), nullable=True
     )
     reward: Mapped[float] = mapped_column(Float, nullable=True)
-    context_val = Mapped[Optional[list[float]]] = mapped_column(
+    context_val: Mapped[Optional[list[float]]] = mapped_column(
         ARRAY(Float), nullable=True
     )
 
@@ -303,12 +291,12 @@ class ContextDB(Base):
     ORM for managing context for an experiment
     """
 
-    __tablename__ = "contexts"
+    __tablename__ = "context"
 
     # IDs
     context_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     experiment_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("contextual_mabs.experiment_id"), nullable=False
+        Integer, ForeignKey("experiments.experiment_id"), nullable=False
     )
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.user_id"), nullable=False
@@ -364,6 +352,13 @@ class ClientDB(Base):
         back_populates="client",
         lazy="joined",
     )
+    experiment: Mapped[ExperimentDB] = relationship(
+        "ExperimentDB",
+        back_populates="clients",
+        lazy="joined",
+        primaryjoin="and_(ClientDB.experiment_id==ExperimentDB.experiment_id,"
+        + "ExperimentDB.sticky_assignment == True)",
+    )
 
 
 # --- Notifications model ---
@@ -385,6 +380,9 @@ class NotificationsDB(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.user_id"), nullable=False
     )
+    workspace_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("workspace.workspace_id"), nullable=False
+    )
     notification_type: Mapped[EventType] = mapped_column(
         Enum(EventType), nullable=False
     )
@@ -393,7 +391,7 @@ class NotificationsDB(Base):
 
     def to_dict(self) -> dict:
         """
-        Convert the model to a dictionary
+        Convert the model to a dictionary.
         """
         return {
             "notification_id": self.notification_id,
@@ -405,7 +403,7 @@ class NotificationsDB(Base):
         }
 
 
-# --- Experiments functions ---
+# --- ORM functions ---
 
 
 # ---- Notifications functions ----
@@ -469,3 +467,78 @@ async def get_notifications_from_db(
     )
 
     return (await asession.execute(statement)).scalars().all()
+
+
+# --- Experiment functions ---
+async def save_experiment_to_db(
+    experiment: Experiment,
+    user_id: int,
+    workspace_id: int,
+    asession: AsyncSession,
+) -> ExperimentDB:
+    """
+    Save an experiment to the database.
+    """
+    len_contexts = len(experiment.contexts) if experiment.contexts else 1
+    contexts = None
+
+    arms = [
+        ArmDB(
+            user_id=user_id,
+            workspace_id=workspace_id,
+            # description
+            name=arm.name,
+            description=arm.description,
+            n_outcomes=0,
+            # prior variables
+            mu_init=arm.mu_init,
+            sigma_init=arm.sigma_init,
+            mu=[arm.mu_init] * len_contexts,
+            covariance=[arm.sigma_init] * len_contexts,
+            alpha_init=arm.alpha_init,
+            beta_init=arm.beta_init,
+            alpha=arm.alpha_init,
+            beta=arm.beta_init,
+        )
+        for arm in experiment.arms
+    ]
+    if experiment.contexts and len_contexts > 0:
+        contexts = [
+            ContextDB(
+                user_id=user_id,
+                name=context.name,
+                description=context.description,
+                value_type=context.value_type,
+            )
+            for context in experiment.contexts
+        ]
+
+    experiment_db = ExperimentDB(
+        user_id=user_id,
+        workspace_id=workspace_id,
+        # description
+        name=experiment.name,
+        description=experiment.description,
+        is_active=experiment.is_active,
+        # assignments config
+        sticky_assignment=experiment.sticky_assignment,
+        auto_fail=experiment.auto_fail,
+        auto_fail_value=experiment.auto_fail_value,
+        auto_fail_unit=experiment.auto_fail_unit,
+        # experiment config
+        exp_type=experiment.exp_type,
+        prior_type=experiment.prior_type,
+        reward_type=experiment.reward_type,
+        # datetime
+        created_datetime_utc=datetime.now(timezone.utc),
+        n_trials=0,
+        # relationships
+        arms=arms,
+        contexts=contexts,
+    )
+
+    asession.add(experiment_db)
+    await asession.commit()
+    await asession.refresh(experiment_db)
+
+    return experiment_db

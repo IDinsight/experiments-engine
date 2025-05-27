@@ -1,5 +1,5 @@
 from enum import Enum, StrEnum
-from typing import Any, Optional, Self
+from typing import Any, List, Optional, Self, Union
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -238,10 +238,11 @@ class ArmResponse(Arm):
     arm_id: int
     experiment_id: int
     n_outcomes: int
-    alpha: Optional[float]
-    beta: Optional[float]
-    mu: Optional[list[float]]
-    covariance: Optional[list[float]]
+    alpha: Optional[Union[float, None]]
+    beta: Optional[Union[float, None]]
+    mu: Optional[List[Union[float, None]]]
+    covariance: Optional[List[Union[float, None]]]
+    draws: Optional[List[Union[float, None]]]
     model_config = ConfigDict(
         from_attributes=True,
     )
@@ -409,9 +410,9 @@ class Experiment(ExperimentBase):
 
     # Relationships
     arms: list[Arm]
+    notifications: Notifications
     contexts: Optional[list[Context]] = None
     clients: Optional[list[Client]] = None
-    notifications = Notifications
 
     @model_validator(mode="after")
     def auto_fail_unit_and_value_set(self) -> Self:
@@ -479,10 +480,25 @@ class Experiment(ExperimentBase):
         if self.prior_type == ArmPriors.BETA:
             if not self.reward_type == RewardLikelihood.BERNOULLI:
                 raise ValueError(
-                    "Beta prior can only be used with Bernoulli reward type."
+                    "Beta prior can only be used with binary-valued rewards."
                 )
 
         return self
+
+    @model_validator(mode="after")
+    def check_contexts(self) -> Self:
+        """
+        Validate that the contexts inputs are valid.
+        """
+        if self.exp_type == "cmab" and not self.contexts:
+            raise ValueError("Contextual MAB experiments require at least one context.")
+        if self.exp_type != "cmab" and self.contexts:
+            raise ValueError(
+                "Contexts are only applicable for contextual MAB experiments."
+            )
+        return self
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ExperimentResponse(ExperimentBase):
@@ -495,8 +511,8 @@ class ExperimentResponse(ExperimentBase):
     last_trial_datetime_utc: Optional[str] = None
 
     arms: list[ArmResponse]
+    notifications: list[NotificationsResponse]
     contexts: Optional[list[ContextResponse]] = None
     clients: Optional[list[Client]] = None
-    notifications: NotificationsResponse
 
     model_config = ConfigDict(from_attributes=True)
