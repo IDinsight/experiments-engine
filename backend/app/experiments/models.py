@@ -542,3 +542,17 @@ async def save_experiment_to_db(
     await asession.refresh(experiment_db)
 
     return experiment_db
+
+
+async def get_all_experiments_from_db(
+    workspace_id: int, asession: AsyncSession
+) -> Sequence[ExperimentDB]:
+    """
+    Get all experiments for a given workspace.
+    """
+    statement = (
+        select(ExperimentDB)
+        .where(ExperimentDB.workspace_id == workspace_id)
+        .order_by(ExperimentDB.created_datetime_utc.desc())
+    )
+    return (await asession.execute(statement)).unique().scalars().all()
