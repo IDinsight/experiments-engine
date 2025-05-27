@@ -16,6 +16,7 @@ from ..workspaces.models import (
 )
 from .dependencies import experiments_db_to_schema
 from .models import (
+    delete_experiment_by_id_from_db,
     get_all_experiment_types_from_db,
     get_all_experiments_from_db,
     get_experiment_by_id_from_db,
@@ -60,6 +61,7 @@ async def create_experiment(
     notifications = await save_notifications_to_db(
         experiment_id=experiment_db.experiment_id,
         user_id=user_db.user_id,
+        workspace_id=workspace_db.workspace_id,
         notifications=experiment.notifications,
         asession=asession,
     )
@@ -163,3 +165,49 @@ async def get_experiment_by_id(
     )
 
     return experiment_dict[0]
+
+
+@router.delete("/id/{experiment_id}", response_model=dict[str, str])
+async def delete_experiment_by_id(
+    experiment_id: int,
+    user_db: Annotated[UserDB, Depends(get_verified_user)],
+    asession: AsyncSession = Depends(get_async_session),
+) -> dict[str, str]:
+    """
+    Retrieve a specific experiment by ID for the current user's workspace.
+    """
+    try:
+        workspace_db = await get_user_default_workspace(
+            asession=asession, user_db=user_db
+        )
+
+        if workspace_db is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Workspace not found. Please create a workspace first.",
+            )
+
+        experiment = await get_experiment_by_id_from_db(
+            workspace_id=workspace_db.workspace_id,
+            experiment_id=experiment_id,
+            asession=asession,
+        )
+
+        if not experiment:
+            raise HTTPException(
+                status_code=404,
+                detail="Experiment not found.",
+            )
+
+        await delete_experiment_by_id_from_db(
+            workspace_id=workspace_db.workspace_id,
+            experiment_id=experiment_id,
+            asession=asession,
+        )
+
+        return {"message": f"Experiment with id {experiment_id} deleted successfully."}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error: {str(e)}",
+        ) from e

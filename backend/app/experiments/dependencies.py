@@ -17,7 +17,10 @@ async def experiments_db_to_schema(
         exp_dict["notifications"] = [
             n.to_dict()
             for n in await get_notifications_from_db(
-                experiment_id=exp.experiment_id, user_id=exp.user_id, asession=asession
+                experiment_id=exp.experiment_id,
+                user_id=exp.user_id,
+                workspace_id=exp.workspace_id,
+                asession=asession,
             )
         ]
         all_experiments.append(

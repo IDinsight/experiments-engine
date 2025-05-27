@@ -10,6 +10,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    delete,
     select,
 )
 from sqlalchemy.dialects.postgresql import ARRAY
@@ -235,6 +236,9 @@ class DrawDB(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.user_id"), nullable=False
     )
+    workspace_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("workspace.workspace_id"), nullable=False
+    )
     client_id: Mapped[str] = mapped_column(
         String(length=36), ForeignKey("clients.client_id"), nullable=False
     )
@@ -300,6 +304,9 @@ class ContextDB(Base):
     )
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.user_id"), nullable=False
+    )
+    workspace_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("workspace.workspace_id"), nullable=False
     )
 
     # Description
@@ -410,6 +417,7 @@ class NotificationsDB(Base):
 async def save_notifications_to_db(
     experiment_id: int,
     user_id: int,
+    workspace_id: int,
     notifications: Notifications,
     asession: AsyncSession,
 ) -> list[NotificationsDB]:
@@ -422,6 +430,7 @@ async def save_notifications_to_db(
         notification_row = NotificationsDB(
             experiment_id=experiment_id,
             user_id=user_id,
+            workspace_id=workspace_id,
             notification_type=EventType.TRIALS_COMPLETED,
             notification_value=notifications.numberOfTrials,
             is_active=True,
@@ -432,6 +441,7 @@ async def save_notifications_to_db(
         notification_row = NotificationsDB(
             experiment_id=experiment_id,
             user_id=user_id,
+            workspace_id=workspace_id,
             notification_type=EventType.DAYS_ELAPSED,
             notification_value=notifications.daysElapsed,
             is_active=True,
@@ -442,6 +452,7 @@ async def save_notifications_to_db(
         notification_row = NotificationsDB(
             experiment_id=experiment_id,
             user_id=user_id,
+            workspace_id=workspace_id,
             notification_type=EventType.PERCENTAGE_BETTER,
             notification_value=notifications.percentBetterThreshold,
             is_active=True,
@@ -455,7 +466,7 @@ async def save_notifications_to_db(
 
 
 async def get_notifications_from_db(
-    experiment_id: int, user_id: int, asession: AsyncSession
+    experiment_id: int, user_id: int, workspace_id: int, asession: AsyncSession
 ) -> Sequence[NotificationsDB]:
     """
     Get notifications from the database
@@ -464,6 +475,7 @@ async def get_notifications_from_db(
         select(NotificationsDB)
         .where(NotificationsDB.experiment_id == experiment_id)
         .where(NotificationsDB.user_id == user_id)
+        .where(NotificationsDB.workspace_id == workspace_id)
     )
 
     return (await asession.execute(statement)).scalars().all()
@@ -480,7 +492,7 @@ async def save_experiment_to_db(
     Save an experiment to the database.
     """
     len_contexts = len(experiment.contexts) if experiment.contexts else 1
-    contexts = None
+    contexts = []
 
     arms = [
         ArmDB(
@@ -506,6 +518,7 @@ async def save_experiment_to_db(
         contexts = [
             ContextDB(
                 user_id=user_id,
+                workspace_id=workspace_id,
                 name=context.name,
                 description=context.description,
                 value_type=context.value_type,
@@ -585,3 +598,48 @@ async def get_experiment_by_id_from_db(
         .where(ExperimentDB.experiment_id == experiment_id)
     )
     return (await asession.execute(statement)).unique().scalars().one_or_none()
+
+
+async def delete_experiment_by_id_from_db(
+    workspace_id: int, experiment_id: int, asession: AsyncSession
+) -> None:
+    """
+    Delete an experiment by ID for a given workspace.
+    """
+    await asession.execute(
+        delete(NotificationsDB)
+        .where(NotificationsDB.workspace_id == workspace_id)
+        .where(NotificationsDB.experiment_id == experiment_id)
+    )
+
+    await asession.execute(
+        delete(ContextDB)
+        .where(ContextDB.workspace_id == workspace_id)
+        .where(ContextDB.experiment_id == experiment_id)
+    )
+
+    await asession.execute(
+        delete(ClientDB)
+        .where(ClientDB.workspace_id == workspace_id)
+        .where(ClientDB.experiment_id == experiment_id)
+    )
+
+    await asession.execute(
+        delete(ArmDB)
+        .where(ArmDB.workspace_id == workspace_id)
+        .where(ArmDB.experiment_id == experiment_id)
+    )
+    await asession.execute(
+        delete(DrawDB)
+        .where(DrawDB.workspace_id == workspace_id)
+        .where(DrawDB.experiment_id == experiment_id)
+    )
+
+    await asession.execute(
+        delete(ExperimentDB)
+        .where(ExperimentDB.workspace_id == workspace_id)
+        .where(ExperimentDB.experiment_id == experiment_id)
+    )
+
+    await asession.commit()
+    return None
