@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional, Sequence
 
+import numpy as np
 from sqlalchemy import (
     Boolean,
     DateTime,
@@ -506,7 +507,11 @@ async def save_experiment_to_db(
             mu_init=arm.mu_init,
             sigma_init=arm.sigma_init,
             mu=[arm.mu_init] * len_contexts,
-            covariance=[arm.sigma_init] * len_contexts,
+            covariance=(
+                (np.identity(len_contexts) * arm.sigma_init**2).tolist()
+                if arm.sigma_init
+                else [[None]]
+            ),
             alpha_init=arm.alpha_init,
             beta_init=arm.beta_init,
             alpha=arm.alpha_init,

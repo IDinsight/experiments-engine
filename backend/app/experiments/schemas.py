@@ -241,7 +241,7 @@ class ArmResponse(Arm):
     alpha: Optional[Union[float, None]]
     beta: Optional[Union[float, None]]
     mu: Optional[List[Union[float, None]]]
-    covariance: Optional[List[Union[float, None]]]
+    covariance: Optional[List[List[Union[float, None]]]]
     draws: Optional[List[Union[float, None]]]
     model_config = ConfigDict(
         from_attributes=True,
@@ -481,6 +481,10 @@ class Experiment(ExperimentBase):
             if not self.reward_type == RewardLikelihood.BERNOULLI:
                 raise ValueError(
                     "Beta prior can only be used with binary-valued rewards."
+                )
+            if self.exp_type != ExperimentsEnum.MAB:
+                raise ValueError(
+                    f"Experiments of type {self.exp_type} can only use Gaussian priors."
                 )
 
         return self
