@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import numpy as np
 from numpy.random import beta
@@ -108,12 +108,12 @@ def _update_arm_normal(
     new_covariance = np.linalg.inv(prior_covariance_inv + llhood_covariance_inv)
 
     # New mean
-    llhood_term = reward / llhood_sigma**2
+    llhood_term: Union[np.ndarray, float] = reward / llhood_sigma**2
     if context:
         llhood_term = context.T * llhood_term
     new_mu = new_covariance @ ((prior_covariance_inv @ current_mu) + llhood_term)
 
-    return new_mu, new_covariance
+    return new_mu.tolist(), new_covariance.tolist()
 
 
 def _update_arm_laplace(
@@ -162,12 +162,14 @@ def _update_arm_laplace(
     covariance = result.hess_inv.todense()  # type: ignore
 
     new_covariance = 0.5 * (covariance + covariance.T)
-    return new_mu, new_covariance.astype(np.float64)
+    return new_mu.tolist(), new_covariance.tolist()
 
 
 # ------------- Import functions ----------------
 # --- Choose arm function ---
-def choose_arm(experiment: ExperimentResponse, context: Optional[list]) -> int:
+def choose_arm(
+    experiment: ExperimentResponse, context: Optional[Union[list, np.ndarray, None]]
+) -> int:
     """
     Choose arm based on posterior using Thompson Sampling.
 
@@ -212,7 +214,7 @@ def update_arm(
     experiment: ExperimentResponse,
     rewards: list[float],
     arm_to_update: Optional[int] = None,
-    context: Optional[np.ndarray] = None,
+    context: Optional[Union[list, np.ndarray, None]] = None,
     treatments: Optional[list[int]] = None,
 ) -> Any:
     """

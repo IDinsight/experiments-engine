@@ -111,7 +111,7 @@ class ExperimentDB(Base):
         return self.exp_type == "cmab"
 
     @property
-    def context_list(self) -> list["ContextDB"]:
+    def context_list(self) -> list["ContextDB"] | list[None]:
         """Get contexts, returning empty list if not applicable."""
         return self.contexts if self.has_contexts else []
 
@@ -139,9 +139,9 @@ class ExperimentDB(Base):
             "arms": [arm.to_dict() for arm in self.arms],
             "draws": [draw.to_dict() for draw in self.draws],
             "contexts": (
-                [context.to_dict() for context in self.context_list]
-                if self.has_contexts
-                else None
+                [context.to_dict() for context in self.context_list if context]
+                if len(self.context_list) > 0
+                else []
             ),
         }
 
