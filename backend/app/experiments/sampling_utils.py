@@ -7,7 +7,7 @@ from scipy.optimize import minimize
 from .schemas import (
     ArmPriors,
     ContextLinkFunctions,
-    ExperimentResponse,
+    ExperimentSample,
     ExperimentsEnum,
     Outcome,
     RewardLikelihood,
@@ -168,7 +168,7 @@ def _update_arm_laplace(
 # ------------- Import functions ----------------
 # --- Choose arm function ---
 def choose_arm(
-    experiment: ExperimentResponse, context: Optional[Union[list, np.ndarray, None]]
+    experiment: ExperimentSample, context: Optional[Union[list, np.ndarray, None]]
 ) -> int:
     """
     Choose arm based on posterior using Thompson Sampling.
@@ -211,7 +211,7 @@ def choose_arm(
 
 # --- Update arm parameters ---
 def update_arm(
-    experiment: ExperimentResponse,
+    experiment: ExperimentSample,
     rewards: list[float],
     arm_to_update: Optional[int] = None,
     context: Optional[Union[list, np.ndarray, None]] = None,

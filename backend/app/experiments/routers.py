@@ -25,7 +25,7 @@ from .models import (
 )
 from .schemas import (
     Experiment,
-    ExperimentResponse,
+    ExperimentSample,
     ExperimentsEnum,
 )
 
@@ -35,12 +35,12 @@ logger = setup_logger(__name__)
 
 
 # --- POST experiments routers ---
-@router.post("/", response_model=ExperimentResponse)
+@router.post("/", response_model=ExperimentSample)
 async def create_experiment(
     experiment: Experiment,
     user_db: Annotated[UserDB, Depends(require_admin_role)],
     asession: AsyncSession = Depends(get_async_session),
-) -> ExperimentResponse:
+) -> ExperimentSample:
     """
     Create a new experiment in the current user's workspace.
     """
@@ -68,15 +68,15 @@ async def create_experiment(
 
     experiment_dict = experiment_db.to_dict()
     experiment_dict["notifications"] = [n.to_dict() for n in notifications]
-    return ExperimentResponse.model_validate(experiment_dict)
+    return ExperimentSample.model_validate(experiment_dict)
 
 
 # -- GET experiment routers ---
-@router.get("/", response_model=list[ExperimentResponse])
+@router.get("/", response_model=list[ExperimentSample])
 async def get_all_experiments(
     user_db: Annotated[UserDB, Depends(get_verified_user)],
     asession: AsyncSession = Depends(get_async_session),
-) -> list[ExperimentResponse]:
+) -> list[ExperimentSample]:
     """
     Retrieve all experiments for the current user's workspace.
     """
@@ -100,12 +100,12 @@ async def get_all_experiments(
     return all_experiments
 
 
-@router.get("/type/{experiment_type}", response_model=list[ExperimentResponse])
+@router.get("/type/{experiment_type}", response_model=list[ExperimentSample])
 async def get_all_experiments_by_type(
     experiment_type: ExperimentsEnum,
     user_db: Annotated[UserDB, Depends(get_verified_user)],
     asession: AsyncSession = Depends(get_async_session),
-) -> list[ExperimentResponse]:
+) -> list[ExperimentSample]:
     """
     Retrieve all experiments for the current user's workspace.
     """
@@ -130,12 +130,12 @@ async def get_all_experiments_by_type(
     return all_experiments
 
 
-@router.get("/id/{experiment_id}", response_model=ExperimentResponse)
+@router.get("/id/{experiment_id}", response_model=ExperimentSample)
 async def get_experiment_by_id(
     experiment_id: int,
     user_db: Annotated[UserDB, Depends(get_verified_user)],
     asession: AsyncSession = Depends(get_async_session),
-) -> ExperimentResponse:
+) -> ExperimentSample:
     """
     Retrieve a specific experiment by ID for the current user's workspace.
     """
@@ -167,6 +167,7 @@ async def get_experiment_by_id(
     return experiment_dict[0]
 
 
+# -- DELETE experiment routers ---
 @router.delete("/type/{experiment_type}", response_model=dict[str, str])
 async def delete_experiment_by_type(
     experiment_type: ExperimentsEnum,
@@ -260,3 +261,49 @@ async def delete_experiment_by_id(
             status_code=500,
             detail=f"Error: {str(e)}",
         ) from e
+
+
+# --- Draw and update arms ---
+# @router.get("/{experiment_id}/draw", response_model=DrawResponse)
+# async def draw_arm(
+#     experiment_id: int,
+#     context: Optional[list] = None,
+#     draw_id: Optional[str] = None,
+#     workspace_db: WorkspaceDB = Depends(authenticate_workspace_key),
+#     asession: AsyncSession = Depends(get_async_session),
+# ) -> DrawResponse:
+#     """
+#     Draw an arm from the specified experiment.
+#     """
+#     workspace_id = workspace_db.workspace_id
+
+#     experiment = await get_experiment_by_id_from_db(
+#         workspace_id=workspace_id, experiment_id=experiment_id, asession=asession
+#     )
+#     if experiment is None:
+#         raise HTTPException(
+#             status_code=404, detail=f"Experiment with id {experiment_id} not found"
+#         )
+
+#     if (experiment.exp_type == ExperimentsEnum.CMAB.value) and (not context):
+#         raise HTTPException(
+#             status_code=400, detail="Context is required for CMAB experiments."
+#         )
+
+#     # Check for existing draws
+#     if draw_id is None:
+#         draw_id = str(uuid4())
+
+#     existing_draw = await get_draw_by_id(draw_id=draw_id, asession=asession)
+#     if existing_draw:
+#         raise HTTPException(
+#             status_code=400, detail=f"Draw with id {draw_id} already exists."
+#         )
+
+#     # Perform the draw
+#     experiment_data = ExperimentSample.model_validate(experiment)
+#     chosen_arm = choose_arm(experiment=experiment_data, context=context)
+#     chosen_arm_id = experiment.arms[chosen_arm].arm_id
+
+# try:
+#     draw = await sa

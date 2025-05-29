@@ -648,3 +648,53 @@ async def delete_experiment_by_id_from_db(
 
     await asession.commit()
     return None
+
+
+# Draw functions
+async def get_draw_by_id(draw_id: str, asession: AsyncSession) -> DrawDB | None:
+    """
+    Get a draw by its ID, which should be unique across the system.
+    """
+    statement = select(DrawDB).where(DrawDB.draw_id == draw_id)
+    result = await asession.execute(statement)
+
+    return result.unique().scalar_one_or_none()
+
+
+async def save_draw_to_db(
+    draw_id: str,
+    arm_id: int,
+    experiment_id: int,
+    user_id: int | None,
+    workspace_id: int,
+    client_id: str,
+    context: list[float] | None,
+    asession: AsyncSession,
+) -> DrawDB:
+    """
+    Save a draw to the database.
+    """
+    if not user_id:
+        experiment = await get_experiment_by_id_from_db(
+            experiment_id=experiment_id, workspace_id=workspace_id, asession=asession
+        )
+        if not experiment:
+            raise ValueError(
+                f"Experiment with id {experiment_id} not found for the given ID."
+            )
+        experiment_id = experiment.experiment_id
+    draw = DrawDB(
+        draw_id=draw_id,
+        arm_id=arm_id,
+        experiment_id=experiment_id,
+        user_id=user_id,
+        workspace_id=workspace_id,
+        client_id=client_id,
+        draw_datetime_utc=datetime.now(timezone.utc),
+        context_val=context,
+    )
+    asession.add(draw)
+    await asession.commit()
+    await asession.refresh(draw)
+
+    return draw

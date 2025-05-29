@@ -1,13 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import ExperimentDB, get_notifications_from_db
-from .schemas import ExperimentResponse, NotificationsResponse
+from .schemas import ExperimentSample, NotificationsResponse
 
 
 async def experiments_db_to_schema(
     experiments_db: list[ExperimentDB],
     asession: AsyncSession,
-) -> list[ExperimentResponse]:
+) -> list[ExperimentSample]:
     """
     Convert a list of ExperimentDB objects to a list of ExperimentResponse schemas.
     """
@@ -24,7 +24,7 @@ async def experiments_db_to_schema(
             )
         ]
         all_experiments.append(
-            ExperimentResponse.model_validate(
+            ExperimentSample.model_validate(
                 {
                     **exp_dict,
                     "notifications": [

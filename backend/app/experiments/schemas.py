@@ -520,3 +520,19 @@ class ExperimentResponse(ExperimentBase):
     clients: Optional[list[Client]] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ExperimentSample(ExperimentBase):
+    """
+    Pydantic model for experiments for drawing and updating arms.
+    """
+
+    experiment_id: int
+    n_trials: int
+    last_trial_datetime_utc: Optional[str] = None
+
+    arms: list[ArmResponse]
+    contexts: Optional[list[ContextResponse]] = None
+    clients: Optional[list[Client]] = None
+
+    model_config = ConfigDict(from_attributes=True)
