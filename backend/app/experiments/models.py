@@ -236,7 +236,7 @@ class DrawDB(Base):
         Integer, ForeignKey("workspace.workspace_id"), nullable=False
     )
     client_id: Mapped[str] = mapped_column(
-        String(length=36), ForeignKey("clients.client_id"), nullable=False
+        String(length=36), ForeignKey("clients.client_id"), nullable=True
     )
 
     # Logging
@@ -264,7 +264,7 @@ class DrawDB(Base):
         "ClientDB",
         back_populates="draws",
         lazy="joined",
-        primaryjoin="and_(DrawDB.client_id==ClientDB.client_id, ExperimentDB.sticky_assignment == True)",  # noqa: E501
+        primaryjoin="DrawDB.client_id==ClientDB.client_id",  # noqa: E501
     )
 
     def to_dict(self) -> dict:
@@ -699,6 +699,8 @@ async def save_observation_to_db(
     draw.observed_datetime_utc = datetime.now(timezone.utc)
     draw.observation_type = observation_type
     draw.reward = reward
+
+    print(draw.to_dict())
 
     await asession.commit()
     await asession.refresh(draw)

@@ -377,7 +377,7 @@ async def draw_experiment_arm(
 
     draw_response_data = {
         "draw_id": draw_id,
-        "draw_datetime_utc": draw.draw_datetime_utc,
+        "draw_datetime_utc": str(draw.draw_datetime_utc),
         "arm": experiment_data.arms[chosen_arm],
         "context_val": draw.context_val,
     }
@@ -480,4 +480,16 @@ async def get_rewards(
         experiment_id=experiment_id, asession=asession
     )
 
-    return [DrawResponse.model_validate(draw) for draw in draws]
+    return [
+        DrawResponse.model_validate(
+            {
+                "draw_id": draw.draw_id,
+                "draw_datetime_utc": str(draw.draw_datetime_utc),
+                "observed_datetime_utc": str(draw.observed_datetime_utc),
+                "arm": [arm for arm in experiment.arms if arm.arm_id == draw.arm_id][0],
+                "reward": draw.reward,
+                "context_val": draw.context_val,
+            }
+        )
+        for draw in draws
+    ]
