@@ -1,7 +1,32 @@
+from datetime import datetime, timezone
+from typing import Union
+
+import numpy as np
+from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import ExperimentDB, get_notifications_from_db
-from .schemas import ExperimentSample, NotificationsResponse
+from .models import (
+    ArmDB,
+    DrawDB,
+    ExperimentDB,
+    get_draw_by_id,
+    get_draws_with_rewards_by_experiment_id,
+    get_experiment_by_id_from_db,
+    get_notifications_from_db,
+    save_observation_to_db,
+)
+from .sampling_utils import update_arm
+from .schemas import (
+    ArmPriors,
+    ArmResponse,
+    DrawResponse,
+    ExperimentSample,
+    ExperimentsEnum,
+    NotificationsResponse,
+    ObservationType,
+    Outcome,
+    RewardLikelihood,
+)
 
 
 async def experiments_db_to_schema(
@@ -35,3 +60,171 @@ async def experiments_db_to_schema(
         )
 
     return all_experiments
+
+
+async def validate_experiment_and_draw(
+    experiment_id: int, draw_id: str, workspace_id: int, asession: AsyncSession
+) -> tuple[ExperimentDB, DrawDB]:
+    """
+    Validate the experiment and draw.
+    """
+    experiment = await get_experiment_by_id_from_db(
+        workspace_id=workspace_id, experiment_id=experiment_id, asession=asession
+    )
+    # Check experiment
+    if experiment is None:
+        raise HTTPException(
+            status_code=404, detail=f"Experiment with id {experiment_id} not found"
+        )
+
+    draw = await get_draw_by_id(draw_id=draw_id, asession=asession)
+    # Check draw
+    if draw is None:
+        raise HTTPException(status_code=404, detail=f"Draw with id {draw_id} not found")
+    if draw.experiment_id != experiment_id:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"Draw with id {draw_id} does not belong to "
+                f"experiment with id {experiment_id}"
+            ),
+        )
+    if draw.reward:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Draw with id {draw_id} has already been updated with a reward.",
+        )
+
+    return ExperimentSample.model_validate(experiment), DrawResponse.model_validate(
+        draw
+    )
+
+
+async def format_rewards_for_arm_update(
+    experiment: ExperimentDB, chosen_arm_id: int, asession: AsyncSession
+) -> tuple[list[float], Union[list[float], None], Union[list[float], None]]:
+    """
+    Format the rewards for the arm update.
+    """
+    previous_rewards = await get_draws_with_rewards_by_experiment_id(
+        experiment_id=experiment.experiment_id, asession=asession
+    )
+    if not previous_rewards:
+        return [], [], []
+
+    treatments, contexts = [], []
+    if experiment.exp_type != ExperimentsEnum.BAYESAB.value:
+        rewards = [
+            draw.reward for draw in previous_rewards if draw.arm_id == chosen_arm_id
+        ]
+
+    else:
+        rewards = [draw.reward for draw in previous_rewards]
+        treatments = [
+            float(experiment.arms[draw.arm_id].is_treatment_arm)
+            for draw in previous_rewards
+        ]
+
+    if experiment.exp_type == ExperimentsEnum.CMAB.value:
+        contexts = [draw.context_val for draw in previous_rewards]
+    return rewards, contexts, treatments
+
+
+async def update_arm_based_on_outcome(
+    experiment: ExperimentDB,
+    draw: DrawDB,
+    rewards: list[float],
+    observation_type: ObservationType,
+    contexts: Union[list[float], list[None]],
+    treatments: Union[list[float], None],
+    asession: AsyncSession,
+) -> ArmResponse:
+    """
+    Update the arm parameters based on the outcome.
+
+    This is a helper function to allow `auto_fail` job to call
+    it as well.
+    """
+    update_experiment_metadata(experiment)
+
+    arm = get_arm_from_experiment(experiment, draw.arm_id)
+    arm.n_outcomes += 1
+
+    experiment_data = ExperimentSample.model_validate(experiment)
+    arm = await update_arm_parameters(
+        arm=arm,
+        experiment_data=experiment_data,
+        chosen_arm=np.argwhere([arm.arm_id for arm in experiment.arms] == draw.arm_id)[
+            0
+        ][0],
+        rewards=rewards,
+        contexts=contexts,
+        treatments=treatments,
+    )
+    await save_updated_data(
+        arm=arm,
+        draw=draw,
+        reward=rewards[0],
+        observation_type=observation_type,
+        asession=asession,
+    )
+
+    return ArmResponse.model_validate(arm)
+
+
+def update_experiment_metadata(experiment: ExperimentDB) -> None:
+    """Update experiment metadata with new trial information"""
+    experiment.n_trials += 1
+    experiment.last_trial_datetime_utc = datetime.now(tz=timezone.utc)
+
+
+def get_arm_from_experiment(experiment: ExperimentDB, arm_id: int) -> ArmDB:
+    """Get and validate the arm from the experiment"""
+    arms = [a for a in experiment.arms if a.arm_id == arm_id]
+    if not arms:
+        raise HTTPException(status_code=404, detail=f"Arm with id {arm_id} not found")
+    return arms[0]
+
+
+async def update_arm_parameters(
+    arm: ArmDB,
+    experiment_data: ExperimentSample,
+    chosen_arm: int,
+    rewards: list[float],
+    contexts: Union[list[float], list[None]],
+    treatments: Union[list[float], None],
+) -> ArmDB:
+    """Update the arm parameters based on the reward type and outcome"""
+    if experiment_data.reward_type == RewardLikelihood.BERNOULLI:
+        Outcome(rewards[0])  # Check if reward is 0 or 1
+    params = update_arm(
+        experiment=experiment_data,
+        rewards=rewards,
+        arm_to_update=chosen_arm,
+        context=contexts,
+        treatments=treatments,
+    )
+    if experiment_data.prior_type == ArmPriors.BETA:
+        arm.alpha, arm.beta = params
+    elif experiment_data.prior_type == ArmPriors.NORMAL:
+        arm.mu, arm.covariance = params
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Prior type not supported.",
+        )
+    return arm
+
+
+async def save_updated_data(
+    arm: ArmDB,
+    draw: DrawDB,
+    reward: float,
+    observation_type: ObservationType,
+    asession: AsyncSession,
+) -> None:
+    """Save the updated arm and observation data"""
+    await asession.commit()
+    await save_observation_to_db(
+        draw=draw, reward=reward, observation_type=observation_type, asession=asession
+    )

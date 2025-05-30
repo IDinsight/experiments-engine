@@ -212,6 +212,10 @@ class Arm(BaseModel):
         examples=[None, 1.0],
         description="Standard deviation parameter for Normal prior",
     )
+    is_treatment_arm: Optional[bool] = Field(
+        default=True,
+        description="Whether the arm is a treatment arm or not",
+    )
 
     @model_validator(mode="after")
     def check_values(self) -> Self:
@@ -242,7 +246,6 @@ class ArmResponse(Arm):
     beta: Optional[Union[float, None]]
     mu: Optional[List[Union[float, None]]]
     covariance: Optional[List[List[Union[float, None]]]]
-    draws: Optional[List[Union[float, None]]]
     model_config = ConfigDict(
         from_attributes=True,
     )
@@ -301,29 +304,12 @@ class Client(BaseModel):
     )
 
 
-# Draws
-class Draw(BaseModel):
-    """
-    Pydantic model for a draw.
-    """
-
-    model_config = ConfigDict(from_attributes=True)
-
-    # Draw info
-    reward: Optional[float] = Field(
-        description="Reward observed from the draw",
-        default=None,
-    )
-    context_val: Optional[list[float]] = Field(
-        description="Context values associated with the draw",
-        default=None,
-    )
-
-
-class DrawResponse(Draw):
+class DrawResponse(BaseModel):
     """
     Pydantic model for a response for draw creation
     """
+
+    model_config = ConfigDict(from_attributes=True)
 
     draw_id: str = Field(
         description="Unique identifier for the draw",
@@ -337,8 +323,18 @@ class DrawResponse(Draw):
         description="Timestamp of when the reward was observed",
         default=None,
     )
+
+    # Draw info
+    reward: Optional[float] = Field(
+        description="Reward observed from the draw",
+        default=None,
+    )
+    context_val: Optional[list[float]] = Field(
+        description="Context values associated with the draw",
+        default=None,
+    )
     arm: ArmResponse
-    client: Client
+    client: Optional[Client] = None
 
 
 # Experiments
@@ -470,6 +466,19 @@ class Experiment(ExperimentBase):
                 if missing_params:
                     val = prior_type.value
                     raise ValueError(f"{val} prior needs {','.join(missing_params)}.")
+        return self
+
+    @model_validator(mode="after")
+    def check_treatment_info(self) -> Self:
+        """
+        Validate that the treatment arm information is set correctly.
+        """
+        arms = self.arms
+        if self.exp_type == ExperimentsEnum.BAYESAB:
+            if not any(arm.is_treatment_arm for arm in arms):
+                raise ValueError("At least one arm must be a treatment arm.")
+            if all(arm.is_treatment_arm for arm in arms):
+                raise ValueError("At least one arm must be a control arm.")
         return self
 
     @model_validator(mode="after")

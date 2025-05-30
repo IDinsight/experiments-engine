@@ -215,7 +215,7 @@ def update_arm(
     rewards: list[float],
     arm_to_update: Optional[int] = None,
     context: Optional[Union[list, np.ndarray, None]] = None,
-    treatments: Optional[list[int]] = None,
+    treatments: Optional[list[float]] = None,
 ) -> Any:
     """
     Update the arm parameters based on the experiment type and reward.
@@ -293,7 +293,7 @@ def update_arm(
                     current_covariance=np.array(arm.covariance),
                     reward=rewards[0],
                     llhood_sigma=1.0,  # TODO: Assuming a fixed likelihood sigma
-                    context=context,
+                    context=np.array(context),
                 )
             # TODO: only supports Bernoulli likelihood
             else:
@@ -301,7 +301,7 @@ def update_arm(
                     current_mu=np.array(arm.mu),
                     current_covariance=np.array(arm.covariance),
                     reward=np.array(rewards),
-                    context=context,
+                    context=np.array(context),
                     link_function=ContextLinkFunctions.LOGISTIC,
                     reward_likelihood=experiment.reward_type,
                     prior_type=experiment.prior_type,

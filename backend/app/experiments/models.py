@@ -156,9 +156,6 @@ class ArmDB(Base):
 
     # IDs
     arm_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
-    user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("users.user_id"), nullable=False
-    )
     workspace_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("workspace.workspace_id"), nullable=False
     )
@@ -178,6 +175,7 @@ class ArmDB(Base):
     covariance: Mapped[Optional[list[float]]] = mapped_column(
         ARRAY(Float), nullable=True
     )
+    is_treatment_arm: Mapped[bool] = mapped_column(Boolean, nullable=True, default=True)
 
     alpha_init: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     beta_init: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
@@ -234,9 +232,6 @@ class DrawDB(Base):
     experiment_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("experiments.experiment_id"), nullable=False
     )
-    user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("users.user_id"), nullable=False
-    )
     workspace_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("workspace.workspace_id"), nullable=False
     )
@@ -280,7 +275,6 @@ class DrawDB(Base):
             "draw_id": self.draw_id,
             "arm_id": self.arm_id,
             "experiment_id": self.experiment_id,
-            "user_id": self.user_id,
             "client_id": self.client_id,
             "draw_datetime_utc": self.draw_datetime_utc,
             "observed_datetime_utc": self.observed_datetime_utc,
@@ -302,9 +296,6 @@ class ContextDB(Base):
     context_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     experiment_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("experiments.experiment_id"), nullable=False
-    )
-    user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("users.user_id"), nullable=False
     )
     workspace_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("workspace.workspace_id"), nullable=False
@@ -344,9 +335,6 @@ class ClientDB(Base):
     client_id: Mapped[str] = mapped_column(
         String, primary_key=True, default=lambda x: str(uuid.uuid4())
     )
-    user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("users.user_id"), nullable=False
-    )
     experiment_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("experiments.experiment_id"), nullable=False
     )
@@ -367,6 +355,17 @@ class ClientDB(Base):
         primaryjoin="and_(ClientDB.experiment_id==ExperimentDB.experiment_id,"
         + "ExperimentDB.sticky_assignment == True)",
     )
+
+    def to_dict(self) -> dict:
+        """
+        Convert the ORM object to a dictionary.
+        """
+        return {
+            "client_id": self.client_id,
+            "experiment_id": self.experiment_id,
+            "workspace_id": self.workspace_id,
+            "draws": [draw.to_dict() for draw in self.draws],
+        }
 
 
 # --- Notifications model ---
@@ -497,7 +496,6 @@ async def save_experiment_to_db(
 
     arms = [
         ArmDB(
-            user_id=user_id,
             workspace_id=workspace_id,
             # description
             name=arm.name,
@@ -516,13 +514,13 @@ async def save_experiment_to_db(
             beta_init=arm.beta_init,
             alpha=arm.alpha_init,
             beta=arm.beta_init,
+            is_treatment_arm=arm.is_treatment_arm,
         )
         for arm in experiment.arms
     ]
     if experiment.contexts and len_contexts > 0:
         contexts = [
             ContextDB(
-                user_id=user_id,
                 workspace_id=workspace_id,
                 name=context.name,
                 description=context.description,
@@ -665,29 +663,18 @@ async def save_draw_to_db(
     draw_id: str,
     arm_id: int,
     experiment_id: int,
-    user_id: int | None,
     workspace_id: int,
-    client_id: str,
+    client_id: str | None,
     context: list[float] | None,
     asession: AsyncSession,
 ) -> DrawDB:
     """
     Save a draw to the database.
     """
-    if not user_id:
-        experiment = await get_experiment_by_id_from_db(
-            experiment_id=experiment_id, workspace_id=workspace_id, asession=asession
-        )
-        if not experiment:
-            raise ValueError(
-                f"Experiment with id {experiment_id} not found for the given ID."
-            )
-        experiment_id = experiment.experiment_id
     draw = DrawDB(
         draw_id=draw_id,
         arm_id=arm_id,
         experiment_id=experiment_id,
-        user_id=user_id,
         workspace_id=workspace_id,
         client_id=client_id,
         draw_datetime_utc=datetime.now(timezone.utc),
@@ -698,3 +685,51 @@ async def save_draw_to_db(
     await asession.refresh(draw)
 
     return draw
+
+
+async def save_observation_to_db(
+    draw: DrawDB,
+    reward: float,
+    observation_type: ObservationType,
+    asession: AsyncSession,
+) -> DrawDB:
+    """
+    Save an observation to the database.
+    """
+    draw.observed_datetime_utc = datetime.now(timezone.utc)
+    draw.observation_type = observation_type
+    draw.reward = reward
+
+    await asession.commit()
+    await asession.refresh(draw)
+
+    return draw
+
+
+async def get_draws_by_experiment_id(
+    experiment_id: int, asession: AsyncSession
+) -> Sequence[DrawDB]:
+    """
+    Get all draws for a given experiment ID.
+    """
+    statement = (
+        select(DrawDB)
+        .where(DrawDB.experiment_id == experiment_id)
+        .order_by(DrawDB.draw_datetime_utc.desc())
+    )
+    return (await asession.execute(statement)).unique().scalars().all()
+
+
+async def get_draws_with_rewards_by_experiment_id(
+    experiment_id: int, asession: AsyncSession
+) -> Sequence[DrawDB]:
+    """
+    Get all draws with rewards for a given experiment ID.
+    """
+    statement = (
+        select(DrawDB)
+        .where(DrawDB.experiment_id == experiment_id)
+        .where(DrawDB.reward.is_not(None))
+        .order_by(DrawDB.draw_datetime_utc.desc())
+    )
+    return (await asession.execute(statement)).unique().scalars().all()
