@@ -276,16 +276,19 @@ def update_arm(
         ), f"arm_to_update must be provided for {experiment.exp_type} experiments."
 
         arm = experiment.arms[arm_to_update]
-        assert arm.alpha and arm.beta, "Arm must have alpha and beta parameters."
 
         # Beta-binomial priors
         if experiment.prior_type == ArmPriors.BETA:
+            assert arm.alpha and arm.beta, "Arm must have alpha and beta parameters."
             return _update_arm_beta_binomial(
                 alpha=arm.alpha, beta=arm.beta, reward=Outcome(rewards[0])
             )
 
         # Normal priors
         elif experiment.prior_type == ArmPriors.NORMAL:
+            assert (
+                arm.mu and arm.covariance
+            ), "Arm must have mu and covariance parameters."
             if context is None:
                 context = np.ones_like(arm.mu)
             # Normal likelihood

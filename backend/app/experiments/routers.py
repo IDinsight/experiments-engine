@@ -22,7 +22,7 @@ from .dependencies import (
     experiments_db_to_schema,
     format_rewards_for_arm_update,
     save_updated_data,
-    update_arm_parameters,
+    update_arm_based_on_outcome,
     validate_experiment_and_draw,
 )
 from .models import (
@@ -427,33 +427,30 @@ async def update_experiment_arm(
     # Update the arm with the given reward
     try:
         # Get experiment type for observation type
-        experiment_data = ExperimentSample.model_validate(experiment)
 
-        arm = await update_arm_parameters(
-            arm=experiment.arms[chosen_arm_index],
-            experiment_data=experiment_data,
-            chosen_arm=chosen_arm_index,
+        await update_arm_based_on_outcome(
+            experiment=experiment,
+            draw=draw,
             rewards=rewards_list,
             contexts=context_list,
             treatments=treatments_list,
         )
 
-        observation_type = experiment_data.observation_type
+        observation_type = draw.observation_type
 
         await save_updated_data(
-            arm=arm,
+            arm=experiment.arms[chosen_arm_index],
             draw=draw,
             reward=reward,
             observation_type=observation_type,
             asession=asession,
         )
+        return ArmResponse.model_validate(experiment.arms[chosen_arm_index])
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=f"Error updating arm: {str(e)}",
         ) from e
-
-    return ArmResponse.model_validate(arm)
 
 
 @router.get("/{experiment_id}/rewards", response_model=list[DrawResponse])

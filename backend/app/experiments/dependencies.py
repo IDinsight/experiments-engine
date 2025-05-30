@@ -142,10 +142,8 @@ async def update_arm_based_on_outcome(
     experiment: ExperimentDB,
     draw: DrawDB,
     rewards: list[float],
-    observation_type: ObservationType,
     contexts: Union[list[list[float]], None],
     treatments: Union[list[float], None],
-    asession: AsyncSession,
 ) -> ArmResponse:
     """
     Update the arm parameters based on the outcome.
@@ -158,23 +156,16 @@ async def update_arm_based_on_outcome(
     arm = get_arm_from_experiment(experiment, draw.arm_id)
     arm.n_outcomes += 1
 
-    experiment_data = ExperimentSample.model_validate(experiment)
-    arm = await update_arm_parameters(
+    experiment_data = ExperimentSample.model_validate(experiment.to_dict())
+    chosen_arm = np.argwhere([a.arm_id == arm.arm_id for a in experiment.arms])[0][0]
+
+    await update_arm_parameters(
         arm=arm,
         experiment_data=experiment_data,
-        chosen_arm=np.argwhere([arm.arm_id for arm in experiment.arms] == draw.arm_id)[
-            0
-        ][0],
+        chosen_arm=chosen_arm,
         rewards=rewards,
         contexts=contexts,
         treatments=treatments,
-    )
-    await save_updated_data(
-        arm=arm,
-        draw=draw,
-        reward=rewards[0],
-        observation_type=observation_type,
-        asession=asession,
     )
 
     return ArmResponse.model_validate(arm)
@@ -201,7 +192,7 @@ async def update_arm_parameters(
     rewards: list[float],
     contexts: Union[list[list[float]], None],
     treatments: Union[list[float], None],
-) -> ArmDB:
+) -> None:
     """Update the arm parameters based on the reward type and outcome"""
     if experiment_data.reward_type == RewardLikelihood.BERNOULLI:
         Outcome(rewards[0])  # Check if reward is 0 or 1
@@ -221,7 +212,6 @@ async def update_arm_parameters(
             status_code=400,
             detail="Prior type not supported.",
         )
-    return arm
 
 
 async def save_updated_data(

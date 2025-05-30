@@ -132,10 +132,10 @@ class ExperimentDB(Base):
             "exp_type": self.exp_type,
             "prior_type": self.prior_type,
             "reward_type": self.reward_type,
-            "created_datetime_utc": self.created_datetime_utc,
+            "created_datetime_utc": str(self.created_datetime_utc),
             "is_active": self.is_active,
             "n_trials": self.n_trials,
-            "last_trial_datetime_utc": self.last_trial_datetime_utc,
+            "last_trial_datetime_utc": str(self.last_trial_datetime_utc),
             "arms": [arm.to_dict() for arm in self.arms],
             "draws": [draw.to_dict() for draw in self.draws],
             "contexts": (
@@ -628,14 +628,15 @@ async def delete_experiment_by_id_from_db(
     )
 
     await asession.execute(
-        delete(ArmDB)
-        .where(ArmDB.workspace_id == workspace_id)
-        .where(ArmDB.experiment_id == experiment_id)
-    )
-    await asession.execute(
         delete(DrawDB)
         .where(DrawDB.workspace_id == workspace_id)
         .where(DrawDB.experiment_id == experiment_id)
+    )
+
+    await asession.execute(
+        delete(ArmDB)
+        .where(ArmDB.workspace_id == workspace_id)
+        .where(ArmDB.experiment_id == experiment_id)
     )
 
     await asession.execute(
@@ -699,8 +700,6 @@ async def save_observation_to_db(
     draw.observed_datetime_utc = datetime.now(timezone.utc)
     draw.observation_type = observation_type
     draw.reward = reward
-
-    print(draw.to_dict())
 
     await asession.commit()
     await asession.refresh(draw)
