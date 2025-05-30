@@ -111,9 +111,9 @@ class ExperimentDB(Base):
         return self.exp_type == "cmab"
 
     @property
-    def context_list(self) -> list["ContextDB"] | list[None]:
+    def context_list(self) -> list["ContextDB"] | list:
         """Get contexts, returning empty list if not applicable."""
-        return self.contexts if self.has_contexts else []
+        return self.contexts if self.has_contexts and self.contexts is not None else []
 
     def to_dict(self) -> dict:
         """

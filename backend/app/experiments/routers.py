@@ -284,7 +284,7 @@ async def delete_experiment_by_id(
 
 # --- Draw and update arms ---
 @router.get("/{experiment_id}/draw", response_model=DrawResponse)
-async def draw_arm(
+async def draw_experiment_arm(
     experiment_id: int,
     contexts: Optional[list[ContextInput]] = None,
     draw_id: Optional[str] = None,
@@ -310,12 +310,12 @@ async def draw_arm(
             status_code=400, detail="Context is required for CMAB experiments."
         )
     elif (experiment.exp_type == ExperimentsEnum.CMAB.value) and contexts:
-        if len(contexts) != len(experiment.contexts):
+        context_length = 0 if not experiment.contexts else len(experiment.contexts)
+        if len(contexts) != context_length:
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    f"Expected {len(experiment.contexts)} contexts"
-                    f" but got {len(contexts)}."
+                    f"Expected {context_length} contexts" f" but got {len(contexts)}."
                 ),
             )
 
@@ -336,9 +336,13 @@ async def draw_arm(
     if contexts:
         sorted_contexts = list(sorted(contexts, key=lambda x: x.context_id))
         try:
+            exp_contexts = experiment_data.contexts or []
+            sorted_exp_contexts = (
+                sorted(exp_contexts, key=lambda x: x.context_id) if exp_contexts else []
+            )
             for c_input, c_exp in zip(
                 sorted_contexts,
-                sorted(experiment_data.contexts, key=lambda x: x.context_id),
+                sorted_exp_contexts,
             ):
                 if c_exp.value_type == ContextType.BINARY.value:
                     Outcome(c_input.context_value)
@@ -362,7 +366,7 @@ async def draw_arm(
             experiment_id=experiment_id,
             workspace_id=workspace_id,
             client_id=None,  # TODO: Update for sticky assignment
-            context=[c.context_value for c in sorted_contexts],
+            context=[c.context_value for c in sorted_contexts] if contexts else None,
             asession=asession,
         )
     except Exception as e:
@@ -371,16 +375,17 @@ async def draw_arm(
             detail=f"Error saving draw: {str(e)}",
         ) from e
 
-    return DrawResponse.model_validate(
-        draw_id=draw_id,
-        draw_datetime_utc=draw.draw_datetime_utc,
-        arm=experiment_data.arms[chosen_arm],
-        context_val=draw.context_val,
-    )
+    draw_response_data = {
+        "draw_id": draw_id,
+        "draw_datetime_utc": draw.draw_datetime_utc,
+        "arm": experiment_data.arms[chosen_arm],
+        "context_val": draw.context_val,
+    }
+    return DrawResponse.model_validate(draw_response_data)
 
 
 @router.put("/{experiment_id}/{draw_id}/{reward}", response_model=ArmResponse)
-async def update_arm(
+async def update_experiment_arm(
     experiment_id: int,
     draw_id: str,
     reward: float,
@@ -407,25 +412,39 @@ async def update_arm(
     rewards, contexts, treatments = await format_rewards_for_arm_update(
         experiment=experiment, chosen_arm_id=draw.arm_id, asession=asession
     )
-    rewards = ([reward] + rewards) if rewards else [reward]
-    contexts = ([draw.context_val] + contexts) if contexts else [draw.context_val]
+
+    rewards_list = [reward] if rewards is None else [reward] + rewards
+
+    context_list = None if not draw.context_val else [draw.context_val]
+    if contexts and context_list:
+        context_list = context_list + contexts
+
     new_treatment = [float(experiment.arms[chosen_arm_index].is_treatment_arm)]
-    treatments = (new_treatment + treatments) if treatments else new_treatment
+    treatments_list = (
+        new_treatment if treatments is None else new_treatment + treatments
+    )
+
     # Update the arm with the given reward
     try:
+        # Get experiment type for observation type
+        experiment_data = ExperimentSample.model_validate(experiment)
+
         arm = await update_arm_parameters(
             arm=experiment.arms[chosen_arm_index],
-            experiment_data=ExperimentSample.model_validate(experiment),
+            experiment_data=experiment_data,
             chosen_arm=chosen_arm_index,
-            rewards=rewards,
-            contexts=contexts,
-            treatments=treatments,
+            rewards=rewards_list,
+            contexts=context_list,
+            treatments=treatments_list,
         )
+
+        observation_type = experiment_data.observation_type
+
         await save_updated_data(
             arm=arm,
             draw=draw,
             reward=reward,
-            observation_type=experiment.observation_type,
+            observation_type=observation_type,
             asession=asession,
         )
     except Exception as e:

@@ -194,13 +194,15 @@ def choose_arm(
         elif experiment.prior_type == ArmPriors.NORMAL:
             mus = [np.array(arm.mu) for arm in experiment.arms]
             covariances = [np.array(arm.covariance) for arm in experiment.arms]
-            if not context:
-                context = np.ones_like(mus[0])
+
+            context_array = (
+                np.ones_like(mus[0]) if context is None else np.array(context)
+            )
 
             return _sample_normal(
                 mus=mus,
                 covariances=covariances,
-                context=context,
+                context=context_array,
                 link_function=(
                     ContextLinkFunctions.NONE
                     if experiment.reward_type == RewardLikelihood.NORMAL

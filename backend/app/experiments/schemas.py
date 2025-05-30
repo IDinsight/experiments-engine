@@ -539,6 +539,7 @@ class ExperimentSample(ExperimentBase):
     experiment_id: int
     n_trials: int
     last_trial_datetime_utc: Optional[str] = None
+    observation_type: ObservationType = ObservationType.USER
 
     arms: list[ArmResponse]
     contexts: Optional[list[ContextResponse]] = None

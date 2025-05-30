@@ -19,7 +19,6 @@ from .sampling_utils import update_arm
 from .schemas import (
     ArmPriors,
     ArmResponse,
-    DrawResponse,
     ExperimentSample,
     ExperimentsEnum,
     NotificationsResponse,
@@ -95,14 +94,12 @@ async def validate_experiment_and_draw(
             detail=f"Draw with id {draw_id} has already been updated with a reward.",
         )
 
-    return ExperimentSample.model_validate(experiment), DrawResponse.model_validate(
-        draw
-    )
+    return experiment, draw
 
 
 async def format_rewards_for_arm_update(
     experiment: ExperimentDB, chosen_arm_id: int, asession: AsyncSession
-) -> tuple[list[float], Union[list[float], None], Union[list[float], None]]:
+) -> tuple[list[float], list[list[float]] | None, list[float] | None]:
     """
     Format the rewards for the arm update.
     """
@@ -110,14 +107,16 @@ async def format_rewards_for_arm_update(
         experiment_id=experiment.experiment_id, asession=asession
     )
     if not previous_rewards:
-        return [], [], []
+        return [], None, None
 
-    treatments, contexts = [], []
+    rewards = []
+    treatments = None
+    contexts = None
+
     if experiment.exp_type != ExperimentsEnum.BAYESAB.value:
         rewards = [
             draw.reward for draw in previous_rewards if draw.arm_id == chosen_arm_id
         ]
-
     else:
         rewards = [draw.reward for draw in previous_rewards]
         treatments = [
@@ -126,7 +125,16 @@ async def format_rewards_for_arm_update(
         ]
 
     if experiment.exp_type == ExperimentsEnum.CMAB.value:
-        contexts = [draw.context_val for draw in previous_rewards]
+        contexts = []
+        for draw in previous_rewards:
+            if draw.context_val:
+                contexts.append(draw.context_val)
+            else:
+                raise ValueError(
+                    f"Context value is missing for draw id {draw.draw_id}"
+                    f" in CMAB experiment {draw.experiment_id}."
+                )
+
     return rewards, contexts, treatments
 
 
@@ -135,7 +143,7 @@ async def update_arm_based_on_outcome(
     draw: DrawDB,
     rewards: list[float],
     observation_type: ObservationType,
-    contexts: Union[list[float], list[None]],
+    contexts: Union[list[list[float]], None],
     treatments: Union[list[float], None],
     asession: AsyncSession,
 ) -> ArmResponse:
@@ -191,7 +199,7 @@ async def update_arm_parameters(
     experiment_data: ExperimentSample,
     chosen_arm: int,
     rewards: list[float],
-    contexts: Union[list[float], list[None]],
+    contexts: Union[list[list[float]], None],
     treatments: Union[list[float], None],
 ) -> ArmDB:
     """Update the arm parameters based on the reward type and outcome"""
