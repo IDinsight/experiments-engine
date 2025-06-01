@@ -1,12 +1,8 @@
 "use client";
 import * as React from "react";
 import {
-  AudioWaveform,
-  ArrowLeftRightIcon,
   LayoutDashboardIcon,
-  Command,
   Frame,
-  GalleryVerticalEnd,
   Map,
   PieChart,
   Settings2,
@@ -23,7 +19,6 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import api from "@/utils/api";
 import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 
@@ -68,33 +63,11 @@ const data = {
     email: "m@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
-  workspaces: [
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
   navMain: [
     {
       title: "Experiments",
       url: "/experiments",
       icon: FlaskConicalIcon,
-    },
-    {
-      title: "Integration",
-      url: "/integration",
-      icon: ArrowLeftRightIcon,
     },
     {
       title: "Dashboard",
@@ -143,7 +116,7 @@ const AppSidebar = React.memo(function AppSidebar({
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
-        <WorkspaceSwitcher workspaces={data.workspaces} />
+        <WorkspaceSwitcher />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />

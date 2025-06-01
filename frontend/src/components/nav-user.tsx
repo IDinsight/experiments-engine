@@ -18,6 +18,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import Link from "next/link";
 
 export function NavUser({
   user,
@@ -97,10 +98,12 @@ export function NavUser({
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Blocks />
-                Manage Workspace
-              </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/workspaces">
+                    <Blocks />
+                    Manage Workspace
+                  </Link>
+                </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>

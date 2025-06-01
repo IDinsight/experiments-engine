@@ -27,7 +27,6 @@ from app.database import get_async_session
 from app.mab.models import MABDrawDB, MultiArmedBanditDB
 from app.mab.observation import update_based_on_outcome as mab_update_based_on_outcome
 from app.schemas import ObservationType
-from app.users.models import UserDB
 
 
 async def auto_fail_mab(asession: AsyncSession) -> int:
@@ -205,10 +204,6 @@ async def auto_fail_cmab(asession: AsyncSession) -> int:
             .limit(100)
         )  # Process in smaller batches
 
-        # Get user
-        user_query = select(UserDB).where(UserDB.user_id == experiment.user_id).limit(1)
-        user_db = (await asession.execute(user_query)).unique().scalars().one()
-
         # Paginate through results if there are many draws to avoid memory issues
         offset = 0
         while True:
@@ -227,7 +222,6 @@ async def auto_fail_cmab(asession: AsyncSession) -> int:
                     draw,
                     0.0,
                     asession,
-                    user_db,
                     ObservationType.AUTO,
                 )
 

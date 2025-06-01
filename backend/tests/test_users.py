@@ -9,7 +9,7 @@ from pytest import fixture
 from backend.app.auth.dependencies import get_current_user, get_verified_user
 from backend.app.users.models import UserDB
 
-from .config import TEST_PASSWORD, TEST_USER_API_KEY, TEST_USERNAME
+from .config import TEST_PASSWORD
 
 
 @fixture
@@ -33,10 +33,11 @@ class TestCreateUser:
         return token
 
     @fixture
-    def user_token(self, client: TestClient, regular_user: int) -> str:
+    def user_token(self, client: TestClient, regular_user: tuple) -> str:
+        user_id, username, _ = regular_user
         response = client.post(
             "/login",
-            data={"username": TEST_USERNAME, "password": TEST_PASSWORD},
+            data={"username": username, "password": TEST_PASSWORD},
         )
         token = response.json()["access_token"]
         return token
@@ -72,10 +73,11 @@ class TestCreateUser:
         self, client: TestClient, mock_send_email: MagicMock
     ) -> None:
         # Register a user
+        username = f"user_test1_{os.urandom(4).hex()}"
         response = client.post(
             "/user/",
             json={
-                "username": "user_test1",
+                "username": username,
                 "password": "password_test",
                 "first_name": "Test",
                 "last_name": "User",
@@ -83,11 +85,11 @@ class TestCreateUser:
         )
         assert response.status_code == 200
 
-        # Try to register another user
+        # Try to register another user with the same username
         response = client.post(
             "/user/",
             json={
-                "username": "user_test1",
+                "username": username,
                 "password": "password_test",
                 "first_name": "Test",
                 "last_name": "User",
@@ -96,28 +98,47 @@ class TestCreateUser:
         assert response.status_code == 400
 
     def test_get_current_user(
-        self, client: TestClient, user_token: str, regular_user: int
+        self, client: TestClient, user_token: str, regular_user: tuple
     ) -> None:
+        user_id, username, _ = regular_user
         response = client.get(
             "/user/",
             headers={"Authorization": f"Bearer {user_token}"},
         )
 
         assert response.status_code == 200
-        assert response.json()["user_id"] == regular_user
-        assert response.json()["username"] == TEST_USERNAME
+        assert response.json()["user_id"] == user_id
+        assert response.json()["username"] == username
 
-    def test_rotate_key(
-        self, client: TestClient, user_token: str, mock_verified_user: None
+    def test_login_creates_default_workspace(
+        self, client: TestClient, mock_send_email: MagicMock
     ) -> None:
-        response = client.get(
-            "/user/", headers={"Authorization": f"Bearer {user_token}"}
+        # Register a new user
+        test_username = f"workspace_user_{os.urandom(4).hex()}@test.com"
+        response = client.post(
+            "/user/",
+            json={
+                "username": test_username,
+                "password": "password_test",
+                "first_name": "Workspace",
+                "last_name": "User",
+            },
         )
         assert response.status_code == 200
-        assert response.json()["api_key_first_characters"] == TEST_USER_API_KEY[:5]
 
-        response = client.put(
-            "/user/rotate-key", headers={"Authorization": f"Bearer {user_token}"}
+        # Login with the new user
+        response = client.post(
+            "/login",
+            data={"username": test_username, "password": "password_test"},
         )
         assert response.status_code == 200
-        assert response.json()["new_api_key"] != TEST_USER_API_KEY
+        token = response.json()["access_token"]
+
+        # Check if a default workspace was created for the user
+        response = client.get(
+            "/workspace/current",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert response.status_code == 200
+        assert response.json()["workspace_name"] == f"{test_username}'s Workspace"
+        assert response.json()["is_default"] is True

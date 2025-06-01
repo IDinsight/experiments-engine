@@ -60,6 +60,7 @@ class ContextualBanditDB(ExperimentBaseDB):
         return {
             "experiment_id": self.experiment_id,
             "user_id": self.user_id,
+            "workspace_id": self.workspace_id,
             "name": self.name,
             "description": self.description,
             "sticky_assignment": self.sticky_assignment,
@@ -198,6 +199,7 @@ class ContextualDrawDB(DrawsBaseDB):
 async def save_contextual_mab_to_db(
     experiment: ContextualBandit,
     user_id: int,
+    workspace_id: int,
     asession: AsyncSession,
 ) -> ContextualBanditDB:
     """
@@ -233,6 +235,7 @@ async def save_contextual_mab_to_db(
         name=experiment.name,
         description=experiment.description,
         user_id=user_id,
+        workspace_id=workspace_id,
         is_active=experiment.is_active,
         created_datetime_utc=datetime.now(timezone.utc),
         n_trials=0,
@@ -254,17 +257,15 @@ async def save_contextual_mab_to_db(
 
 
 async def get_all_contextual_mabs(
-    user_id: int,
+    workspace_id: int,
     asession: AsyncSession,
 ) -> Sequence[ContextualBanditDB]:
     """
-    Get all the contextual experiments from the database.
+    Get all the contextual experiments from the database for a specific workspace.
     """
     statement = (
         select(ContextualBanditDB)
-        .where(
-            ContextualBanditDB.user_id == user_id,
-        )
+        .where(ContextualBanditDB.workspace_id == workspace_id)
         .order_by(ContextualBanditDB.experiment_id)
     )
 
@@ -272,61 +273,48 @@ async def get_all_contextual_mabs(
 
 
 async def get_contextual_mab_by_id(
-    experiment_id: int, user_id: int, asession: AsyncSession
+    experiment_id: int, workspace_id: int, asession: AsyncSession
 ) -> ContextualBanditDB | None:
     """
-    Get the contextual experiment by id.
+    Get the contextual experiment by id from a specific workspace.
     """
-    result = await asession.execute(
-        select(ContextualBanditDB)
-        .where(ContextualBanditDB.user_id == user_id)
-        .where(ContextualBanditDB.experiment_id == experiment_id)
-    )
+    condition = [
+        ContextualBanditDB.experiment_id == experiment_id,
+        ContextualBanditDB.workspace_id == workspace_id,
+    ]
+
+    statement = select(ContextualBanditDB).where(*condition)
+    result = await asession.execute(statement)
 
     return result.unique().scalar_one_or_none()
 
 
 async def delete_contextual_mab_by_id(
-    experiment_id: int, user_id: int, asession: AsyncSession
+    experiment_id: int, workspace_id: int, asession: AsyncSession
 ) -> None:
     """
     Delete the contextual experiment by id.
     """
     await asession.execute(
-        delete(NotificationsDB)
-        .where(NotificationsDB.user_id == user_id)
-        .where(NotificationsDB.experiment_id == experiment_id)
+        delete(NotificationsDB).where(NotificationsDB.experiment_id == experiment_id)
     )
 
     await asession.execute(
-        delete(ContextualDrawDB).where(
-            and_(
-                ContextualDrawDB.user_id == DrawsBaseDB.user_id,
-                ContextualDrawDB.user_id == user_id,
-                ContextualDrawDB.experiment_id == experiment_id,
-            )
-        )
+        delete(ContextualDrawDB).where(ContextualDrawDB.experiment_id == experiment_id)
     )
 
     await asession.execute(
-        delete(ContextDB)
-        .where(ContextDB.user_id == user_id)
-        .where(ContextDB.experiment_id == experiment_id)
+        delete(ContextDB).where(ContextDB.experiment_id == experiment_id)
     )
 
     await asession.execute(
-        delete(ContextualArmDB).where(
-            and_(
-                ContextualArmDB.user_id == user_id,
-                ContextualArmDB.experiment_id == experiment_id,
-            )
-        )
+        delete(ContextualArmDB).where(ContextualArmDB.experiment_id == experiment_id)
     )
 
     await asession.execute(
         delete(ContextualBanditDB).where(
             and_(
-                ContextualBanditDB.user_id == user_id,
+                ContextualBanditDB.workspace_id == workspace_id,
                 ContextualBanditDB.experiment_id == experiment_id,
                 ContextualBanditDB.experiment_id == ExperimentBaseDB.experiment_id,
             )
@@ -356,67 +344,85 @@ async def save_contextual_obs_to_db(
 
 
 async def get_contextual_obs_by_experiment_arm_id(
-    experiment_id: int, arm_id: int, user_id: int, asession: AsyncSession
+    experiment_id: int,
+    arm_id: int,
+    asession: AsyncSession,
 ) -> Sequence[ContextualDrawDB]:
-    """
-    Get the rewards for an arm of an experiment.
-    """
+    """Get the observations for a specific arm of an experiment."""
     statement = (
         select(ContextualDrawDB)
-        .where(ContextualDrawDB.user_id == user_id)
-        .where(ContextualDrawDB.experiment_id == experiment_id)
-        .where(ContextualDrawDB.reward.is_not(None))
-        .where(ContextualDrawDB.arm_id == arm_id)
+        .where(
+            and_(
+                ContextualDrawDB.experiment_id == experiment_id,
+                ContextualDrawDB.arm_id == arm_id,
+                ContextualDrawDB.reward.is_not(None),
+            )
+        )
         .order_by(ContextualDrawDB.observed_datetime_utc)
     )
 
-    return (await asession.execute(statement)).unique().scalars().all()
+    result = await asession.execute(statement)
+    return result.unique().scalars().all()
 
 
 async def get_all_contextual_obs_by_experiment_id(
-    experiment_id: int, user_id: int, asession: AsyncSession
+    experiment_id: int,
+    workspace_id: int,
+    asession: AsyncSession,
 ) -> Sequence[ContextualDrawDB]:
     """
-    Get the rewards for an experiment.
+    Get all observations for an experiment,
+    verified to belong to the specified workspace.
     """
+    # First, verify experiment belongs to the workspace
+    experiment = await get_contextual_mab_by_id(
+        experiment_id=experiment_id,
+        workspace_id=workspace_id,
+        asession=asession,
+    )
+
+    if experiment is None:
+        # Return empty list if experiment doesn't exist or doesn't belong to workspace
+        return []
+
+    # Get all observations for this experiment
     statement = (
         select(ContextualDrawDB)
-        .where(ContextualDrawDB.user_id == user_id)
-        .where(ContextualDrawDB.reward.is_not(None))
-        .where(ContextualDrawDB.experiment_id == experiment_id)
+        .where(
+            and_(
+                ContextualDrawDB.experiment_id == experiment_id,
+                ContextualDrawDB.reward.is_not(None),
+            )
+        )
         .order_by(ContextualDrawDB.observed_datetime_utc)
     )
 
-    return (await asession.execute(statement)).unique().scalars().all()
+    result = await asession.execute(statement)
+    return result.unique().scalars().all()
 
 
 async def get_draw_by_id(
-    draw_id: str, user_id: int, asession: AsyncSession
+    draw_id: str, asession: AsyncSession
 ) -> ContextualDrawDB | None:
     """
-    Get the draw by id.
+    Get the draw by its ID, which should be unique across the system.
     """
-    statement = (
-        select(ContextualDrawDB)
-        .where(ContextualDrawDB.user_id == user_id)
-        .where(ContextualDrawDB.draw_id == draw_id)
-    )
+    statement = select(ContextualDrawDB).where(ContextualDrawDB.draw_id == draw_id)
     result = await asession.execute(statement)
-
     return result.unique().scalar_one_or_none()
 
 
 async def get_draw_by_client_id(
-    client_id: str, user_id: int, asession: AsyncSession
+    client_id: str, experiment_id: int, asession: AsyncSession
 ) -> ContextualDrawDB | None:
     """
-    Get the draw by id.
+    Get the draw by client id for a specific experiment.
     """
     statement = (
         select(ContextualDrawDB)
-        .where(ContextualDrawDB.user_id == user_id)
-        .where(ContextualDrawDB.client_id.is_not(None))
         .where(ContextualDrawDB.client_id == client_id)
+        .where(ContextualDrawDB.client_id.is_not(None))
+        .where(ContextualDrawDB.experiment_id == experiment_id)
     )
     result = await asession.execute(statement)
 
@@ -429,12 +435,37 @@ async def save_draw_to_db(
     context_val: list[float],
     draw_id: str,
     client_id: str | None,
-    user_id: int,
+    user_id: int | None,
     asession: AsyncSession,
+    workspace_id: int | None,
 ) -> ContextualDrawDB:
     """
     Save the draw to the database.
     """
+    # If user_id is not provided but needed, get it from the experiment
+    if user_id is None:
+        if workspace_id is not None:
+            # Try to get experiment with workspace_id
+            experiment = await get_contextual_mab_by_id(
+                experiment_id=experiment_id,
+                workspace_id=workspace_id,
+                asession=asession,
+            )
+            if experiment:
+                user_id = experiment.user_id
+            else:
+                raise ValueError(f"Experiment with id {experiment_id} not found")
+        else:
+            # Fall back to direct get if workspace_id not provided
+            experiment = await asession.get(ContextualBanditDB, experiment_id)
+            if experiment:
+                user_id = experiment.user_id
+            else:
+                raise ValueError(f"Experiment with id {experiment_id} not found")
+
+    if user_id is None:
+        raise ValueError("User ID must be provided or derivable from experiment")
+
     draw_db = ContextualDrawDB(
         draw_id=draw_id,
         client_id=client_id,

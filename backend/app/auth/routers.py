@@ -6,10 +6,11 @@ from google.oauth2 import id_token
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..config import DEFAULT_API_QUOTA, DEFAULT_EXPERIMENTS_QUOTA
 from ..database import get_async_session, get_redis
 from ..email import EmailService
+from ..users.exceptions import UserNotFoundError
 from ..users.models import (
-    UserNotFoundError,
     get_user_by_username,
     update_user_password,
     update_user_verification_status,
@@ -21,6 +22,11 @@ from ..users.schemas import (
     PasswordResetRequest,
 )
 from ..utils import setup_logger
+from ..workspaces.models import (
+    delete_pending_invitation,
+    get_pending_invitations_by_email,
+)
+from ..workspaces.utils import get_workspace_by_workspace_id
 from .config import NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID
 from .dependencies import (
     authenticate_credentials,
@@ -66,7 +72,6 @@ async def login(
 
     return AuthenticationDetails(
         access_token=create_access_token(user.username),
-        api_key_first_characters=user.api_key_first_characters,
         token_type="bearer",
         access_level=user.access_level,
         username=user.username,
@@ -100,12 +105,24 @@ async def login_google(
         )
         raise HTTPException(status_code=401, detail="Invalid token") from e
 
+    # Import here to avoid circular imports
+    from ..workspaces.models import (
+        UserRoles,
+        create_user_workspace_role,
+        get_user_default_workspace,
+    )
+    from ..workspaces.utils import create_workspace
+
+    user_email = idinfo["email"]
+    first_name = idinfo.get("given_name") or user_email.split("@")[0]
+    last_name = idinfo.get("family_name", "")
+
     user = await authenticate_or_create_google_user(
         request=request,
         google_email=idinfo["email"],
         asession=asession,
-        first_name=idinfo["given_name"],
-        last_name=idinfo["family_name"],
+        first_name=first_name,
+        last_name=last_name,
     )
     if not user:
         raise HTTPException(
@@ -113,9 +130,59 @@ async def login_google(
             detail="Unable to create new user",
         )
 
+    user_db = await get_user_by_username(username=user_email, asession=asession)
+
+    pending_invitations = await get_pending_invitations_by_email(
+        asession=asession, email=user_email
+    )
+
+    for invitation in pending_invitations:
+        invite_workspace = await get_workspace_by_workspace_id(
+            asession=asession, workspace_id=invitation.workspace_id
+        )
+
+        # Add user to the invited workspace
+        await create_user_workspace_role(
+            asession=asession,
+            is_default_workspace=False,
+            user_db=user_db,
+            user_role=invitation.role,
+            workspace_db=invite_workspace,
+        )
+
+        # Delete the invitation
+        await delete_pending_invitation(asession=asession, invitation=invitation)
+
+    # Create default workspace if user is new (has no workspaces)
+    default_workspace = await get_user_default_workspace(
+        asession=asession, user_db=user_db
+    )
+
+    if default_workspace:
+        default_workspace_name = default_workspace.workspace_name
+    else:
+        # User doesn't have a default workspace, create one
+        default_workspace_name = f"{user_email}'s Workspace"
+
+        # Create default workspace
+        workspace_db, _ = await create_workspace(
+            api_daily_quota=DEFAULT_API_QUOTA,
+            asession=asession,
+            content_quota=DEFAULT_EXPERIMENTS_QUOTA,
+            workspace_name=default_workspace_name,
+            is_default=True,
+        )
+
+        await create_user_workspace_role(
+            asession=asession,
+            is_default_workspace=True,
+            user_db=user_db,
+            user_role=UserRoles.ADMIN,
+            workspace_db=workspace_db,
+        )
+
     return AuthenticationDetails(
-        access_token=create_access_token(user.username),
-        api_key_first_characters=user.api_key_first_characters,
+        access_token=create_access_token(user.username, default_workspace_name),
         token_type="bearer",
         access_level=user.access_level,
         username=user.username,

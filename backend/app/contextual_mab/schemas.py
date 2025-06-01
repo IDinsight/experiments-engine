@@ -219,6 +219,7 @@ class ContextualBanditResponse(ContextualBanditBase):
     """
 
     experiment_id: int
+    workspace_id: int
     arms: list[ContextualArmResponse]
     contexts: list[ContextResponse]
     notifications: list[NotificationsResponse]
