@@ -98,7 +98,7 @@ async def validate_experiment_and_draw(
 
 
 async def format_rewards_for_arm_update(
-    experiment: ExperimentDB, chosen_arm_id: int, asession: AsyncSession
+    experiment: ExperimentDB, chosen_arm_id: int, reward: float, asession: AsyncSession
 ) -> tuple[list[float], list[list[float]] | None, list[float] | None]:
     """
     Format the rewards for the arm update.
@@ -140,7 +140,21 @@ async def format_rewards_for_arm_update(
                     f" in CMAB experiment {draw.experiment_id}."
                 )
 
-    return rewards, contexts, treatments
+    rewards_list = [reward] if rewards is None else [reward] + rewards
+
+    context_list = None if not draw.context_val else [draw.context_val]
+    if contexts and context_list:
+        context_list = context_list + contexts
+
+    chosen_arm_index = int(
+        np.argwhere([a.arm_id == chosen_arm_id for a in experiment.arms])[0][0]
+    )
+    new_treatment = [float(experiment.arms[chosen_arm_index].is_treatment_arm)]
+    treatments_list = (
+        new_treatment if treatments is None else new_treatment + treatments
+    )
+
+    return rewards_list, context_list, treatments_list
 
 
 async def update_arm_based_on_outcome(

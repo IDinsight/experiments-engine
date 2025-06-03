@@ -415,25 +415,15 @@ async def update_experiment_arm(
             0
         ][0],
     )
-    rewards, contexts, treatments = await format_rewards_for_arm_update(
-        experiment=experiment, chosen_arm_id=draw.arm_id, asession=asession
-    )
-
-    rewards_list = [reward] if rewards is None else [reward] + rewards
-
-    context_list = None if not draw.context_val else [draw.context_val]
-    if contexts and context_list:
-        context_list = context_list + contexts
-
-    new_treatment = [float(experiment.arms[chosen_arm_index].is_treatment_arm)]
-    treatments_list = (
-        new_treatment if treatments is None else new_treatment + treatments
+    rewards_list, context_list, treatments_list = await format_rewards_for_arm_update(
+        experiment=experiment,
+        chosen_arm_id=draw.arm_id,
+        reward=reward,
+        asession=asession,
     )
 
     # Update the arm with the given reward
     try:
-        # Get experiment type for observation type
-
         await update_arm_based_on_outcome(
             experiment=experiment,
             draw=draw,

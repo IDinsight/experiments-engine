@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from redis import asyncio as aioredis
 
-from . import auth, bayes_ab, mab, messages
+from . import auth, messages
 from .config import BACKEND_ROOT_PATH, DOMAIN, REDIS_HOST
 from .experiments.routers import router as experiments_router
 from .users.routers import (
@@ -58,9 +58,6 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(experiments_router)
-    app.include_router(mab.router)
-    # app.include_router(contextual_mab.router)
-    app.include_router(bayes_ab.router)
     app.include_router(auth.router)
     app.include_router(users_router)
     app.include_router(messages.router)
