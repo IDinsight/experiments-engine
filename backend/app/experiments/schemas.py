@@ -407,8 +407,8 @@ class Experiment(ExperimentBase):
     # Relationships
     arms: list[Arm]
     notifications: Notifications
-    contexts: Optional[list[Context]] = []
-    clients: Optional[list[Client]] = []
+    contexts: Optional[list[Context]]
+    clients: Optional[list[Client]]
 
     @model_validator(mode="after")
     def auto_fail_unit_and_value_set(self) -> Self:

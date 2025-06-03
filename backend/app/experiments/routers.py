@@ -330,7 +330,7 @@ async def draw_experiment_arm(
         )
 
     # -- Perform the draw ---
-    experiment_data = ExperimentSample.model_validate(experiment)
+    experiment_data = ExperimentSample.model_validate(experiment.to_dict())
 
     # Validate contexts input
     if contexts:

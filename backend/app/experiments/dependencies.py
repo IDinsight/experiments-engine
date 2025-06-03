@@ -118,11 +118,16 @@ async def format_rewards_for_arm_update(
             draw.reward for draw in previous_rewards if draw.arm_id == chosen_arm_id
         ]
     else:
-        rewards = [draw.reward for draw in previous_rewards]
-        treatments = [
-            float(experiment.arms[draw.arm_id].is_treatment_arm)
-            for draw in previous_rewards
-        ]
+        treatments = []
+        for draw in previous_rewards:
+            rewards.append(draw.reward)
+            treatments.append(
+                [
+                    float(arm.is_treatment_arm)
+                    for arm in experiment.arms
+                    if arm.arm_id == draw.arm_id
+                ][0]
+            )
 
     if experiment.exp_type == ExperimentsEnum.CMAB.value:
         contexts = []
@@ -156,12 +161,11 @@ async def update_arm_based_on_outcome(
     arm = get_arm_from_experiment(experiment, draw.arm_id)
     arm.n_outcomes += 1
 
-    experiment_data = ExperimentSample.model_validate(experiment.to_dict())
     chosen_arm = np.argwhere([a.arm_id == arm.arm_id for a in experiment.arms])[0][0]
 
     await update_arm_parameters(
         arm=arm,
-        experiment_data=experiment_data,
+        experiment=experiment,
         chosen_arm=chosen_arm,
         rewards=rewards,
         contexts=contexts,
@@ -187,13 +191,14 @@ def get_arm_from_experiment(experiment: ExperimentDB, arm_id: int) -> ArmDB:
 
 async def update_arm_parameters(
     arm: ArmDB,
-    experiment_data: ExperimentSample,
+    experiment: ExperimentDB,
     chosen_arm: int,
     rewards: list[float],
     contexts: Union[list[list[float]], None],
     treatments: Union[list[float], None],
 ) -> None:
     """Update the arm parameters based on the reward type and outcome"""
+    experiment_data = ExperimentSample.model_validate(experiment.to_dict())
     if experiment_data.reward_type == RewardLikelihood.BERNOULLI:
         Outcome(rewards[0])  # Check if reward is 0 or 1
     params = update_arm(
@@ -203,15 +208,33 @@ async def update_arm_parameters(
         context=contexts,
         treatments=treatments,
     )
-    if experiment_data.prior_type == ArmPriors.BETA:
-        arm.alpha, arm.beta = params
-    elif experiment_data.prior_type == ArmPriors.NORMAL:
-        arm.mu, arm.covariance = params
+
+    if experiment_data.exp_type == ExperimentsEnum.BAYESAB:
+        if experiment_data.prior_type == ArmPriors.NORMAL:
+            mus, covariances = params
+            for arm in experiment.arms:
+                if arm.is_treatment_arm:
+                    arm.mu = [mus[0]]
+                    arm.covariance = covariances[0]
+                else:
+                    arm.mu = [mus[1]]
+                    arm.covariance = covariances[1]
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Prior type not supported for Bayesian A/B experiments.",
+            )
     else:
-        raise HTTPException(
-            status_code=400,
-            detail="Prior type not supported.",
-        )
+        if experiment_data.prior_type == ArmPriors.BETA:
+            arm.alpha, arm.beta = params
+        elif experiment_data.prior_type == ArmPriors.NORMAL:
+            print("Len params:", len(params))
+            arm.mu, arm.covariance = params
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Prior type not supported.",
+            )
 
 
 async def save_updated_data(

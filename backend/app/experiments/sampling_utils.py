@@ -241,13 +241,25 @@ def update_arm(
     if experiment.exp_type == ExperimentsEnum.BAYESAB:
 
         assert treatments, "Treatments must be provided for Bayesian A/B tests."
+        assert [
+            arm.mu for arm in experiment.arms
+        ], "Arms must have mu parameters for Bayesian A/B tests."
+        assert [
+            arm.covariance for arm in experiment.arms
+        ], "Arms must have covariance parameters for Bayesian A/B tests."
 
-        mus = np.array([arm.mu for arm in experiment.arms] + [0.0])
+        mus = np.array([arm.mu[0] for arm in experiment.arms if arm.mu] + [0.0])
         covariances = np.diag(
-            [np.array(arm.covariance).ravel()[0] for arm in experiment.arms] + [1.0]
+            [
+                np.array(arm.covariance).ravel()[0]
+                for arm in experiment.arms
+                if arm.covariance
+            ]
+            + [1.0]
         )
-
-        context = np.zeros((len(rewards), 3))
+        context = (
+            np.zeros((len(experiment.arms), 3)) if not context else np.array(context)
+        )
         context[:, 0] = np.array(treatments)
         context[:, 1] = 1.0 - np.array(treatments)
         context[:, 2] = 1.0
@@ -268,7 +280,10 @@ def update_arm(
 
         treatment_mu, control_mu, _ = new_mus
         treatment_sigma, control_sigma, _ = np.diag(new_covariances)
-        return [treatment_mu, control_mu], [[treatment_sigma]], [[control_sigma]]
+        return [treatment_mu, control_mu], [
+            [[float(treatment_sigma)]],
+            [[float(control_sigma)]],
+        ]
     else:
         # Update for MABs and CMABs
         assert (
