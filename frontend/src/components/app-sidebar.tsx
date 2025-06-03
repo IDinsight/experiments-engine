@@ -19,6 +19,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 
 const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = React.memo(function AppSidebar({

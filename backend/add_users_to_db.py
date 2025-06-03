@@ -1,7 +1,7 @@
 import asyncio
 import os
 from datetime import datetime, timezone
-from typing import Optional, Union
+from typing import Union
 
 from redis import asyncio as aioredis
 from sqlalchemy import select
@@ -27,7 +27,7 @@ ADMIN_LAST_NAME = os.environ.get("ADMIN_LAST_NAME", "User")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "12345")
 
 
-async def async_redis_operations(key: str, value: Optional[int]) -> None:
+async def async_redis_operations(key: str, value: int | None) -> None:
     """
     Asynchronous Redis operations to set the remaining API calls for a user.
     """
