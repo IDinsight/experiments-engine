@@ -283,7 +283,7 @@ async def delete_experiment_by_id(
 
 
 # --- Draw and update arms ---
-@router.get("/{experiment_id}/draw", response_model=DrawResponse)
+@router.put("/{experiment_id}/draw", response_model=DrawResponse)
 async def draw_experiment_arm(
     experiment_id: int,
     contexts: Optional[list[ContextInput]] = None,
@@ -340,6 +340,12 @@ async def draw_experiment_arm(
             sorted_exp_contexts = (
                 sorted(exp_contexts, key=lambda x: x.context_id) if exp_contexts else []
             )
+            if [c1.context_id for c1 in sorted_contexts] != [
+                c2.context_id for c2 in sorted_exp_contexts
+            ]:
+                raise ValueError(
+                    "Provided contexts do not match the experiment's expected contexts."
+                )
             for c_input, c_exp in zip(
                 sorted_contexts,
                 sorted_exp_contexts,

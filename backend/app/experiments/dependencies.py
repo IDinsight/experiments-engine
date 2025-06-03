@@ -161,7 +161,9 @@ async def update_arm_based_on_outcome(
     arm = get_arm_from_experiment(experiment, draw.arm_id)
     arm.n_outcomes += 1
 
-    chosen_arm = np.argwhere([a.arm_id == arm.arm_id for a in experiment.arms])[0][0]
+    chosen_arm = int(
+        np.argwhere([a.arm_id == arm.arm_id for a in experiment.arms])[0][0]
+    )
 
     await update_arm_parameters(
         arm=arm,

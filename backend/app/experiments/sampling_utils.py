@@ -98,7 +98,7 @@ def _update_arm_normal(
     """
     # Likelihood covariance matrix inverse
     llhood_covariance_inv = np.eye(len(current_mu)) / llhood_sigma**2
-    if context:
+    if context is not None:
         llhood_covariance_inv *= context.T @ context
 
     # Prior covariance matrix inverse
@@ -109,10 +109,10 @@ def _update_arm_normal(
 
     # New mean
     llhood_term: Union[np.ndarray, float] = reward / llhood_sigma**2
-    if context:
-        llhood_term = context.T * llhood_term
+    print("llhood_term", llhood_term)
+    if context is not None:
+        llhood_term = (context * llhood_term).squeeze()
     new_mu = new_covariance @ ((prior_covariance_inv @ current_mu) + llhood_term)
-
     return new_mu.tolist(), new_covariance.tolist()
 
 
@@ -286,14 +286,8 @@ def update_arm(
         ]
     else:
         # Update for MABs and CMABs
-        assert (
-            isinstance(arm_to_update, int) and arm_to_update >= 0
-        ), "Arm to update must be a non-negative integer."
-        arm = (
-            experiment.arms[arm_to_update]
-            if arm_to_update is not None
-            else experiment.arms[0]
-        )
+        assert arm_to_update is not None, "Arm to update must be provided."
+        arm = experiment.arms[arm_to_update]
 
         # Beta-binomial priors
         if experiment.prior_type == ArmPriors.BETA:
@@ -316,7 +310,7 @@ def update_arm(
                     current_covariance=np.array(arm.covariance),
                     reward=rewards[0],
                     llhood_sigma=1.0,  # TODO: Assuming a fixed likelihood sigma
-                    context=np.array(context),
+                    context=np.array(context[0]),
                 )
             # TODO: only supports Bernoulli likelihood
             else:
