@@ -287,10 +287,13 @@ def update_arm(
     else:
         # Update for MABs and CMABs
         assert (
-            arm_to_update
-        ), f"arm_to_update must be provided for {experiment.exp_type} experiments."
-
-        arm = experiment.arms[arm_to_update]
+            isinstance(arm_to_update, int) and arm_to_update >= 0
+        ), "Arm to update must be a non-negative integer."
+        arm = (
+            experiment.arms[arm_to_update]
+            if arm_to_update is not None
+            else experiment.arms[0]
+        )
 
         # Beta-binomial priors
         if experiment.prior_type == ArmPriors.BETA:

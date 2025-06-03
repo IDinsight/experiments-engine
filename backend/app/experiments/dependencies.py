@@ -228,7 +228,6 @@ async def update_arm_parameters(
         if experiment_data.prior_type == ArmPriors.BETA:
             arm.alpha, arm.beta = params
         elif experiment_data.prior_type == ArmPriors.NORMAL:
-            print("Len params:", len(params))
             arm.mu, arm.covariance = params
         else:
             raise HTTPException(
