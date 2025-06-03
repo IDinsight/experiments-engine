@@ -1,8 +1,8 @@
-"""new start
+"""fresh start
 
-Revision ID: 2d3946caceff
+Revision ID: 6101ba814d91
 Revises:
-Create Date: 2025-05-27 18:39:15.282285
+Create Date: 2025-06-03 18:00:18.919218
 
 """
 
@@ -13,7 +13,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = "2d3946caceff"
+revision: str = "6101ba814d91"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -201,7 +201,6 @@ def upgrade() -> None:
     op.create_table(
         "arms",
         sa.Column("arm_id", sa.Integer(), nullable=False),
-        sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("workspace_id", sa.Integer(), nullable=False),
         sa.Column("experiment_id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(length=150), nullable=False),
@@ -211,6 +210,7 @@ def upgrade() -> None:
         sa.Column("sigma_init", sa.Float(), nullable=True),
         sa.Column("mu", postgresql.ARRAY(sa.Float()), nullable=True),
         sa.Column("covariance", postgresql.ARRAY(sa.Float()), nullable=True),
+        sa.Column("is_treatment_arm", sa.Boolean(), nullable=True),
         sa.Column("alpha_init", sa.Float(), nullable=True),
         sa.Column("beta_init", sa.Float(), nullable=True),
         sa.Column("alpha", sa.Float(), nullable=True),
@@ -218,10 +218,6 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["experiment_id"],
             ["experiments.experiment_id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["users.user_id"],
         ),
         sa.ForeignKeyConstraint(
             ["workspace_id"],
@@ -249,26 +245,13 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("arm_id"),
     )
     op.create_table(
-        "bayes_ab_experiments",
-        sa.Column("experiment_id", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["experiment_id"], ["experiments_base.experiment_id"], ondelete="CASCADE"
-        ),
-        sa.PrimaryKeyConstraint("experiment_id"),
-    )
-    op.create_table(
         "clients",
         sa.Column("client_id", sa.String(), nullable=False),
-        sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("experiment_id", sa.Integer(), nullable=False),
         sa.Column("workspace_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
             ["experiment_id"],
             ["experiments.experiment_id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["users.user_id"],
         ),
         sa.ForeignKeyConstraint(
             ["workspace_id"],
@@ -280,7 +263,7 @@ def upgrade() -> None:
         "context",
         sa.Column("context_id", sa.Integer(), nullable=False),
         sa.Column("experiment_id", sa.Integer(), nullable=False),
-        sa.Column("user_id", sa.Integer(), nullable=False),
+        sa.Column("workspace_id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(length=150), nullable=False),
         sa.Column("description", sa.String(length=500), nullable=True),
         sa.Column("value_type", sa.String(length=50), nullable=False),
@@ -289,18 +272,10 @@ def upgrade() -> None:
             ["experiments.experiment_id"],
         ),
         sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["users.user_id"],
+            ["workspace_id"],
+            ["workspace.workspace_id"],
         ),
         sa.PrimaryKeyConstraint("context_id"),
-    )
-    op.create_table(
-        "contextual_mabs",
-        sa.Column("experiment_id", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["experiment_id"], ["experiments_base.experiment_id"], ondelete="CASCADE"
-        ),
-        sa.PrimaryKeyConstraint("experiment_id"),
     )
     op.create_table(
         "event_messages",
@@ -314,14 +289,6 @@ def upgrade() -> None:
             ["message_id"], ["messages.message_id"], ondelete="CASCADE"
         ),
         sa.PrimaryKeyConstraint("message_id"),
-    )
-    op.create_table(
-        "mabs",
-        sa.Column("experiment_id", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["experiment_id"], ["experiments_base.experiment_id"], ondelete="CASCADE"
-        ),
-        sa.PrimaryKeyConstraint("experiment_id"),
     )
     op.create_table(
         "notifications",
@@ -383,51 +350,12 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("notification_id"),
     )
     op.create_table(
-        "bayes_ab_arms",
-        sa.Column("arm_id", sa.Integer(), nullable=False),
-        sa.Column("mu_init", sa.Float(), nullable=False),
-        sa.Column("sigma_init", sa.Float(), nullable=False),
-        sa.Column("mu", sa.Float(), nullable=False),
-        sa.Column("sigma", sa.Float(), nullable=False),
-        sa.Column("is_treatment_arm", sa.Boolean(), nullable=False),
-        sa.ForeignKeyConstraint(["arm_id"], ["arms_base.arm_id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("arm_id"),
-    )
-    op.create_table(
-        "contexts",
-        sa.Column("context_id", sa.Integer(), nullable=False),
-        sa.Column("experiment_id", sa.Integer(), nullable=False),
-        sa.Column("user_id", sa.Integer(), nullable=False),
-        sa.Column("name", sa.String(length=150), nullable=False),
-        sa.Column("description", sa.String(length=500), nullable=True),
-        sa.Column("value_type", sa.String(length=50), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["experiment_id"],
-            ["contextual_mabs.experiment_id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["users.user_id"],
-        ),
-        sa.PrimaryKeyConstraint("context_id"),
-    )
-    op.create_table(
-        "contextual_arms",
-        sa.Column("arm_id", sa.Integer(), nullable=False),
-        sa.Column("mu_init", sa.Float(), nullable=False),
-        sa.Column("sigma_init", sa.Float(), nullable=False),
-        sa.Column("mu", postgresql.ARRAY(sa.Float()), nullable=False),
-        sa.Column("covariance", postgresql.ARRAY(sa.Float()), nullable=False),
-        sa.ForeignKeyConstraint(["arm_id"], ["arms_base.arm_id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("arm_id"),
-    )
-    op.create_table(
         "draws",
         sa.Column("draw_id", sa.String(), nullable=False),
         sa.Column("arm_id", sa.Integer(), nullable=False),
         sa.Column("experiment_id", sa.Integer(), nullable=False),
-        sa.Column("user_id", sa.Integer(), nullable=False),
-        sa.Column("client_id", sa.String(length=36), nullable=False),
+        sa.Column("workspace_id", sa.Integer(), nullable=False),
+        sa.Column("client_id", sa.String(length=36), nullable=True),
         sa.Column("draw_datetime_utc", sa.DateTime(timezone=True), nullable=False),
         sa.Column("observed_datetime_utc", sa.DateTime(timezone=True), nullable=True),
         sa.Column(
@@ -450,8 +378,8 @@ def upgrade() -> None:
             ["experiments.experiment_id"],
         ),
         sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["users.user_id"],
+            ["workspace_id"],
+            ["workspace.workspace_id"],
         ),
         sa.PrimaryKeyConstraint("draw_id"),
     )
@@ -485,67 +413,18 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("draw_id"),
     )
-    op.create_table(
-        "mab_arms",
-        sa.Column("arm_id", sa.Integer(), nullable=False),
-        sa.Column("alpha", sa.Float(), nullable=True),
-        sa.Column("beta", sa.Float(), nullable=True),
-        sa.Column("mu", sa.Float(), nullable=True),
-        sa.Column("sigma", sa.Float(), nullable=True),
-        sa.Column("alpha_init", sa.Float(), nullable=True),
-        sa.Column("beta_init", sa.Float(), nullable=True),
-        sa.Column("mu_init", sa.Float(), nullable=True),
-        sa.Column("sigma_init", sa.Float(), nullable=True),
-        sa.ForeignKeyConstraint(["arm_id"], ["arms_base.arm_id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("arm_id"),
-    )
-    op.create_table(
-        "bayes_ab_draws",
-        sa.Column("draw_id", sa.String(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["draw_id"], ["draws_base.draw_id"], ondelete="CASCADE"
-        ),
-        sa.PrimaryKeyConstraint("draw_id"),
-    )
-    op.create_table(
-        "contextual_draws",
-        sa.Column("draw_id", sa.String(), nullable=False),
-        sa.Column("context_val", postgresql.ARRAY(sa.Float()), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["draw_id"], ["draws_base.draw_id"], ondelete="CASCADE"
-        ),
-        sa.PrimaryKeyConstraint("draw_id"),
-    )
-    op.create_table(
-        "mab_draws",
-        sa.Column("draw_id", sa.String(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["draw_id"], ["draws_base.draw_id"], ondelete="CASCADE"
-        ),
-        sa.PrimaryKeyConstraint("draw_id"),
-    )
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_table("mab_draws")
-    op.drop_table("contextual_draws")
-    op.drop_table("bayes_ab_draws")
-    op.drop_table("mab_arms")
     op.drop_table("draws_base")
     op.drop_table("draws")
-    op.drop_table("contextual_arms")
-    op.drop_table("contexts")
-    op.drop_table("bayes_ab_arms")
     op.drop_table("notifications_db")
     op.drop_table("notifications")
-    op.drop_table("mabs")
     op.drop_table("event_messages")
-    op.drop_table("contextual_mabs")
     op.drop_table("context")
     op.drop_table("clients")
-    op.drop_table("bayes_ab_experiments")
     op.drop_table("arms_base")
     op.drop_table("arms")
     op.drop_table("user_workspace")
