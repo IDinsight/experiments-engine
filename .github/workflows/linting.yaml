@@ -1,5 +1,6 @@
 name: Python Linting
 on:
+  workflow_call:
   workflow_dispatch:
   push:
     branches:
