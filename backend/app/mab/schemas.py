@@ -219,6 +219,7 @@ class MultiArmedBanditResponse(MultiArmedBanditBase):
     """
 
     experiment_id: int
+    workspace_id: int
     arms: list[ArmResponse]
     notifications: list[NotificationsResponse]
     created_datetime_utc: datetime

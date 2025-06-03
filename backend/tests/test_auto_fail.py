@@ -1,5 +1,4 @@
 import copy
-import os
 from datetime import datetime, timedelta, timezone
 from typing import Generator, Literal, Type
 
@@ -155,7 +154,7 @@ class TestMABAutoFailJob:
         mab = response.json()
         yield mab
         headers = {"Authorization": f"Bearer {admin_token}"}
-        client.delete(f"/mab/{['experiment_id']}", headers=headers)
+        client.delete(f"/mab/{mab['experiment_id']}", headers=headers)
 
     @mark.parametrize(
         "create_mab_with_autofail, fail_value, fail_unit, n_observed",
@@ -177,10 +176,10 @@ class TestMABAutoFailJob:
         fail_unit: Literal["days", "hours"],
         n_observed: int,
         asession: AsyncSession,
+        workspace_api_key: str,
     ) -> None:
         draws = []
-        api_key = os.environ.get("ADMIN_API_KEY", "")
-        headers = {"Authorization": f"Bearer {api_key}"}
+        headers = {"Authorization": f"Bearer {workspace_api_key}"}
         for i in range(1, 15):
             monkeypatch.setattr(
                 mab_models,
@@ -232,7 +231,7 @@ class TestBayesABAutoFailJob:
         ab = response.json()
         yield ab
         headers = {"Authorization": f"Bearer {admin_token}"}
-        client.delete(f"/bayes_ab/{['experiment_id']}", headers=headers)
+        client.delete(f"/bayes_ab/{ab['experiment_id']}", headers=headers)
 
     @mark.parametrize(
         "create_bayes_ab_with_autofail, fail_value, fail_unit, n_observed",
@@ -254,10 +253,10 @@ class TestBayesABAutoFailJob:
         fail_unit: Literal["days", "hours"],
         n_observed: int,
         asession: AsyncSession,
+        workspace_api_key: str,
     ) -> None:
         draws = []
-        api_key = os.environ.get("ADMIN_API_KEY", "")
-        headers = {"Authorization": f"Bearer {api_key}"}
+        headers = {"Authorization": f"Bearer {workspace_api_key}"}
         for i in range(1, 15):
             monkeypatch.setattr(
                 bayes_ab_models,
@@ -309,7 +308,7 @@ class TestCMABAutoFailJob:
         cmab = response.json()
         yield cmab
         headers = {"Authorization": f"Bearer {admin_token}"}
-        client.delete(f"/contextual_mab/{['experiment_id']}", headers=headers)
+        client.delete(f"/contextual_mab/{cmab['experiment_id']}", headers=headers)
 
     @mark.parametrize(
         "create_cmab_with_autofail, fail_value, fail_unit, n_observed",
@@ -331,10 +330,10 @@ class TestCMABAutoFailJob:
         fail_unit: Literal["days", "hours"],
         n_observed: int,
         asession: AsyncSession,
+        workspace_api_key: str,
     ) -> None:
         draws = []
-        api_key = os.environ.get("ADMIN_API_KEY", "")
-        headers = {"Authorization": f"Bearer {api_key}"}
+        headers = {"Authorization": f"Bearer {workspace_api_key}"}
         for i in range(1, 15):
             monkeypatch.setattr(
                 cmab_models,
@@ -347,8 +346,8 @@ class TestCMABAutoFailJob:
             response = client.post(
                 f"/contextual_mab/{create_cmab_with_autofail['experiment_id']}/draw",
                 json=[
-                    {"context_id": 0, "context_value": 0},
                     {"context_id": 1, "context_value": 0},
+                    {"context_id": 2, "context_value": 0},
                 ],
                 headers=headers,
             )

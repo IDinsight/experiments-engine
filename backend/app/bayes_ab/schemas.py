@@ -108,6 +108,7 @@ class BayesianABResponse(MultiArmedBanditBase):
     """
 
     experiment_id: int
+    workspace_id: int
     arms: list[BayesABArmResponse]
     notifications: list[NotificationsResponse]
     created_datetime_utc: datetime

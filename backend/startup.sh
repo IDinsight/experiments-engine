@@ -1,5 +1,6 @@
 #!/bin/bash
 python -m alembic upgrade head
+python add_users_to_db.py
 
 # Run background cron job for `create_notifications.py` to run every 5 minutes
 (crontab -l 2>/dev/null; \

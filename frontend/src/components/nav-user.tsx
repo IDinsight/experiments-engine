@@ -18,6 +18,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import Link from "next/link";
 
 export function NavUser({
   user,
@@ -70,7 +71,7 @@ export function NavUser({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg z-100 bg-popover shadow-md"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}
@@ -97,10 +98,12 @@ export function NavUser({
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Blocks />
-                Manage Workspace
-              </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/workspaces">
+                    <Blocks />
+                    Manage Workspace
+                  </Link>
+                </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>

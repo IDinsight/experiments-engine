@@ -27,6 +27,10 @@ fresh-env:
 		pip install psycopg2-binary==2.9.9; \
 	fi
 
+	@echo "Installing frontend dependencies..."
+	cd frontend && npm install
+
+# --- Local development commands ---
 setup-dev: setup-redis setup-db
 
 setup-db: guard-POSTGRES_USER guard-POSTGRES_PASSWORD guard-POSTGRES_DB
@@ -79,3 +83,61 @@ run-backend:
 
 run-frontend:
 	cd frontend && npm run dev
+
+
+# --- Prod instance (with no hot reload) commands, use for deployment ---
+server-start:
+	@echo "🔧 Preparing environment files for build..."
+	@cp "$(CURDIR)/deployment/docker-compose/.base.env" "$(CURDIR)/frontend/.env.local"
+	@echo "✅ Environment files copied to frontend"
+	cd deployment/docker-compose && \
+	docker-compose -f docker-compose.yml -p exe-prod up --build -d --remove-orphans
+	@echo "🧹 Cleaning up temporary files..."
+	@rm -f "$(CURDIR)/frontend/.env.local"
+	@echo "✅ Cleanup complete"
+
+server-stop:
+	cd deployment/docker-compose && docker-compose -f docker-compose.yml -p exe-prod down
+
+server-restart:
+	make server-stop
+	make server-start
+
+server-status:
+	cd deployment/docker-compose && docker-compose ps
+
+server-prune:
+	cd deployment/docker-compose && docker system prune -f --force
+
+server-soft-reset: # delete all containers and images
+	make server-stop
+	make server-prune
+	make server-start
+
+# -- Dev instance (with hot reload) commands ---
+dev-inst-start:
+	@echo "🔧 Preparing environment files for build..."
+	@cp "$(CURDIR)/deployment/docker-compose/.base.env" "$(CURDIR)/frontend/.env.local"
+	@echo "✅ Environment files copied to frontend"
+	cd deployment/docker-compose && \
+	docker-compose -f docker-compose-dev.yml -p exe-dev up --build -d --remove-orphans
+	@echo "🧹 Cleaning up temporary files..."
+	@rm -f "$(CURDIR)/frontend/.env.local"
+	@echo "✅ Cleanup complete"
+
+dev-inst-stop:
+	cd deployment/docker-compose && docker-compose -f docker-compose-dev.yml -p exe-dev down
+
+dev-inst-restart:
+	make dev-inst-stop
+	make dev-inst-start
+
+dev-inst-soft-reset: # delete all containers and images
+	make dev-inst-stop
+	make server-prune
+	make dev-inst-start
+
+dev-inst-hard-reset: # delete all containers, images and volumes
+	make dev-inst-stop
+	@docker system prune -f --volumes --force
+	make dev-inst-start

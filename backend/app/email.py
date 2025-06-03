@@ -124,6 +124,81 @@ class EmailService:
 
         return await self._send_email(email, subject, html_body, text_body)
 
+    async def send_workspace_invitation_email(
+        self,
+        email: str,
+        username: str,
+        inviter_email: str,
+        workspace_name: str,
+        user_exists: bool,
+    ) -> Dict[str, Any]:
+        """
+        Send workspace invitation email
+        """
+        if user_exists:
+            subject = f"You've been invited to join a workspace: {workspace_name}"
+            html_body = f"""
+            <html>
+            <head></head>
+            <body>
+                <h1>Workspace Invitation</h1>
+                <p>Hello {username},</p>
+                <p>
+                    You have been invited by {inviter_email} to join the workspace
+                    "{workspace_name}".
+                </p>
+                <p>You have been added to this workspace. Log in to access it.</p>
+                <p><a href="{FRONTEND_URL}/login">Login to Your Account</a></p>
+            </body>
+            </html>
+            """
+            text_body = f"""
+            Workspace Invitation
+
+            Hello {username},
+
+            You have been invited by {inviter_email} to join the workspace "
+            {workspace_name}".
+
+            You have been added to this workspace. Log in to access it.
+
+            {FRONTEND_URL}/login
+            """
+        else:
+            subject = (
+                f"Invitation to Create an Account and Join a Workspace: "
+                f"{workspace_name}"
+            )
+            html_body = f"""
+            <html>
+            <head></head>
+            <body>
+                <h1>Workspace Invitation</h1>
+                <p>Hello,</p>
+                <p>
+                    You have been invited by {inviter_email} to join the workspace
+                    "{workspace_name}".
+                </p>
+                <p>You need to create an account to join this workspace.</p>
+                <p><a href="{FRONTEND_URL}/register">Create Your Account</a></p>
+            </body>
+            </html>
+            """
+            text_body = f"""
+            Workspace Invitation
+
+            Hello,
+
+            You have been invited by {inviter_email} to join the workspace "
+            {workspace_name}".
+
+            You need to create an account to join this workspace.
+
+            {FRONTEND_URL}/signup
+            """
+
+        return await self._send_email(email, subject, html_body, text_body)
+
     async def _send_email(
         self, recipient: str, subject: str, html_body: str, text_body: str
     ) -> Dict[str, Any]:

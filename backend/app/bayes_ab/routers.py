@@ -5,11 +5,19 @@ from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import authenticate_key, get_verified_user
+from ..auth.dependencies import (
+    authenticate_workspace_key,
+    get_verified_user,
+    require_admin_role,
+)
 from ..database import get_async_session
 from ..models import get_notifications_from_db, save_notifications_to_db
 from ..schemas import NotificationsResponse, ObservationType
 from ..users.models import UserDB
+from ..workspaces.models import (
+    WorkspaceDB,
+    get_user_default_workspace,
+)
 from .models import (
     BayesianABDB,
     BayesianABDrawDB,
@@ -39,13 +47,24 @@ router = APIRouter(prefix="/bayes_ab", tags=["Bayesian A/B Testing"])
 @router.post("/", response_model=BayesianABResponse)
 async def create_ab_experiment(
     experiment: BayesianAB,
-    user_db: Annotated[UserDB, Depends(get_verified_user)],
+    user_db: Annotated[UserDB, Depends(require_admin_role)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> BayesianABResponse:
     """
-    Create a new experiment.
+    Create a new experiment in the user's current workspace.
     """
-    bayes_ab = await save_bayes_ab_to_db(experiment, user_db.user_id, asession)
+    workspace_db = await get_user_default_workspace(asession=asession, user_db=user_db)
+
+    if workspace_db is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Workspace not found for the user.",
+        )
+
+    bayes_ab = await save_bayes_ab_to_db(
+        experiment, user_db.user_id, workspace_db.workspace_id, asession
+    )
+
     notifications = await save_notifications_to_db(
         experiment_id=bayes_ab.experiment_id,
         user_id=user_db.user_id,
@@ -65,9 +84,19 @@ async def get_bayes_abs(
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[BayesianABResponse]:
     """
-    Get details of all experiments.
+    Get details of all experiments in the user's current workspace.
     """
-    experiments = await get_all_bayes_ab_experiments(user_db.user_id, asession)
+    workspace_db = await get_user_default_workspace(asession=asession, user_db=user_db)
+
+    if workspace_db is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Workspace not found for the user.",
+        )
+
+    experiments = await get_all_bayes_ab_experiments(
+        workspace_db.workspace_id, asession
+    )
 
     all_experiments = []
     for exp in experiments:
@@ -100,8 +129,16 @@ async def get_bayes_ab(
     """
     Get details of experiment with the provided `experiment_id`.
     """
+    workspace_db = await get_user_default_workspace(asession=asession, user_db=user_db)
+
+    if workspace_db is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Workspace not found for the user.",
+        )
+
     experiment = await get_bayes_ab_experiment_by_id(
-        experiment_id, user_db.user_id, asession
+        experiment_id, workspace_db.workspace_id, asession
     )
 
     if experiment is None:
@@ -123,21 +160,35 @@ async def get_bayes_ab(
 @router.delete("/{experiment_id}", response_model=dict)
 async def delete_bayes_ab(
     experiment_id: int,
-    user_db: Annotated[UserDB, Depends(get_verified_user)],
+    user_db: Annotated[UserDB, Depends(require_admin_role)],
     asession: AsyncSession = Depends(get_async_session),
 ) -> dict:
     """
     Delete the experiment with the provided `experiment_id`.
     """
     try:
+        workspace_db = await get_user_default_workspace(
+            asession=asession, user_db=user_db
+        )
+
+        if workspace_db is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Workspace not found for the user.",
+            )
+
         experiment = await get_bayes_ab_experiment_by_id(
-            experiment_id, user_db.user_id, asession
+            experiment_id, workspace_db.workspace_id, asession
         )
         if experiment is None:
             raise HTTPException(
                 status_code=404, detail=f"Experiment with id {experiment_id} not found"
             )
-        await delete_bayes_ab_experiment_by_id(experiment_id, user_db.user_id, asession)
+
+        await delete_bayes_ab_experiment_by_id(
+            experiment_id, workspace_db.workspace_id, asession
+        )
+
         return {"message": f"Experiment with id {experiment_id} deleted successfully."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {e}") from e
@@ -148,14 +199,17 @@ async def draw_arm(
     experiment_id: int,
     draw_id: Optional[str] = None,
     client_id: Optional[str] = None,
-    user_db: UserDB = Depends(authenticate_key),
+    workspace_db: WorkspaceDB = Depends(authenticate_workspace_key),
     asession: AsyncSession = Depends(get_async_session),
 ) -> BayesianABDrawResponse:
     """
     Get which arm to pull next for provided experiment.
     """
+    # Get workspace from user context
+    workspace_id = workspace_db.workspace_id
+
     experiment = await get_bayes_ab_experiment_by_id(
-        experiment_id, user_db.user_id, asession
+        experiment_id, workspace_id, asession
     )
 
     if experiment is None:
@@ -175,7 +229,9 @@ async def draw_arm(
     if experiment.sticky_assignment and client_id:
         # Check if the client_id is already assigned to an arm
         previous_draw = await get_bayes_ab_draw_by_client_id(
-            client_id=client_id, user_id=user_db.user_id, asession=asession
+            client_id=client_id,
+            experiment_id=experiment_id,
+            asession=asession,
         )
         if previous_draw:
             chosen_arm_id = previous_draw.arm_id
@@ -184,9 +240,7 @@ async def draw_arm(
     if draw_id is None:
         draw_id = str(uuid4())
 
-    existing_draw = await get_bayes_ab_draw_by_id(
-        draw_id=draw_id, user_id=user_db.user_id, asession=asession
-    )
+    existing_draw = await get_bayes_ab_draw_by_id(draw_id=draw_id, asession=asession)
     if existing_draw:
         raise HTTPException(
             status_code=400,
@@ -197,11 +251,12 @@ async def draw_arm(
     try:
         await save_bayes_ab_draw_to_db(
             experiment_id=experiment.experiment_id,
-            user_id=user_db.user_id,
+            arm_id=chosen_arm_id,
             draw_id=draw_id,
             client_id=client_id,
-            arm_id=chosen_arm_id,
+            user_id=None,
             asession=asession,
+            workspace_id=workspace_id,
         )
     except Exception as e:
         raise HTTPException(
@@ -225,16 +280,22 @@ async def save_observation_for_arm(
     experiment_id: int,
     draw_id: str,
     outcome: float,
-    user_db: UserDB = Depends(authenticate_key),
+    workspace_db: WorkspaceDB = Depends(authenticate_workspace_key),
     asession: AsyncSession = Depends(get_async_session),
 ) -> BayesABArmResponse:
     """
     Update the arm with the provided `arm_id` for the given
     `experiment_id` based on the `outcome`.
     """
+    # Get workspace from user context
+    workspace_id = workspace_db.workspace_id
+
     # Get and validate experiment
     experiment, draw = await validate_experiment_and_draw(
-        experiment_id, draw_id, user_db.user_id, asession
+        experiment_id=experiment_id,
+        draw_id=draw_id,
+        workspace_id=workspace_id,
+        asession=asession,
     )
 
     return await update_based_on_outcome(
@@ -252,14 +313,17 @@ async def save_observation_for_arm(
 )
 async def get_outcomes(
     experiment_id: int,
-    user_db: UserDB = Depends(authenticate_key),
+    workspace_db: WorkspaceDB = Depends(authenticate_workspace_key),
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[BayesianABObservationResponse]:
     """
     Get the outcomes for the experiment.
     """
+    # Get workspace from user context
+    workspace_id = workspace_db.workspace_id
+
     experiment = await get_bayes_ab_experiment_by_id(
-        experiment_id, user_db.user_id, asession
+        experiment_id, workspace_id, asession
     )
     if not experiment:
         raise HTTPException(
@@ -268,7 +332,7 @@ async def get_outcomes(
 
     rewards = await get_bayes_ab_obs_by_experiment_id(
         experiment_id=experiment.experiment_id,
-        user_id=user_db.user_id,
+        workspace_id=workspace_id,
         asession=asession,
     )
 
@@ -281,15 +345,18 @@ async def get_outcomes(
 )
 async def update_arms(
     experiment_id: int,
-    user_db: UserDB = Depends(authenticate_key),
+    workspace_db: WorkspaceDB = Depends(authenticate_workspace_key),
     asession: AsyncSession = Depends(get_async_session),
 ) -> list[BayesABArmResponse]:
     """
     Get the outcomes for the experiment.
     """
+    # Get workspace from user context
+    workspace_id = workspace_db.workspace_id
+
     # Check experiment params
     experiment = await get_bayes_ab_experiment_by_id(
-        experiment_id, user_db.user_id, asession
+        experiment_id, workspace_id, asession
     )
     if not experiment:
         raise HTTPException(
@@ -306,7 +373,7 @@ async def update_arms(
         control_sigma,
     ) = await prepare_data_for_arms_update(
         experiment=experiment,
-        user_id=user_db.user_id,
+        workspace_id=workspace_id,
         asession=asession,
     )
 
@@ -329,18 +396,21 @@ async def update_arms(
 
 
 async def validate_experiment_and_draw(
-    experiment_id: int, draw_id: str, user_id: int, asession: AsyncSession
+    experiment_id: int,
+    draw_id: str,
+    workspace_id: int,
+    asession: AsyncSession,
 ) -> tuple[BayesianABDB, BayesianABDrawDB]:
     """Validate the experiment and draw"""
-    experiment = await get_bayes_ab_experiment_by_id(experiment_id, user_id, asession)
+    experiment = await get_bayes_ab_experiment_by_id(
+        experiment_id, workspace_id, asession
+    )
     if experiment is None:
         raise HTTPException(
             status_code=404, detail=f"Experiment with id {experiment_id} not found"
         )
 
-    draw = await get_bayes_ab_draw_by_id(
-        draw_id=draw_id, user_id=user_id, asession=asession
-    )
+    draw = await get_bayes_ab_draw_by_id(draw_id=draw_id, asession=asession)
     if draw is None:
         raise HTTPException(status_code=404, detail=f"Draw with id {draw_id} not found")
 
@@ -364,7 +434,7 @@ async def validate_experiment_and_draw(
 
 async def prepare_data_for_arms_update(
     experiment: BayesianABDB,
-    user_id: int,
+    workspace_id: int,
     asession: AsyncSession,
 ) -> tuple[list[float], list[float], float, float, float, float]:
     """
@@ -373,7 +443,7 @@ async def prepare_data_for_arms_update(
     # Get observations
     observations = await get_bayes_ab_obs_by_experiment_id(
         experiment_id=experiment.experiment_id,
-        user_id=user_id,
+        workspace_id=workspace_id,
         asession=asession,
     )
 

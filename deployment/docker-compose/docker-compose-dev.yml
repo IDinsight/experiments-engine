@@ -1,0 +1,76 @@
+services:
+  backend:
+    image: idinsight/experiment_engine_backend_dev:latest
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    command: >
+      python -m alembic upgrade head && python add_users_to_db.py && uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      # - temp:/usr/src/experiment_engine_backend/temp
+      - ../../backend:/usr/src/experiment_engine_backend
+    env_file:
+      - .base.env
+      - .backend.env
+    depends_on:
+      - relational_db
+      - redis
+    environment:
+      - POSTGRES_HOST=relational_db
+      - REDIS_HOST=redis://redis:6379
+
+  frontend:
+    image: idinsight/experiment_engine_frontend_dev:latest
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile.dev
+    command: >
+      npm run dev
+    depends_on:
+      - backend
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .base.env
+      - .backend.env
+    volumes:
+      - ../../frontend:/app
+      - /app/node_modules
+
+  relational_db:
+    image: postgres:16.4
+    restart: always
+    env_file:
+      - .backend.env
+    volumes:
+      - db_volume:/var/lib/postgresql/data
+
+  caddy:
+    image: caddy:2.7.6
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    env_file:
+      - .base.env
+
+  redis:
+    image: "redis:6.0-alpine"
+    ports: # Expose the port to port 6380 on the host machine for debugging
+      - "6380:6379"
+    restart: always
+
+volumes:
+  db_volume:
+  caddy_data:
+  caddy_config:
+  # temp:

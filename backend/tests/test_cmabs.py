@@ -61,6 +61,19 @@ base_binary_normal_payload["reward_type"] = "binary"
 
 
 @fixture
+def admin_token(client: TestClient) -> str:
+    response = client.post(
+        "/login",
+        data={
+            "username": os.environ.get("ADMIN_USERNAME", ""),
+            "password": os.environ.get("ADMIN_PASSWORD", ""),
+        },
+    )
+    token = response.json()["access_token"]
+    return token
+
+
+@fixture
 def clean_cmabs(db_session: Session) -> Generator:
     yield
     db_session.query(NotificationsDB).delete()
@@ -201,13 +214,16 @@ class TestCMab:
 
     @mark.parametrize("create_cmab_payload", ["base_normal"], indirect=True)
     def test_draw_arm_draw_id_provided(
-        self, client: TestClient, create_cmabs: list, create_cmab_payload: dict
+        self,
+        client: TestClient,
+        create_cmabs: list,
+        create_cmab_payload: dict,
+        workspace_api_key: str,
     ) -> None:
         id = create_cmabs[0]["experiment_id"]
-        api_key = os.environ.get("ADMIN_API_KEY", "")
         response = client.post(
             f"/contextual_mab/{id}/draw",
-            headers={"Authorization": f"Bearer {api_key}"},
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
             params={"draw_id": "test_draw_id"},
             json=[
                 {"context_id": 1, "context_value": 0},
@@ -219,13 +235,16 @@ class TestCMab:
 
     @mark.parametrize("create_cmab_payload", ["base_normal"], indirect=True)
     def test_draw_arm_no_draw_id_provided(
-        self, client: TestClient, create_cmabs: list, create_cmab_payload: dict
+        self,
+        client: TestClient,
+        create_cmabs: list,
+        create_cmab_payload: dict,
+        workspace_api_key: str,
     ) -> None:
         id = create_cmabs[0]["experiment_id"]
-        api_key = os.environ.get("ADMIN_API_KEY", "")
         response = client.post(
             f"/contextual_mab/{id}/draw",
-            headers={"Authorization": f"Bearer {api_key}"},
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
             json=[
                 {"context_id": 1, "context_value": 0},
                 {"context_id": 2, "context_value": 0.5},
@@ -249,16 +268,16 @@ class TestCMab:
         create_cmab_payload: dict,
         client_id: str | None,
         expected_response: int,
+        workspace_api_key: str,
     ) -> None:
         id = create_cmabs[0]["experiment_id"]
-        api_key = os.environ.get("ADMIN_API_KEY", "")
         url = f"/contextual_mab/{id}/draw"
         if client_id:
             url += f"?client_id={client_id}"
 
         response = client.post(
             url,
-            headers={"Authorization": f"Bearer {api_key}"},
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
             json=[
                 {"context_id": 1, "context_value": 0},
                 {"context_id": 2, "context_value": 0.5},
@@ -268,16 +287,19 @@ class TestCMab:
 
     @mark.parametrize("create_cmab_payload", ["with_sticky_assignment"], indirect=True)
     def test_draw_arm_with_sticky_assignment(
-        self, client: TestClient, create_cmabs: list, create_cmab_payload: dict
+        self,
+        client: TestClient,
+        create_cmabs: list,
+        create_cmab_payload: dict,
+        workspace_api_key: str,
     ) -> None:
         id = create_cmabs[0]["experiment_id"]
-        api_key = os.environ.get("ADMIN_API_KEY", "")
         arm_ids = []
 
         for _ in range(10):
             response = client.post(
                 f"/contextual_mab/{id}/draw?client_id=123",
-                headers={"Authorization": f"Bearer {api_key}"},
+                headers={"Authorization": f"Bearer {workspace_api_key}"},
                 json=[
                     {"context_id": 1, "context_value": 0},
                     {"context_id": 2, "context_value": 1},
@@ -289,13 +311,16 @@ class TestCMab:
 
     @mark.parametrize("create_cmab_payload", ["base_normal"], indirect=True)
     def test_one_outcome_per_draw(
-        self, client: TestClient, create_cmabs: list, create_cmab_payload: dict
+        self,
+        client: TestClient,
+        create_cmabs: list,
+        create_cmab_payload: dict,
+        workspace_api_key: str,
     ) -> None:
         id = create_cmabs[0]["experiment_id"]
-        api_key = os.environ.get("ADMIN_API_KEY", "")
         response = client.post(
             f"/contextual_mab/{id}/draw",
-            headers={"Authorization": f"Bearer {api_key}"},
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
             json=[
                 {"context_id": 1, "context_value": 0},
                 {"context_id": 2, "context_value": 0.5},
@@ -306,14 +331,14 @@ class TestCMab:
 
         response = client.put(
             f"/contextual_mab/{id}/{draw_id}/1",
-            headers={"Authorization": f"Bearer {api_key}"},
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
         )
 
         assert response.status_code == 200
 
         response = client.put(
             f"/contextual_mab/{id}/{draw_id}/1",
-            headers={"Authorization": f"Bearer {api_key}"},
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
         )
 
         assert response.status_code == 400
@@ -329,15 +354,14 @@ class TestCMab:
         create_cmabs: list,
         n_draws: int,
         create_cmab_payload: dict,
+        workspace_api_key: str,
     ) -> None:
-        id = create_cmabs[0]["experiment_id"]
-        api_key = os.environ.get("ADMIN_API_KEY", "")
         id = create_cmabs[0]["experiment_id"]
 
         for _ in range(n_draws):
             response = client.post(
                 f"/contextual_mab/{id}/draw",
-                headers={"Authorization": f"Bearer {api_key}"},
+                headers={"Authorization": f"Bearer {workspace_api_key}"},
                 json=[
                     {"context_id": 1, "context_value": 0},
                     {"context_id": 2, "context_value": 0.5},
@@ -347,12 +371,12 @@ class TestCMab:
             draw_id = response.json()["draw_id"]
             response = client.put(
                 f"/contextual_mab/{id}/{draw_id}/1",
-                headers={"Authorization": f"Bearer {api_key}"},
+                headers={"Authorization": f"Bearer {workspace_api_key}"},
             )
 
         response = client.get(
             f"/contextual_mab/{id}/outcomes",
-            headers={"Authorization": f"Bearer {api_key}"},
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
         )
 
         assert response.status_code == 200

@@ -59,6 +59,21 @@ def clean_bayes_ab(db_session: Session) -> Generator:
     db_session.commit()
 
 
+@fixture
+def admin_token(client: TestClient) -> str:
+    """Get a token for the admin user"""
+    response = client.post(
+        "/login",
+        data={
+            "username": os.environ.get("ADMIN_USERNAME", "admin@idinsight.org"),
+            "password": os.environ.get("ADMIN_PASSWORD", "12345"),
+        },
+    )
+    assert response.status_code == 200, f"Login failed: {response.json()}"
+    token = response.json()["access_token"]
+    return token
+
+
 class TestBayesAB:
     """
     Test class for Bayesian A/B testing.
@@ -195,12 +210,12 @@ class TestBayesAB:
         create_bayes_abs: list,
         create_bayes_ab_payload: dict,
         expected_response: int,
+        workspace_api_key: str,
     ) -> None:
         id = create_bayes_abs[0]["experiment_id"]
-        api_key = os.environ.get("ADMIN_API_KEY", "")
         response = client.get(
             f"/bayes_ab/{id}/draw",
-            headers={"Authorization": f"Bearer {api_key}"},
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
         )
         assert response.status_code == expected_response
 
@@ -219,12 +234,12 @@ class TestBayesAB:
         create_bayes_ab_payload: dict,
         client_id: str | None,
         expected_response: int,
+        workspace_api_key: str,
     ) -> None:
         id = create_bayes_abs[0]["experiment_id"]
-        api_key = os.environ.get("ADMIN_API_KEY", "")
         response = client.get(
             f"/bayes_ab/{id}/draw{'?client_id=' + client_id if client_id else ''}",
-            headers={"Authorization": f"Bearer {api_key}"},
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
         )
         assert response.status_code == expected_response
 
@@ -232,18 +247,119 @@ class TestBayesAB:
         "create_bayes_ab_payload", ["with_sticky_assignment"], indirect=True
     )
     def test_draw_arm_with_sticky_assignment(
-        self, client: TestClient, create_bayes_abs: list, create_bayes_ab_payload: dict
+        self,
+        client: TestClient,
+        create_bayes_abs: list,
+        create_bayes_ab_payload: dict,
+        workspace_api_key: str,
     ) -> None:
         id = create_bayes_abs[0]["experiment_id"]
-        api_key = os.environ.get("ADMIN_API_KEY", "")
         arm_ids = []
         for _ in range(10):
             response = client.get(
                 f"/bayes_ab/{id}/draw?client_id=123",
-                headers={"Authorization": f"Bearer {api_key}"},
+                headers={"Authorization": f"Bearer {workspace_api_key}"},
             )
             arm_ids.append(response.json()["arm"]["arm_id"])
         assert np.unique(arm_ids).size == 1
+
+    @mark.parametrize("create_bayes_ab_payload", ["base_normal"], indirect=True)
+    def test_update_observation(
+        self,
+        client: TestClient,
+        create_bayes_abs: list,
+        create_bayes_ab_payload: dict,
+        workspace_api_key: str,
+    ) -> None:
+        id = create_bayes_abs[0]["experiment_id"]
+
+        # First, get a draw
+        response = client.get(
+            f"/bayes_ab/{id}/draw",
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
+        )
+        assert response.status_code == 200
+        draw_id = response.json()["draw_id"]
+
+        # Then update with an observation
+        response = client.put(
+            f"/bayes_ab/{id}/{draw_id}/0.5",
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
+        )
+        assert response.status_code == 200
+
+        # Test that we can't update the same draw twice
+        response = client.put(
+            f"/bayes_ab/{id}/{draw_id}/0.5",
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
+        )
+        assert response.status_code == 400
+
+    @mark.parametrize("create_bayes_ab_payload", ["base_normal"], indirect=True)
+    def test_get_outcomes(
+        self,
+        client: TestClient,
+        create_bayes_abs: list,
+        create_bayes_ab_payload: dict,
+        workspace_api_key: str,
+    ) -> None:
+        id = create_bayes_abs[0]["experiment_id"]
+
+        # First, get a draw
+        response = client.get(
+            f"/bayes_ab/{id}/draw",
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
+        )
+        assert response.status_code == 200
+        draw_id = response.json()["draw_id"]
+
+        # Then update with an observation
+        response = client.put(
+            f"/bayes_ab/{id}/{draw_id}/0.5",
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
+        )
+        assert response.status_code == 200
+
+        # Get outcomes
+        response = client.get(
+            f"/bayes_ab/{id}/outcomes",
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
+        )
+        assert response.status_code == 200
+        assert len(response.json()) == 1
+
+    @mark.parametrize("create_bayes_ab_payload", ["base_normal"], indirect=True)
+    def test_get_arms(
+        self,
+        client: TestClient,
+        create_bayes_abs: list,
+        create_bayes_ab_payload: dict,
+        workspace_api_key: str,
+    ) -> None:
+        id = create_bayes_abs[0]["experiment_id"]
+
+        # First, get a draw
+        response = client.get(
+            f"/bayes_ab/{id}/draw",
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
+        )
+        assert response.status_code == 200
+        draw_id = response.json()["draw_id"]
+
+        # Then update with an observation
+        response = client.put(
+            f"/bayes_ab/{id}/{draw_id}/0.5",
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
+        )
+        assert response.status_code == 200
+
+        # Get arms
+        response = client.get(
+            f"/bayes_ab/{id}/arms",
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
+        )
+        assert response.status_code == 200
+        assert len(response.json()) == 2
 
 
 class TestNotifications:

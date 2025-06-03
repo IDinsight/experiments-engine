@@ -1,12 +1,8 @@
 "use client";
 import * as React from "react";
 import {
-  AudioWaveform,
-  ArrowLeftRightIcon,
   LayoutDashboardIcon,
-  Command,
   Frame,
-  GalleryVerticalEnd,
   Map,
   PieChart,
   Settings2,
@@ -23,7 +19,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import api from "@/utils/api";
+import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 
 type UserDetails = {
@@ -36,20 +32,22 @@ type UserDetails = {
 
 const getUserDetails = async (token: string | null) => {
   try {
-    const response = await api.get("/user", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    return {
-      username: response.data.username,
-      firstName: response.data.first_name,
-      lastName: response.data.last_name,
-      isActive: response.data.is_active,
-      isVerified: response.data.is_verified,
-    } as UserDetails;
-  } catch (error: unknown) {
+    if (token) {
+      const response = await apiCalls.getUser(token);
+      if (!response) {
+        throw new Error("No response from server");
+      }
+      return {
+        username: response.username,
+        firstName: response.first_name,
+        lastName: response.last_name,
+        isActive: response.is_active,
+        isVerified: response.is_verified,
+      } as UserDetails;
+  } else {
+    throw new Error("No token provided");
+  }
+} catch (error: unknown) {
     if (error instanceof Error) {
       throw new Error(`Error fetching user details: ${error.message}`);
     } else {
@@ -65,33 +63,11 @@ const data = {
     email: "m@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
-  workspaces: [
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
   navMain: [
     {
       title: "Experiments",
       url: "/experiments",
       icon: FlaskConicalIcon,
-    },
-    {
-      title: "Integration",
-      url: "/integration",
-      icon: ArrowLeftRightIcon,
     },
     {
       title: "Dashboard",
@@ -140,7 +116,7 @@ const AppSidebar = React.memo(function AppSidebar({
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
-        <WorkspaceSwitcher workspaces={data.workspaces} />
+        <WorkspaceSwitcher />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />

@@ -8,7 +8,7 @@ POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
 DB_POOL_SIZE = os.environ.get("DB_POOL_SIZE", 20)  # Number of connections in the pool
 
 REDIS_HOST = os.environ.get("REDIS_HOST", "redis://localhost:6379")
-
+DOMAIN = os.environ.get("DOMAIN", "localhost")
 BACKEND_ROOT_PATH = os.environ.get("BACKEND_ROOT_PATH", "")
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
 

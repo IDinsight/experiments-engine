@@ -21,6 +21,9 @@ services:
 
   frontend:
     image: idinsight/experiment_engine_frontend:latest
+    env_file:
+      - .base.env
+      - .backend.env
     build:
       context: ../../frontend
       dockerfile: Dockerfile
@@ -29,8 +32,6 @@ services:
     depends_on:
       - backend
     restart: always
-    env_file:
-      - .base.env
 
   relational_db:
     image: postgres:16.4
