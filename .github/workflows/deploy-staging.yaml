@@ -1,0 +1,41 @@
+name: Deploy to Staging
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - staging
+  pull_request:
+    branches:
+      - staging
+    types: [closed]
+
+jobs:
+  # Call existing workflows
+  run-linting:
+    uses: ./.github/workflows/linting.yaml
+
+  run-frontend-build:
+    uses: ./.github/workflows/check-frontend-build.yaml
+
+  run-unit-tests:
+    uses: ./.github/workflows/unit_tests.yaml
+
+  # Deploy to EC2 after all checks pass
+  deploy-to-ec2:
+    runs-on: ubuntu-latest
+    needs: [run-linting, run-frontend-build, run-unit-tests]
+    if: github.ref == 'refs/heads/staging' && (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true))
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST_STG }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY_STG }}
+          port: ${{ secrets.EC2_PORT || 22 }}
+          script: |
+            cd ${{ secrets.EC2_PROJECT_PATH_STG }}
+            git checkout staging
+            git pull origin staging
+            make server-restart

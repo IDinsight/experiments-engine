@@ -116,14 +116,8 @@ server-soft-reset: # delete all containers and images
 
 # -- Dev instance (with hot reload) commands ---
 dev-inst-start:
-	@echo "🔧 Preparing environment files for build..."
-	@cp "$(CURDIR)/deployment/docker-compose/.base.env" "$(CURDIR)/frontend/.env.local"
-	@echo "✅ Environment files copied to frontend"
 	cd deployment/docker-compose && \
 	docker-compose -f docker-compose-dev.yml -p exe-dev up --build -d --remove-orphans
-	@echo "🧹 Cleaning up temporary files..."
-	@rm -f "$(CURDIR)/frontend/.env.local"
-	@echo "✅ Cleanup complete"
 
 dev-inst-stop:
 	cd deployment/docker-compose && docker-compose -f docker-compose-dev.yml -p exe-dev down
