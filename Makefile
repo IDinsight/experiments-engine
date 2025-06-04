@@ -87,13 +87,21 @@ run-frontend:
 
 # --- Prod instance (with no hot reload) commands, use for deployment ---
 server-start:
-	cd deployment/docker-compose && docker-compose -f docker-compose.yml -p exe-prod up --build -d --remove-orphans
+	@echo "🔧 Preparing environment files for build..."
+	@cp "$(CURDIR)/deployment/docker-compose/.base.env" "$(CURDIR)/frontend/.env.local"
+	@echo "✅ Environment files copied to frontend"
+	cd deployment/docker-compose && \
+	docker-compose -f docker-compose.yml -p exe-prod up --build -d --remove-orphans
+	@echo "🧹 Cleaning up temporary files..."
+	@rm -f "$(CURDIR)/frontend/.env.local"
+	@echo "✅ Cleanup complete"
 
 server-stop:
 	cd deployment/docker-compose && docker-compose -f docker-compose.yml -p exe-prod down
 
 server-restart:
-	cd deployment/docker-compose && docker-compose -f docker-compose.yml -p exe-prod restart
+	make server-stop
+	make server-start
 
 server-status:
 	cd deployment/docker-compose && docker-compose ps
@@ -108,13 +116,15 @@ server-soft-reset: # delete all containers and images
 
 # -- Dev instance (with hot reload) commands ---
 dev-inst-start:
-	cd deployment/docker-compose && docker-compose -f docker-compose-dev.yml -p exe-dev up --build -d --remove-orphans
+	cd deployment/docker-compose && \
+	docker-compose -f docker-compose-dev.yml -p exe-dev up --build -d --remove-orphans
 
 dev-inst-stop:
 	cd deployment/docker-compose && docker-compose -f docker-compose-dev.yml -p exe-dev down
 
 dev-inst-restart:
-	cd deployment/docker-compose && docker-compose -f docker-compose-dev.yml -p exe-dev restart
+	make dev-inst-stop
+	make dev-inst-start
 
 dev-inst-soft-reset: # delete all containers and images
 	make dev-inst-stop
