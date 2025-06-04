@@ -83,7 +83,7 @@ def _update_arm_normal(
     current_covariance: np.ndarray,
     reward: float,
     llhood_sigma: float,
-    context: Optional[np.ndarray] = None,
+    context: np.ndarray,
 ) -> tuple[float, np.ndarray]:
     """
     Update the mean and standard deviation of the Normal distribution.
@@ -98,8 +98,7 @@ def _update_arm_normal(
     """
     # Likelihood covariance matrix inverse
     llhood_covariance_inv = np.eye(len(current_mu)) / llhood_sigma**2
-    if context is not None:
-        llhood_covariance_inv *= context.T @ context
+    llhood_covariance_inv *= context.T @ context
 
     # Prior covariance matrix inverse
     prior_covariance_inv = np.linalg.inv(current_covariance)
@@ -109,9 +108,9 @@ def _update_arm_normal(
 
     # New mean
     llhood_term: Union[np.ndarray, float] = reward / llhood_sigma**2
-    print("llhood_term", llhood_term)
     if context is not None:
         llhood_term = (context * llhood_term).squeeze()
+
     new_mu = new_covariance @ ((prior_covariance_inv @ current_mu) + llhood_term)
     return new_mu.tolist(), new_covariance.tolist()
 
@@ -138,6 +137,7 @@ def _update_arm_laplace(
     reward_likelihood : The likelihood function of the reward.
     prior_type : The prior type of the arm.
     """
+    print(current_mu.shape, current_covariance.shape, reward.shape, context.shape)
 
     def objective(theta: np.ndarray) -> float:
         """
@@ -257,9 +257,8 @@ def update_arm(
             ]
             + [1.0]
         )
-        context = (
-            np.zeros((len(experiment.arms), 3)) if not context else np.array(context)
-        )
+        context = np.zeros((len(rewards), 3)) if not context else np.array(context)
+        print(rewards, treatments)
         context[:, 0] = np.array(treatments)
         context[:, 1] = 1.0 - np.array(treatments)
         context[:, 2] = 1.0
@@ -302,7 +301,7 @@ def update_arm(
                 arm.mu and arm.covariance
             ), "Arm must have mu and covariance parameters."
             if context is None:
-                context = np.ones_like(arm.mu)
+                context = np.ones((1, len(arm.mu)))
             # Normal likelihood
             if experiment.reward_type == RewardLikelihood.NORMAL:
                 return _update_arm_normal(

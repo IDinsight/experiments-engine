@@ -419,6 +419,7 @@ async def update_experiment_arm(
         experiment=experiment,
         chosen_arm_id=draw.arm_id,
         reward=reward,
+        context_val=draw.context_val,
         asession=asession,
     )
 

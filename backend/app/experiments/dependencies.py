@@ -98,7 +98,11 @@ async def validate_experiment_and_draw(
 
 
 async def format_rewards_for_arm_update(
-    experiment: ExperimentDB, chosen_arm_id: int, reward: float, asession: AsyncSession
+    experiment: ExperimentDB,
+    chosen_arm_id: int,
+    reward: float,
+    context_val: Union[list[float], None],
+    asession: AsyncSession,
 ) -> tuple[list[float], list[list[float]] | None, list[float] | None]:
     """
     Format the rewards for the arm update.
@@ -106,43 +110,42 @@ async def format_rewards_for_arm_update(
     previous_rewards = await get_draws_with_rewards_by_experiment_id(
         experiment_id=experiment.experiment_id, asession=asession
     )
-    if not previous_rewards:
-        return [], None, None
 
     rewards = []
     treatments = None
     contexts = None
 
-    if experiment.exp_type != ExperimentsEnum.BAYESAB.value:
-        rewards = [
-            draw.reward for draw in previous_rewards if draw.arm_id == chosen_arm_id
-        ]
-    else:
-        treatments = []
-        for draw in previous_rewards:
-            rewards.append(draw.reward)
-            treatments.append(
-                [
-                    float(arm.is_treatment_arm)
-                    for arm in experiment.arms
-                    if arm.arm_id == draw.arm_id
-                ][0]
-            )
-
-    if experiment.exp_type == ExperimentsEnum.CMAB.value:
-        contexts = []
-        for draw in previous_rewards:
-            if draw.context_val:
-                contexts.append(draw.context_val)
-            else:
-                raise ValueError(
-                    f"Context value is missing for draw id {draw.draw_id}"
-                    f" in CMAB experiment {draw.experiment_id}."
+    if previous_rewards:
+        if experiment.exp_type != ExperimentsEnum.BAYESAB.value:
+            rewards = [
+                draw.reward for draw in previous_rewards if draw.arm_id == chosen_arm_id
+            ]
+        else:
+            treatments = []
+            for draw in previous_rewards:
+                rewards.append(draw.reward)
+                treatments.append(
+                    [
+                        float(arm.is_treatment_arm)
+                        for arm in experiment.arms
+                        if arm.arm_id == draw.arm_id
+                    ][0]
                 )
+
+        if experiment.exp_type == ExperimentsEnum.CMAB.value:
+            contexts = []
+            for draw in previous_rewards:
+                if draw.context_val:
+                    contexts.append(draw.context_val)
+                else:
+                    raise ValueError(
+                        f"Context value is missing for draw id {draw.draw_id}"
+                        f" in CMAB experiment {draw.experiment_id}."
+                    )
 
     rewards_list = [reward] if rewards is None else [reward] + rewards
 
-    context_list = None if not draw.context_val else [draw.context_val]
+    context_list = None if not context_val else [context_val]
     if contexts and context_list:
         context_list = context_list + contexts
 
