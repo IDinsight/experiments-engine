@@ -137,7 +137,6 @@ def _update_arm_laplace(
     reward_likelihood : The likelihood function of the reward.
     prior_type : The prior type of the arm.
     """
-    print(current_mu.shape, current_covariance.shape, reward.shape, context.shape)
 
     def objective(theta: np.ndarray) -> float:
         """
@@ -258,7 +257,6 @@ def update_arm(
             + [1.0]
         )
         context = np.zeros((len(rewards), 3)) if not context else np.array(context)
-        print(rewards, treatments)
         context[:, 0] = np.array(treatments)
         context[:, 1] = 1.0 - np.array(treatments)
         context[:, 2] = 1.0
