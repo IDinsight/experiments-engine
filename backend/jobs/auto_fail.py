@@ -78,15 +78,17 @@ async def auto_fail_experiment(asession: AsyncSession) -> int:
 
                 rewards_list, context_list, treatments_list = (
                     await format_rewards_for_arm_update(
-                        experiment, draw.arm_id, 0.0, asession
+                        experiment, draw.arm_id, 0.0, draw.context_val, asession
                     )
                 )
                 await update_arm_based_on_outcome(
-                    experiment,
-                    draw,
-                    rewards_list,
-                    context_list,
-                    treatments_list,
+                    experiment=experiment,
+                    draw=draw,
+                    rewards=rewards_list,
+                    contexts=context_list,
+                    treatments=treatments_list,
+                    observation_type=ObservationType.AUTO,
+                    asession=asession,
                 )
 
                 total_failed += 1

@@ -21,7 +21,6 @@ from ..workspaces.models import (
 from .dependencies import (
     experiments_db_to_schema,
     format_rewards_for_arm_update,
-    save_updated_data,
     update_arm_based_on_outcome,
     validate_experiment_and_draw,
 )
@@ -45,6 +44,7 @@ from .schemas import (
     Experiment,
     ExperimentSample,
     ExperimentsEnum,
+    ObservationType,
     Outcome,
 )
 
@@ -431,17 +431,10 @@ async def update_experiment_arm(
             rewards=rewards_list,
             contexts=context_list,
             treatments=treatments_list,
-        )
-
-        observation_type = draw.observation_type
-
-        await save_updated_data(
-            arm=experiment.arms[chosen_arm_index],
-            draw=draw,
-            reward=reward,
-            observation_type=observation_type,
+            observation_type=ObservationType.USER,
             asession=asession,
         )
+
         return ArmResponse.model_validate(experiment.arms[chosen_arm_index])
     except Exception as e:
         raise HTTPException(

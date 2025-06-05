@@ -166,6 +166,8 @@ async def update_arm_based_on_outcome(
     rewards: list[float],
     contexts: Union[list[list[float]], None],
     treatments: Union[list[float], None],
+    observation_type: ObservationType,
+    asession: AsyncSession,
 ) -> ArmResponse:
     """
     Update the arm parameters based on the outcome.
@@ -189,6 +191,14 @@ async def update_arm_based_on_outcome(
         rewards=rewards,
         contexts=contexts,
         treatments=treatments,
+    )
+
+    await save_updated_data(
+        arm=experiment.arms[chosen_arm],
+        draw=draw,
+        reward=rewards[0],
+        observation_type=observation_type,
+        asession=asession,
     )
 
     return ArmResponse.model_validate(arm)
