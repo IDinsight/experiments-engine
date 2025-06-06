@@ -16,9 +16,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_async_session
+from app.experiments.models import ExperimentDB, NotificationsDB
+from app.experiments.schemas import EventType
 from app.messages.models import EventMessageDB
-from app.models import ExperimentBaseDB, NotificationsDB
-from app.schemas import EventType
 from app.utils import setup_logger
 
 logger = setup_logger(log_level=logging.INFO)
@@ -34,10 +34,10 @@ async def check_days_elapsed(
     Check if the number of days elapsed since the experiment was created is greater
     than or equal to the milestone
     """
-    experiments_stmt = select(ExperimentBaseDB).where(
-        ExperimentBaseDB.experiment_id == experiment_id
+    experiments_stmt = select(ExperimentDB).where(
+        ExperimentDB.experiment_id == experiment_id
     )
-    experiment: ExperimentBaseDB | None = (
+    experiment: ExperimentDB | None = (
         (await asession.execute(experiments_stmt)).scalars().first()
     )
 
@@ -100,12 +100,8 @@ async def check_trials_completed(
     or equal to the milestone.
     """
     # Fetch experiment
-    stmt = select(ExperimentBaseDB).where(
-        ExperimentBaseDB.experiment_id == experiment_id
-    )
-    experiment: ExperimentBaseDB | None = (
-        (await asession.execute(stmt)).scalars().first()
-    )
+    stmt = select(ExperimentDB).where(ExperimentDB.experiment_id == experiment_id)
+    experiment: ExperimentDB | None = (await asession.execute(stmt)).scalars().first()
 
     if experiment:
         if experiment.n_trials >= milestone_trials:
