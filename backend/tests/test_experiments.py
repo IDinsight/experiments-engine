@@ -20,12 +20,14 @@ mab_beta_binom_payload = {
             "description": "arm 1 description.",
             "alpha_init": 5,
             "beta_init": 1,
+            "is_treatment_arm": True,
         },
         {
             "name": "arm 2",
             "description": "arm 2 description.",
             "alpha_init": 1,
             "beta_init": 4,
+            "is_treatment_arm": False,
         },
     ],
     "notifications": {
@@ -63,62 +65,64 @@ def clean_experiments(db_session: Session) -> Generator:
     db_session.commit()
 
 
-class TestExperiment:
-    @fixture
-    def create_experiment_payload(self, request: FixtureRequest) -> dict:
-        payload_mab_beta_binom: dict = copy.deepcopy(mab_beta_binom_payload)
-        payload_mab_beta_binom["arms"] = list(payload_mab_beta_binom["arms"])
+def _get_experiment_payload(input: str) -> dict:
+    """Helper function to get the experiment payload based on input."""
+    payload_mab_beta_binom: dict = copy.deepcopy(mab_beta_binom_payload)
+    payload_mab_beta_binom["arms"] = list(payload_mab_beta_binom["arms"])
 
-        payload_mab_normal: dict = copy.deepcopy(mab_beta_binom_payload)
-        payload_mab_normal["prior_type"] = "normal"
-        payload_mab_normal["reward_type"] = "real-valued"
-        payload_mab_normal["arms"] = [
-            {
-                "name": "arm 1",
-                "description": "arm 1 description",
-                "mu_init": 2,
-                "sigma_init": 3,
-            },
-            {
-                "name": "arm 2",
-                "description": "arm 2 description",
-                "mu_init": 3,
-                "sigma_init": 7,
-            },
-        ]
+    payload_mab_normal: dict = copy.deepcopy(mab_beta_binom_payload)
+    payload_mab_normal["prior_type"] = "normal"
+    payload_mab_normal["reward_type"] = "real-valued"
+    payload_mab_normal["arms"] = [
+        {
+            "name": "arm 1",
+            "description": "arm 1 description",
+            "mu_init": 2,
+            "sigma_init": 3,
+            "is_treatment_arm": True,
+        },
+        {
+            "name": "arm 2",
+            "description": "arm 2 description",
+            "mu_init": 3,
+            "sigma_init": 7,
+            "is_treatment_arm": True,
+        },
+    ]
 
-        if request.param == "base_beta_binom":
+    match input:
+        case "base_beta_binom":
             return payload_mab_beta_binom
-        if request.param == "base_normal":
+        case "base_normal":
             return payload_mab_normal
-        if request.param == "one_arm":
+        case "one_arm":
             payload_mab_beta_binom["arms"].pop()
             return payload_mab_beta_binom
-        if request.param == "no_notifications":
+        case "no_notifications":
             payload_mab_beta_binom["notifications"]["onTrialCompletion"] = False
             return payload_mab_beta_binom
-        if request.param == "invalid_prior":
+        case "invalid_prior":
             payload_mab_beta_binom["prior_type"] = "invalid"
             return payload_mab_beta_binom
-        if request.param == "invalid_reward":
+        case "invalid_reward":
             payload_mab_beta_binom["reward_type"] = "invalid"
             return payload_mab_beta_binom
-        if request.param == "invalid_alpha":
+        case "invalid_alpha":
             payload_mab_beta_binom["arms"][0]["alpha_init"] = -1
             return payload_mab_beta_binom
-        if request.param == "invalid_beta":
+        case "invalid_beta":
             payload_mab_beta_binom["arms"][0]["beta_init"] = -1
             return payload_mab_beta_binom
-        if request.param == "invalid_combo":
+        case "invalid_combo":
             payload_mab_beta_binom["reward_type"] = "real-valued"
             return payload_mab_beta_binom
-        if request.param == "incorrect_params":
+        case "incorrect_params":
             payload_mab_beta_binom["arms"][0].pop("alpha_init")
             return payload_mab_beta_binom
-        if request.param == "invalid_sigma":
+        case "invalid_sigma":
             payload_mab_normal["arms"][0]["sigma_init"] = 0.0
             return payload_mab_normal
-        if request.param == "invalid_context_input":
+        case "invalid_context_input":
             payload_mab_beta_binom["contexts"] = [
                 {
                     "name": "context 1",
@@ -127,8 +131,42 @@ class TestExperiment:
                 }
             ]
             return payload_mab_beta_binom
-        else:
-            raise ValueError("Invalid parameter")
+        case "bayes_ab_normal_binom":
+            payload_mab_normal["exp_type"] = "bayes_ab"
+            payload_mab_normal["reward_type"] = "real-valued"
+            payload_mab_normal["arms"][1]["is_treatment_arm"] = False
+            return payload_mab_normal
+        case "bayes_ab_invalid_prior":
+            payload_mab_beta_binom["exp_type"] = "bayes_ab"
+            payload_mab_beta_binom["arms"][1]["is_treatment_arm"] = False
+            return payload_mab_beta_binom
+        case "bayes_ab_invalid_arm":
+            payload_mab_normal["exp_type"] = "bayes_ab"
+            payload_mab_normal["reward_type"] = "real-valued"
+            return payload_mab_normal
+        case "bayes_ab_invalid_context":
+            payload_mab_normal["exp_type"] = "bayes_ab"
+            payload_mab_normal["reward_type"] = "real-valued"
+            payload_mab_normal["arms"][1]["is_treatment_arm"] = False
+            payload_mab_normal["contexts"] = [
+                {
+                    "name": "context 1",
+                    "description": "context 1 description",
+                    "value_type": "binary",
+                }
+            ]
+            return payload_mab_normal
+        case _:
+            raise ValueError(f"Invalid input: {input}.")
+
+
+class TestExperiment:
+    @fixture
+    def create_experiment_payload(self, request: FixtureRequest) -> dict:
+        """Fixture to create experiment payload based on request parameter."""
+        return (
+            _get_experiment_payload(request.param) if hasattr(request, "param") else {}
+        )
 
     @mark.parametrize(
         "create_experiment_payload, expected_response",
@@ -145,6 +183,10 @@ class TestExperiment:
             ("invalid_combo", 422),
             ("incorrect_params", 422),
             ("invalid_context_input", 422),
+            ("bayes_ab_normal_binom", 200),
+            ("bayes_ab_invalid_prior", 422),
+            ("bayes_ab_invalid_arm", 422),
+            ("bayes_ab_invalid_context", 422),
         ],
         indirect=["create_experiment_payload"],
     )
@@ -188,6 +230,29 @@ class TestExperiment:
                 headers={"Authorization": f"Bearer {admin_token}"},
             )
 
+    @fixture
+    def create_mixed_experiments(
+        self,
+        client: TestClient,
+        admin_token: str,
+        request: FixtureRequest,
+    ) -> Generator:
+        mixed_payload = []
+        for param in request.param:
+            payload = _get_experiment_payload(param)
+            response = client.post(
+                "/experiment",
+                json=payload,
+                headers={"Authorization": f"Bearer {admin_token}"},
+            )
+            mixed_payload.append(response.json())
+        yield mixed_payload
+        for experiment in mixed_payload:
+            client.delete(
+                f"/experiment/id/{experiment['experiment_id']}",
+                headers={"Authorization": f"Bearer {admin_token}"},
+            )
+
     @mark.parametrize(
         "create_experiments, create_experiment_payload, n_expected",
         [
@@ -207,6 +272,30 @@ class TestExperiment:
     ) -> None:
         response = client.get(
             "/experiment", headers={"Authorization": f"Bearer {admin_token}"}
+        )
+        assert response.status_code == 200
+        assert len(response.json()) == n_expected
+
+    @mark.parametrize(
+        "create_mixed_experiments, exp_type, n_expected",
+        [
+            (["base_beta_binom", "bayes_ab_normal_binom"], "mab", 1),
+            (["base_beta_binom", "bayes_ab_normal_binom"], "bayes_ab", 1),
+            (["base_beta_binom", "bayes_ab_normal_binom"], "cmab", 0),
+        ],
+        indirect=["create_mixed_experiments"],
+    )
+    def test_get_all_experiments_by_type(
+        self,
+        client: TestClient,
+        admin_token: str,
+        n_expected: int,
+        create_mixed_experiments: list,
+        exp_type: str,
+    ) -> None:
+        response = client.get(
+            f"/experiment/type/{exp_type}",
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert response.status_code == 200
         assert len(response.json()) == n_expected
@@ -264,7 +353,11 @@ class TestExperiment:
         assert response.status_code == 200
         assert len(response.json()["draw_id"]) == 36
 
-    @mark.parametrize("create_experiment_payload", ["base_beta_binom"], indirect=True)
+    @mark.parametrize(
+        "create_experiment_payload",
+        ["base_beta_binom", "bayes_ab_normal_binom"],
+        indirect=True,
+    )
     def test_one_outcome_per_draw(
         self,
         client: TestClient,
@@ -296,7 +389,14 @@ class TestExperiment:
 
     @mark.parametrize(
         "n_draws, create_experiment_payload",
-        [(0, "base_beta_binom"), (1, "base_beta_binom"), (5, "base_beta_binom")],
+        [
+            (0, "base_beta_binom"),
+            (1, "base_beta_binom"),
+            (5, "base_beta_binom"),
+            (0, "bayes_ab_normal_binom"),
+            (1, "bayes_ab_normal_binom"),
+            (5, "bayes_ab_normal_binom"),
+        ],
         indirect=["create_experiment_payload"],
     )
     def test_get_rewards(
