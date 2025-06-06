@@ -6,7 +6,12 @@ from fastapi.testclient import TestClient
 from pytest import FixtureRequest, fixture, mark
 from sqlalchemy.orm import Session
 
-from backend.app.experiments.models import ArmDB, ExperimentDB, NotificationsDB
+from backend.app.experiments.models import (
+    ArmDB,
+    ContextDB,
+    ExperimentDB,
+    NotificationsDB,
+)
 
 mab_beta_binom_payload = {
     "name": "Test",
@@ -60,6 +65,7 @@ def admin_token(client: TestClient) -> str:
 def clean_experiments(db_session: Session) -> Generator:
     yield
     db_session.query(NotificationsDB).delete()
+    db_session.query(ContextDB).delete()
     db_session.query(ArmDB).delete()
     db_session.query(ExperimentDB).delete()
     db_session.commit()
@@ -156,6 +162,57 @@ def _get_experiment_payload(input: str) -> dict:
                 }
             ]
             return payload_mab_normal
+        case "cmab_normal":
+            payload_mab_normal["exp_type"] = "cmab"
+            payload_mab_normal["contexts"] = [
+                {
+                    "name": "context 1",
+                    "description": "context 1 description",
+                    "value_type": "binary",
+                },
+                {
+                    "name": "context 2",
+                    "description": "context 2 description",
+                    "value_type": "real-valued",
+                },
+            ]
+            return payload_mab_normal
+        case "cmab_normal_binomial":
+            payload_mab_normal["exp_type"] = "cmab"
+            payload_mab_normal["reward_type"] = "binary"
+            payload_mab_normal["contexts"] = [
+                {
+                    "name": "context 1",
+                    "description": "context 1 description",
+                    "value_type": "binary",
+                },
+                {
+                    "name": "context 2",
+                    "description": "context 2 description",
+                    "value_type": "real-valued",
+                },
+            ]
+            return payload_mab_normal
+        case "cmab_invalid_prior":
+            payload_mab_normal["exp_type"] = "cmab"
+            payload_mab_normal["prior_type"] = "beta"
+            payload_mab_normal["contexts"] = [
+                {
+                    "name": "context 1",
+                    "description": "context 1 description",
+                    "value_type": "binary",
+                },
+                {
+                    "name": "context 2",
+                    "description": "context 2 description",
+                    "value_type": "real-valued",
+                },
+            ]
+            return payload_mab_normal
+        case "cmab_invalid_context":
+            payload_mab_normal["exp_type"] = "cmab"
+            return payload_mab_normal
+
         case _:
             raise ValueError(f"Invalid input: {input}.")
 
@@ -164,9 +221,7 @@ class TestExperiment:
     @fixture
     def create_experiment_payload(self, request: FixtureRequest) -> dict:
         """Fixture to create experiment payload based on request parameter."""
-        return (
-            _get_experiment_payload(request.param) if hasattr(request, "param") else {}
-        )
+        return _get_experiment_payload(request.param)
 
     @mark.parametrize(
         "create_experiment_payload, expected_response",
@@ -187,6 +242,10 @@ class TestExperiment:
             ("bayes_ab_invalid_prior", 422),
             ("bayes_ab_invalid_arm", 422),
             ("bayes_ab_invalid_context", 422),
+            ("cmab_normal", 200),
+            ("cmab_normal_binomial", 200),
+            ("cmab_invalid_prior", 422),
+            ("cmab_invalid_context", 422),
         ],
         indirect=["create_experiment_payload"],
     )
@@ -279,9 +338,36 @@ class TestExperiment:
     @mark.parametrize(
         "create_mixed_experiments, exp_type, n_expected",
         [
-            (["base_beta_binom", "bayes_ab_normal_binom"], "mab", 1),
-            (["base_beta_binom", "bayes_ab_normal_binom"], "bayes_ab", 1),
-            (["base_beta_binom", "bayes_ab_normal_binom"], "cmab", 0),
+            (
+                [
+                    "base_beta_binom",
+                    "base_normal",
+                    "bayes_ab_normal_binom",
+                    "cmab_normal",
+                ],
+                "mab",
+                2,
+            ),
+            (
+                [
+                    "base_beta_binom",
+                    "bayes_ab_normal_binom",
+                    "bayes_ab_normal_binom",
+                    "cmab_normal",
+                ],
+                "bayes_ab",
+                2,
+            ),
+            (
+                [
+                    "base_beta_binom",
+                    "bayes_ab_normal_binom",
+                    "cmab_normal",
+                    "cmab_normal_binomial",
+                ],
+                "cmab",
+                2,
+            ),
         ],
         indirect=["create_mixed_experiments"],
     )
@@ -355,7 +441,7 @@ class TestExperiment:
 
     @mark.parametrize(
         "create_experiment_payload",
-        ["base_beta_binom", "bayes_ab_normal_binom"],
+        ["base_beta_binom", "bayes_ab_normal_binom", "cmab_normal"],
         indirect=True,
     )
     def test_one_outcome_per_draw(
@@ -366,9 +452,17 @@ class TestExperiment:
         workspace_api_key: str,
     ) -> None:
         id = create_experiments[0]["experiment_id"]
+        exp_type = create_experiments[0]["exp_type"]
+        contexts = None
+        if exp_type == "cmab":
+            contexts = [
+                {"context_id": context["context_id"], "context_value": 1}
+                for context in create_experiments[0]["contexts"]
+            ]
         response = client.put(
             f"/experiment/{id}/draw",
             headers={"Authorization": f"Bearer {workspace_api_key}"},
+            json=contexts,
         )
         assert response.status_code == 200
         draw_id = response.json()["draw_id"]
@@ -396,6 +490,9 @@ class TestExperiment:
             (0, "bayes_ab_normal_binom"),
             (1, "bayes_ab_normal_binom"),
             (5, "bayes_ab_normal_binom"),
+            (0, "cmab_normal"),
+            (1, "cmab_normal"),
+            (5, "cmab_normal"),
         ],
         indirect=["create_experiment_payload"],
     )
@@ -408,11 +505,19 @@ class TestExperiment:
         workspace_api_key: str,
     ) -> None:
         id = create_experiments[0]["experiment_id"]
+        exp_type = create_experiments[0]["exp_type"]
+        contexts = None
+        if exp_type == "cmab":
+            contexts = [
+                {"context_id": context["context_id"], "context_value": 1}
+                for context in create_experiments[0]["contexts"]
+            ]
 
         for _ in range(n_draws):
             response = client.put(
                 f"/experiment/{id}/draw",
                 headers={"Authorization": f"Bearer {workspace_api_key}"},
+                json=contexts,
             )
             assert response.status_code == 200
             draw_id = response.json()["draw_id"]
