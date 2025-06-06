@@ -151,8 +151,8 @@ export default function WorkspacesPage() {
                   </CardContent>
                   <Separator />
                   <CardFooter className="flex justify-between pt-4">
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
                       disabled={currentWorkspace?.workspace_id === workspace.workspace_id}
                       onClick={() => handleWorkspaceSwitch(workspace.workspace_name)}
@@ -195,24 +195,24 @@ export default function WorkspacesPage() {
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           <div className="text-muted-foreground">Created:</div>
                           <div>{new Date(currentWorkspace.created_datetime_utc).toLocaleDateString()}</div>
-                          
+
                           <div className="text-muted-foreground">Last Updated:</div>
                           <div>{new Date(currentWorkspace.updated_datetime_utc).toLocaleDateString()}</div>
-                          
+
                           <div className="text-muted-foreground">API Daily Quota:</div>
                           <div>{currentWorkspace.api_daily_quota} calls/day</div>
-                          
+
                           <div className="text-muted-foreground">Content Quota:</div>
                           <div>{currentWorkspace.content_quota} experiments</div>
                         </div>
                       </div>
-                      
+
                       <div>
                         <h3 className="text-md font-medium mb-2">API Configuration</h3>
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           <div className="text-muted-foreground">API Key Prefix:</div>
                           <div className="font-mono">{currentWorkspace.api_key_first_characters}•••••</div>
-                          
+
                           <div className="text-muted-foreground">Key Last Rotated:</div>
                           <div>{new Date(currentWorkspace.api_key_updated_datetime_utc).toLocaleDateString()}</div>
                         </div>
@@ -220,7 +220,7 @@ export default function WorkspacesPage() {
                     </div>
                   </CardContent>
                   <CardFooter className="flex justify-between pt-4 space-x-2">
-                    <Button 
+                    <Button
                       onClick={() => router.push(`/workspaces/${currentWorkspace.workspace_id}`)}
                     >
                       <Settings className="h-4 w-4 mr-2" />
@@ -234,7 +234,7 @@ export default function WorkspacesPage() {
         </Tabs>
       </div>
 
-      <CreateWorkspaceDialog 
+      <CreateWorkspaceDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
       />

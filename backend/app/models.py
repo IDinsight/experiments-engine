@@ -13,12 +13,12 @@ from sqlalchemy import (
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from .schemas import AutoFailUnitType, EventType, Notifications, ObservationType
 
 if TYPE_CHECKING:
-    from .workspaces.models import WorkspaceDB
+    pass
 
 
 class Base(DeclarativeBase):
@@ -65,9 +65,6 @@ class ExperimentBaseDB(Base):
     n_trials: Mapped[int] = mapped_column(Integer, nullable=False)
     last_trial_datetime_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=True
-    )
-    workspace: Mapped["WorkspaceDB"] = relationship(
-        "WorkspaceDB", back_populates="experiments"
     )
 
     __mapper_args__ = {
@@ -161,7 +158,7 @@ class NotificationsDB(Base):
     the background celery job
     """
 
-    __tablename__ = "notifications"
+    __tablename__ = "notifications_db"
 
     notification_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, nullable=False

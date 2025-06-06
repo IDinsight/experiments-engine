@@ -83,7 +83,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           setIsVerified(userData.is_verified);
           setFirstName(userData.first_name);
           setLastName(userData.last_name);
-          
+
           // Fetch current workspace
           await fetchCurrentWorkspace();
 
@@ -103,7 +103,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const fetchCurrentWorkspace = async () => {
     if (!token) return;
-    
+
     try {
       const workspaceData = await apiCalls.getCurrentWorkspace(token);
       setCurrentWorkspace(workspaceData);
@@ -114,7 +114,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const fetchWorkspaces = async () => {
     if (!token) return;
-    
+
     try {
       const workspacesData = await apiCalls.getUserWorkspaces(token);
       setWorkspaces(workspacesData);
@@ -125,18 +125,18 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const switchWorkspace = async (workspaceName: string) => {
     if (!token) return;
-    
+
     try {
       setIsLoading(true);
       const authResponse = await apiCalls.switchWorkspace(token, workspaceName);
-      
+
       // Update token and other auth details
       localStorage.setItem("ee-token", authResponse.access_token);
       setToken(authResponse.access_token);
-      
+
       // Refresh workspace data
       await fetchCurrentWorkspace();
-      
+
       return;
     } catch (error) {
       console.error("Error switching workspace:", error);
@@ -148,14 +148,14 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const rotateWorkspaceApiKey = async () => {
     if (!token) throw new Error("Not authenticated");
-    
+
     try {
       setIsLoading(true);
       const response = await apiCalls.rotateWorkspaceApiKey(token);
-      
+
       // Update workspace to reflect key change
       await fetchCurrentWorkspace();
-      
+
       return response.new_api_key;
     } catch (error) {
       console.error("Error rotating workspace API key:", error);
