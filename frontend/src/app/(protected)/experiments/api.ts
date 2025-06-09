@@ -44,7 +44,7 @@ const getExperimentsByType = async (token: string | null, exp_type: string) => {
 
 const getExperimentById = async (token: string | null, id: number) => {
   try {
-    const response = await api.get(`/experiment/${id}/`, {
+    const response = await api.get(`/experiment/id/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

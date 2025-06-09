@@ -11,8 +11,8 @@ interface BetaParams {
 
 interface GaussianParams {
   name: string;
-  mu: Array<number>;
-  covariance: Array<number>;
+  mu: number[];
+  covariance: number[][];
 }
 
 interface StepComponentProps {
@@ -76,6 +76,7 @@ interface Arm extends NewArm {
   beta?: number;
   mu?: number[];
   covariance?: number[][];
+  n_outcomes: number;
 }
 
 interface NewExperimentState extends ExperimentStateBase {
@@ -88,6 +89,8 @@ interface ExperimentState extends NewExperimentState {
   experiment_id: number;
   is_active: boolean;
   last_trial_datetime_utc: string;
+  created_datetime_utc: string;
+  n_trials: number;
   arms: Arm[];
   contexts?: Context[];
 }
