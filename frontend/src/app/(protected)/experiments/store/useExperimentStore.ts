@@ -169,9 +169,6 @@ export const useExperimentStore = create<ExperimentStore>()(
       updateMethodType: (newMethodType: MethodType) =>
         set((state) => {
           const { experimentState } = state;
-          if (newMethodType === experimentState.exp_type)
-            return { experimentState };
-
           const { reward_type, notifications } = experimentState;
 
           let newState: NewExperimentState;
@@ -201,7 +198,7 @@ export const useExperimentStore = create<ExperimentStore>()(
           } else if (newMethodType == "cmab") {
             newState = {
               ...experimentState,
-              methodType: newMethodType,
+              exp_type: newMethodType,
               prior_type: "normal",
               reward_type,
               notifications,
@@ -230,7 +227,7 @@ export const useExperimentStore = create<ExperimentStore>()(
           } else if (newMethodType == "bayes_ab") {
             newState = {
               ...experimentState,
-              methodType: newMethodType,
+              exp_type: newMethodType,
               prior_type: "normal",
               reward_type,
               notifications,
@@ -295,7 +292,7 @@ export const useExperimentStore = create<ExperimentStore>()(
           } else if (experimentState.exp_type === "cmab") {
             newState = {
               ...experimentState,
-              prior_type: "normal",
+              prior_type: newPriorType,
               arms: experimentState.arms.map(() => ({
                 ...baseArm,
                 mu_init: 0,

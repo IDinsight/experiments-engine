@@ -15,12 +15,12 @@ import { Info } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 
-import { MABArmDetails } from "../types";
+import { ArmDetails } from "../types";
 
 export default function MABArmsProgress({
   armsData,
 }: {
-  armsData: MABArmDetails[];
+  armsData: ArmDetails[];
 }) {
   const maxMu = Math.max(...armsData.map((arm) => arm.mu ? arm.mu[0] : 0));
   return (

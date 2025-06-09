@@ -8,13 +8,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { MABExperimentDetails } from "../types";
+import { SingleExperimentDetails } from "../types";
 import { BetaLineChart, NormalLineChart } from "./Charts";
 
 export default function MABChart({
   experimentData,
 }: {
-  experimentData: MABExperimentDetails | null;
+  experimentData: SingleExperimentDetails | null;
 }) {
   const [showPriors, setShowPriors] = useState(false);
 
