@@ -11,8 +11,8 @@ interface BetaParams {
 
 interface GaussianParams {
   name: string;
-  mu: number;
-  sigma: number;
+  mu: Array<number>;
+  covariance: Array<number>;
 }
 
 interface StepComponentProps {
@@ -46,7 +46,7 @@ interface Context extends NewContext {
 interface ExperimentStateBase {
   name: string;
   description: string;
-  methodType: MethodType;
+  exp_type: MethodType;
   prior_type: PriorType;
   reward_type: RewardType;
   sticky_assignment: boolean;
@@ -55,148 +55,55 @@ interface ExperimentStateBase {
   auto_fail_unit: "days" | "hours";
 }
 
-interface ArmBase {
+interface NewArm {
   name: string;
   description: string;
+  mu_init?: number;
+  sigma_init?: number;
+  alpha_init?: number;
+  beta_init?: number;
+  is_treatment_arm?: boolean;
 }
 
 interface StepValidation {
   isValid: boolean;
   errors: Record<string, string> | Record<string, string>[];
 }
-// ----- Bayesian AB
 
-interface NewBayesianABArm extends ArmBase {
-  mu_init: number;
-  sigma_init: number;
-  is_treatment_arm: boolean;
-}
-
-interface BayesianABArm extends NewBayesianABArm {
+interface Arm extends NewArm {
   arm_id: number;
-  mu: number;
-  sigma: number;
+  alpha?: number;
+  beta?: number;
+  mu?: number[];
+  covariance?: number[][];
 }
 
-interface BayesianABState extends ExperimentStateBase {
-  methodType: "bayes_ab";
-  arms: NewBayesianABArm[];
+interface NewExperimentState extends ExperimentStateBase {
+  arms: NewArm[];
   notifications: Notifications;
+  contexts?: NewContext[];
 }
 
-interface BayesianAB extends BayesianABState {
-  experiment_id: number;
-  is_active: boolean;
-  arms: BayesianABArm[];
-}
-
-// ----- MAB
-
-interface NewMABArmBeta extends ArmBase {
-  alpha_init: number;
-  beta_init: number;
-}
-
-interface NewMABArmNormal extends ArmBase {
-  mu_init: number;
-  sigma_init: number;
-}
-
-interface MABArmBeta extends NewMABArmBeta {
-  arm_id: number;
-  alpha: number;
-  beta: number;
-}
-
-interface MABArmNormal extends NewMABArmNormal {
-  arm_id: number;
-  mu: number;
-  sigma: number;
-}
-
-interface MABExperimentStateNormal extends ExperimentStateBase {
-  methodType: "mab";
-  arms: NewMABArmNormal[];
-  notifications: Notifications;
-}
-
-interface MABExperimentStateBeta extends ExperimentStateBase {
-  methodType: "mab";
-  arms: NewMABArmBeta[];
-  notifications: Notifications;
-}
-
-interface MABNormal extends MABExperimentStateNormal {
+interface ExperimentState extends NewExperimentState {
   experiment_id: number;
   is_active: boolean;
   last_trial_datetime_utc: string;
-  arms: MABArmNormal[];
+  arms: Arm[];
+  contexts?: Context[];
 }
 
-interface MABBeta extends MABExperimentStateBeta {
-  experiment_id: number;
-  is_active: boolean;
-  last_trial_datetime_utc: string;
-  arms: MABArmBeta[];
-}
-
-// ----- CMAB
-
-interface NewCMABArm extends ArmBase {
-  mu_init: number;
-  sigma_init: number;
-}
-
-interface CMABArm extends NewCMABArm {
-  arm_id: number;
-  mu: number[];
-  sigma: number[];
-}
-
-interface CMABExperimentState extends ExperimentStateBase {
-  methodType: "cmab";
-  arms: NewCMABArm[];
-  contexts: NewContext[];
-  notifications: Notifications;
-}
-
-interface CMAB extends CMABExperimentState {
-  experiment_id: number;
-  is_active: boolean;
-  arms: CMABArm[];
-}
-
-type ExperimentState =
-  | MABExperimentStateNormal
-  | MABExperimentStateBeta
-  | CMABExperimentState
-  | BayesianABState;
 
 export type {
-  BayesianAB,
-  BayesianABArm,
-  BayesianABState,
-  ArmBase,
+  Arm,
   BetaParams,
-  CMAB,
-  CMABArm,
-  CMABExperimentState,
   Context,
   ExperimentState,
   ExperimentStateBase,
   GaussianParams,
-  MABBeta,
-  MABNormal,
-  MABArmBeta,
-  MABArmNormal,
-  MABExperimentStateBeta,
-  MABExperimentStateNormal,
   MethodType,
-  NewBayesianABArm,
-  NewCMABArm,
+  NewArm,
+  NewExperimentState,
   NewContext,
-  NewMABArmBeta,
-  NewMABArmNormal,
   Notifications,
   PriorType,
   RewardType,

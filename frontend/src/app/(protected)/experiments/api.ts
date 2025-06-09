@@ -1,43 +1,17 @@
 import api from "@/utils/api";
-import { ExperimentState, MABBeta, MABNormal, CMAB, BayesianAB } from "./types";
-import {
-  isMABExperimentStateBeta,
-  isMABExperimentStateNormal,
-  isCMABExperimentState,
-  isBayesianABState,
-} from "./store/useExperimentStore";
+import { ExperimentState, NewExperimentState } from "./types";
+
 
 const createNewExperiment = async ({
   experimentData,
   token,
 }: {
-  experimentData: ExperimentState;
+  experimentData: NewExperimentState;
   token: string | null;
 }) => {
-  const getEndpointAndData = (
-    data: ExperimentState
-  ): {
-    endpoint: string;
-  } => {
-
-    if (isMABExperimentStateBeta(data) || isMABExperimentStateNormal(data)) {
-      return { endpoint: "/mab/" };
-    }
-
-    if (isCMABExperimentState(data)) {
-      return { endpoint: "/contextual_mab/" };
-    }
-
-    if (isBayesianABState(data)) {
-      return { endpoint: "/bayes_ab/" };
-    }
-
-    throw new Error("Invalid experiment type");
-  };
 
   try {
-    const { endpoint } = getEndpointAndData(experimentData);
-    const response = await api.post(endpoint, experimentData, {
+    const response = await api.post("/experiment", experimentData, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -51,20 +25,14 @@ const createNewExperiment = async ({
   }
 };
 
-const getAllMABExperiments = async (token: string | null) => {
+const getExperimentsByType = async (token: string | null, exp_type: string) => {
   try {
-    const response = await api.get("/mab/", {
+    const response = await api.get(`/experiment/type/${exp_type}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    const convertedData = response.data.map(
-      (experiment: MABBeta | MABNormal) => ({
-        ...experiment,
-        methodType: "mab",
-      })
-    );
-    return convertedData;
+    return response.data as ExperimentState[];
   } catch (error: unknown) {
     if (error instanceof Error) {
       throw new Error(`Error fetching all experiments: ${error.message}`);
@@ -74,60 +42,14 @@ const getAllMABExperiments = async (token: string | null) => {
   }
 };
 
-const getAllCMABExperiments = async (token: string | null) => {
+const getExperimentById = async (token: string | null, id: number) => {
   try {
-    const response = await api.get("/contextual_mab/", {
+    const response = await api.get(`/experiment/${id}/`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    const convertedData = response.data.map((experiment: CMAB) => ({
-      ...experiment,
-      methodType: "cmab",
-    }));
-    return convertedData;
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      throw new Error(`Error fetching all experiments: ${error.message}`);
-    } else {
-      throw new Error("Error fetching all experiments");
-    }
-  }
-};
-
-const getAllBayesianABExperiments = async (token: string | null) => {
-  try {
-    const response = await api.get("/bayes_ab/", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const convertedData = response.data.map((experiment: BayesianAB) => ({
-      ...experiment,
-      methodType: "bayes_ab",
-    }));
-    return convertedData;
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      throw new Error(`Error fetching all experiments: ${error.message}`);
-    } else {
-      throw new Error("Error fetching all experiments");
-    }
-  }
-};
-
-const getMABExperimentById = async (token: string | null, id: number) => {
-  try {
-    const response = await api.get(`/mab/${id}/`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const convertedData = {
-      ...response.data,
-      methodType: "mab",
-    };
-    return convertedData;
+    return response.data as ExperimentState;
   } catch (error: unknown) {
     if (error instanceof Error) {
       throw new Error(`Error fetching experiment: ${error.message}`);
@@ -136,10 +58,9 @@ const getMABExperimentById = async (token: string | null, id: number) => {
     }
   }
 };
+
 export {
   createNewExperiment,
-  getAllMABExperiments,
-  getAllCMABExperiments,
-  getAllBayesianABExperiments,
-  getMABExperimentById,
+  getExperimentsByType,
+  getExperimentById,
 };
