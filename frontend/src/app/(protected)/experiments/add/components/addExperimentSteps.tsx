@@ -9,7 +9,7 @@ import AddArms from "./addArms";
 // import CMABPriorRewardSelection from "./cmabs/addPriorReward";
 // import AddBayesABArms from "./bayes_ab/addBayesABArms";
 // import BayesianABRewardSelection from "./bayes_ab/addPriorReward";
-// import AddNotifications from "./addNotifications";
+import AddNotifications from "./addNotifications";
 
 
 const AllSteps = (exp_type: MethodType): Step[] => {
@@ -21,6 +21,8 @@ const AllSteps = (exp_type: MethodType): Step[] => {
     name: "Add Arms",
     component: AddArms,
   },
+  { name: "Notifications",
+    component: AddNotifications }
 
 ]
   if (exp_type === "cmab") {
