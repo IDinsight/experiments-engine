@@ -83,6 +83,7 @@ interface NewExperimentState extends ExperimentStateBase {
   arms: NewArm[];
   notifications: Notifications;
   contexts?: NewContext[];
+  clients: [];
 }
 
 interface ExperimentState extends NewExperimentState {

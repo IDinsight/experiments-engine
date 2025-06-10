@@ -93,6 +93,7 @@ const createInitialState = (): NewExperimentState => {
       onPercentBetter: false,
       percentBetterThreshold: 0,
     },
+    clients: [] as []
   };
 
   return {

@@ -9,9 +9,8 @@ const createNewExperiment = async ({
   experimentData: NewExperimentState;
   token: string | null;
 }) => {
-
   try {
-    const response = await api.post("/experiment", experimentData, {
+    const response = await api.post("/experiment/", experimentData, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
