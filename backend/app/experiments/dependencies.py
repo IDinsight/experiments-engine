@@ -65,7 +65,12 @@ async def validate_experiment_and_draw(
     experiment_id: int, draw_id: str, workspace_id: int, asession: AsyncSession
 ) -> tuple[ExperimentDB, DrawDB]:
     """
-    Validate the experiment and draw.
+    Validate the experiment and draw. 
+    Checks if:
+    (a) `experiment_id` exists 
+    (b) `draw_id` exists 
+    (c) `draw_id` belongs to `experiment_id` 
+    (d) `draw_id` doesn't already have a reward 
     """
     experiment = await get_experiment_by_id_from_db(
         workspace_id=workspace_id, experiment_id=experiment_id, asession=asession
