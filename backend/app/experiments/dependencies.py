@@ -110,7 +110,48 @@ async def format_rewards_for_arm_update(
     asession: AsyncSession,
 ) -> tuple[list[float], list[list[float]] | None, list[float] | None]:
     """
-    Format the rewards for the arm update.
+    Aggregates and formats reward, context, and treatment data for updating experiment arm parameters.
+
+    This function collects all previous rewards associated with the specified experiment and arm,
+    appends the latest observed reward, and structures the data (including context and treatment values
+    when applicable) for downstream update algorithms. It ensures that data passed to update routines
+    is comprehensive and correctly ordered for robust experiment tracking, including support for
+    contextual bandits and Bayesian A/B experiments.
+
+    Parameters
+    ----------
+    experiment : ExperimentDB
+        The experiment object containing metadata and arms.
+    chosen_arm_id : int
+        The ID of the arm for which the new reward is being recorded.
+    reward : float
+        The most recent observed reward for the chosen arm.
+    context_val : list of float or None
+        The context vector associated with the latest draw, if available.
+    asession : AsyncSession
+        The asynchronous database session for performing queries.
+
+    Returns
+    -------
+    rewards_list : list of float
+        List of rewards for the arm, with the new reward prepended.
+    context_list : list of list of float or None
+        List of context vectors (if applicable), with the new context prepended.
+        `None` if context is not used.
+    treatments_list : list of float or None
+        List of treatment assignments (if applicable), with the new assignment prepended.
+        `None` if treatments are not used.
+
+    Raises
+    ------
+    ValueError
+        If context values are missing for prior draws in a contextual bandit experiment.
+
+    Notes
+    -----
+    This function ensures that historical and new data are combined and
+    formatted as expected by arm update algorithms, supporting various
+    experiment types and configurations.
     """
     previous_rewards = await get_draws_with_rewards_by_experiment_id(
         experiment_id=experiment.experiment_id, asession=asession
