@@ -1,11 +1,11 @@
-import { useExperimentStore } from "../../../store/useExperimentStore";
+import { useExperimentStore, isBayesianABState, isCMABExperimentState } from "../../store/useExperimentStore";
 import { useCallback, useState, useEffect } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import type { PriorType, RewardType, StepComponentProps } from "../../../types";
+import type { PriorType, RewardType, StepComponentProps } from "../../types";
 import { DividerWithTitle } from "@/components/Dividers";
 
-export default function MABPriorRewardSelection({
+export default function PriorRewardSelection({
   onValidate,
 }: StepComponentProps) {
   const { experimentState, updatePriorType, updateRewardType } =
@@ -33,14 +33,6 @@ export default function MABPriorRewardSelection({
     }
 
     if (
-      experimentState.prior_type === "normal" &&
-      experimentState.reward_type === "binary"
-    ) {
-      newErrors.reward_type =
-        "Normal prior is not compatible with binary reward";
-      isValid = false;
-    }
-    if (
       experimentState.prior_type === "beta" &&
       experimentState.reward_type === "real-valued"
     ) {
@@ -48,6 +40,12 @@ export default function MABPriorRewardSelection({
         "Beta prior is not compatible with real-valued reward";
       isValid = false;
     }
+
+    if ((isBayesianABState(experimentState) || isCMABExperimentState(experimentState)) && experimentState.prior_type === "beta") {
+      newErrors.prior_type = "Beta prior is not compatible with Bayesian AB or CMAB experiments";
+      isValid = false;
+    }
+
     return { isValid, newErrors };
   }, [experimentState.prior_type, experimentState.reward_type]);
 
@@ -69,7 +67,7 @@ export default function MABPriorRewardSelection({
     <div>
       <div className="pt-5 flex w-full flex-wrap items-end justify-between gap-4 border-b border-zinc-950/10 pb-6 dark:border-white/10">
         <h2 className="text-2xl font-semibold tracking-tight">
-          Configure MAB Parameters
+          Configure Experiment Parameters
         </h2>
       </div>
       <div className="pt-6 space-y-6" aria-label="MAB Parameters">

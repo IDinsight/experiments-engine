@@ -8,13 +8,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { MABExperimentDetails } from "../types";
+import { SingleExperimentDetails } from "../types";
 import { BetaLineChart, NormalLineChart } from "./Charts";
 
 export default function MABChart({
   experimentData,
 }: {
-  experimentData: MABExperimentDetails | null;
+  experimentData: SingleExperimentDetails | null;
 }) {
   const [showPriors, setShowPriors] = useState(false);
 
@@ -24,27 +24,27 @@ export default function MABChart({
 
   const priorBetaData = experimentData.arms.map((arm) => ({
     name: arm.name,
-    alpha: arm.alpha_init,
-    beta: arm.beta_init,
+    alpha: arm.alpha_init ? arm.alpha_init : 1,
+    beta: arm.beta_init ? arm.beta_init : 1,
   }));
 
 
   const posteriorBetaData = experimentData.arms.map((arm) => ({
     name: arm.name,
-    alpha: arm.alpha,
-    beta: arm.beta,
+    alpha: arm.alpha ? arm.alpha : 1,
+    beta: arm.beta ? arm.beta : 1,
   }));
 
   const priorGaussianData = experimentData.arms.map((arm) => ({
     name: arm.name,
-    mu: arm.mu_init,
-    sigma: arm.sigma_init,
+    mu: [arm.mu_init ? arm.mu_init : 0],
+    covariance: [[arm.sigma_init ? arm.sigma_init : 1]],
   }));
 
   const posteriorGaussianData = experimentData.arms.map((arm) => ({
     name: arm.name,
-    mu: arm.mu,
-    sigma: arm.sigma,
+    mu: arm.mu ? arm.mu : [0],
+    covariance: arm.covariance ? arm.covariance : [[1]],
   }));
 
   return (

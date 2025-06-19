@@ -160,15 +160,15 @@ const NormalLineChart = ({
   const data = x.map((xVal) => {
     const point: { x: number; [key: string]: number } = { x: xVal };
 
-    const posteriorPDFs = posteriors.map(({ mu, sigma }) =>
-      normalPDF(xVal, mu, sigma)
+    const posteriorPDFs = posteriors.map(({ mu, covariance }) =>
+      normalPDF(xVal, mu[0], covariance[0][0])
     );
 
     posteriors.forEach(({ name }, i) => {
       point[`Posterior - ${i}_${name}`] = posteriorPDFs[i];
     });
 
-    const priorPDFs = priors.map(({ mu, sigma }) => normalPDF(xVal, mu, sigma));
+    const priorPDFs = priors.map(({ mu, covariance }) => normalPDF(xVal, mu[0], covariance[0][0]));
 
     priors.forEach(({ name }, i) => {
       point[`Prior - ${i}_${name}`] = priorPDFs[i];

@@ -9,19 +9,20 @@ from backend.app.messages.models import MessageDB
 
 base_mab_payload = {
     "name": "Test",
-    "description": "Test description",
+    "description": "Test description.",
+    "exp_type": "mab",
     "prior_type": "beta",
     "reward_type": "binary",
     "arms": [
         {
             "name": "arm 1",
-            "description": "arm 1 description",
+            "description": "arm 1 description.",
             "alpha_init": 5,
             "beta_init": 1,
         },
         {
             "name": "arm 2",
-            "description": "arm 2 description",
+            "description": "arm 2 description.",
             "alpha_init": 1,
             "beta_init": 4,
         },
@@ -34,6 +35,8 @@ base_mab_payload = {
         "onPercentBetter": False,
         "percentBetterThreshold": 5,
     },
+    "contexts": [],
+    "clients": [],
 }
 
 
@@ -53,13 +56,13 @@ def admin_token(client: TestClient) -> str:
 @fixture
 def experiment_id(client: TestClient, admin_token: str) -> Generator[int, None, None]:
     response = client.post(
-        "/mab",
+        "/experiment",
         headers={"Authorization": f"Bearer {admin_token}"},
         json=base_mab_payload,
     )
     yield response.json()["experiment_id"]
     client.delete(
-        f"/mab/{response.json()['experiment_id']}",
+        f"/experiment/id/{response.json()['experiment_id']}",
         headers={"Authorization": f"Bearer {admin_token}"},
     )
 

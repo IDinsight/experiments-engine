@@ -68,12 +68,12 @@ export default function AddBasicInfo({
   const [errors, setErrors] = useState({
     name: "",
     description: "",
-    methodType: "",
+    exp_type: "",
   });
 
   const validateForm = useCallback(() => {
     let isValid = true;
-    const newErrors = { name: "", description: "", methodType: "" };
+    const newErrors = { name: "", description: "", exp_type: "" };
 
     if (!experimentState.name.trim()) {
       newErrors.name = "Experiment name is required";
@@ -85,8 +85,8 @@ export default function AddBasicInfo({
       isValid = false;
     }
 
-    if (!experimentState.methodType) {
-      newErrors.methodType = "Please select an experiment type";
+    if (!experimentState.exp_type) {
+      newErrors.exp_type = "Please select an experiment type";
       isValid = false;
     }
 
@@ -164,15 +164,15 @@ export default function AddBasicInfo({
                   description={methodInfo[method].description}
                   infoTitle={methodInfo[method].infoTitle}
                   infoDescription={methodInfo[method].infoDescription}
-                  selected={experimentState.methodType === method}
+                  selected={experimentState.exp_type === method}
                   disabled={methodInfo[method].disabled}
                   onClick={() => updateMethodType(method as keyof Methods)}
                 />
               )
             )}
           </div>
-          {errors.methodType ? (
-            <p className="text-destructive text-xs mt-2">{errors.methodType}</p>
+          {errors.exp_type ? (
+            <p className="text-destructive text-xs mt-2">{errors.exp_type}</p>
           ) : (
             <p className="text-destructive text-xs mt-2">&nbsp;</p>
           )}
