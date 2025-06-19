@@ -121,7 +121,7 @@ class ExperimentDB(Base):
         Update the metadata of the experiment.
         """
         experiment.n_trials += 1
-        experiment.last_trial_datetime_utc = datetime.now(tz=timezone.utc)
+        experiment.last_trial_datetime_utc = datetime.now(timezone.utc)
         return experiment
 
     def to_dict(self) -> dict:

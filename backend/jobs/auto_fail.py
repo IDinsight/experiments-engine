@@ -35,7 +35,7 @@ async def auto_fail_experiment(asession: AsyncSession) -> int:
         int: Number of draws automatically failed
     """
     total_failed = 0
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(timezone.utc)
 
     # Fetch all required experiments data in one query
     experiment_query = select(ExperimentDB).where(ExperimentDB.auto_fail.is_(True))
