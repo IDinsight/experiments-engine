@@ -115,6 +115,15 @@ class ExperimentDB(Base):
         """Get contexts, returning empty list if not applicable."""
         return self.contexts if self.has_contexts and self.contexts is not None else []
 
+    @staticmethod
+    def update_metadata(experiment: "ExperimentDB") -> "ExperimentDB":
+        """
+        Update the metadata of the experiment.
+        """
+        experiment.n_trials += 1
+        experiment.last_trial_datetime_utc = datetime.now(timezone.utc)
+        return experiment
+
     def to_dict(self) -> dict:
         """
         Convert the ORM object to a dictionary.
@@ -137,7 +146,6 @@ class ExperimentDB(Base):
             "n_trials": self.n_trials,
             "last_trial_datetime_utc": str(self.last_trial_datetime_utc),
             "arms": [arm.to_dict() for arm in self.arms],
-            "draws": [draw.to_dict() for draw in self.draws],
             "contexts": (
                 [context.to_dict() for context in self.context_list if context]
                 if len(self.context_list) > 0
