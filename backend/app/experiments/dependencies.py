@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from typing import Union
 
 import numpy as np
@@ -65,12 +64,12 @@ async def validate_experiment_and_draw(
     experiment_id: int, draw_id: str, workspace_id: int, asession: AsyncSession
 ) -> tuple[ExperimentDB, DrawDB]:
     """
-    Validate the experiment and draw. 
+    Validate the experiment and draw.
     Checks if:
-    (a) `experiment_id` exists 
-    (b) `draw_id` exists 
-    (c) `draw_id` belongs to `experiment_id` 
-    (d) `draw_id` doesn't already have a reward 
+    (a) `experiment_id` exists
+    (b) `draw_id` exists
+    (c) `draw_id` belongs to `experiment_id`
+    (d) `draw_id` doesn't already have a reward
     """
     experiment = await get_experiment_by_id_from_db(
         workspace_id=workspace_id, experiment_id=experiment_id, asession=asession
@@ -110,13 +109,15 @@ async def format_rewards_for_arm_update(
     asession: AsyncSession,
 ) -> tuple[list[float], list[list[float]] | None, list[float] | None]:
     """
-    Aggregates and formats reward, context, and treatment data for updating experiment arm parameters.
+    Aggregates and formats reward, context, and treatment data for updating experiment
+    arm parameters.
 
-    This function collects all previous rewards associated with the specified experiment and arm,
-    appends the latest observed reward, and structures the data (including context and treatment values
-    when applicable) for downstream update algorithms. It ensures that data passed to update routines
-    is comprehensive and correctly ordered for robust experiment tracking, including support for
-    contextual bandits and Bayesian A/B experiments.
+    This function collects all previous rewards associated with the specified experiment
+    and arm, appends the latest observed reward, and structures the data (including
+    context and treatment values when applicable) for downstream update algorithms. It
+    ensures that data passed to update routines is comprehensive and correctly ordered
+    for robust experiment tracking, including support for contextual bandits and
+    Bayesian A/B experiments.
 
     Parameters
     ----------
@@ -139,7 +140,8 @@ async def format_rewards_for_arm_update(
         List of context vectors (if applicable), with the new context prepended.
         `None` if context is not used.
     treatments_list : list of float or None
-        List of treatment assignments (if applicable), with the new assignment prepended.
+        List of treatment assignments (if applicable), with the new assignment
+        prepended.
         `None` if treatments are not used.
 
     Raises
@@ -219,7 +221,7 @@ async def update_arm_based_on_outcome(
     This is a helper function to allow `auto_fail` job to call
     it as well.
     """
-    update_experiment_metadata(experiment)
+    ExperimentDB.update_metadata(experiment)
 
     arm = get_arm_from_experiment(experiment, draw.arm_id)
     arm.n_outcomes += 1
@@ -238,12 +240,6 @@ async def update_arm_based_on_outcome(
     )
 
     return ArmResponse.model_validate(arm)
-
-
-def update_experiment_metadata(experiment: ExperimentDB) -> None:
-    """Update experiment metadata with new trial information"""
-    experiment.n_trials += 1
-    experiment.last_trial_datetime_utc = datetime.now(tz=timezone.utc)
 
 
 def get_arm_from_experiment(experiment: ExperimentDB, arm_id: int) -> ArmDB:
