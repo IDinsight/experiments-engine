@@ -35,11 +35,19 @@ def get_experiment_params(experiment: ExperimentSample) -> tuple[list, list]:
     try:
         if experiment.prior_type == ArmPriors.BETA:
             prior_samples = [
-                np.random.beta(arm.alpha_init, arm.beta_init, 1000).tolist()
+                np.random.beta(
+                    float(arm.alpha_init) if arm.alpha_init is not None else 1.0,
+                    float(arm.beta_init) if arm.beta_init is not None else 1.0,
+                    1000,
+                ).tolist()
                 for arm in experiment.arms
             ]
             posterior_samples = [
-                np.random.beta(arm.alpha, arm.beta, 1000).tolist()
+                np.random.beta(
+                    float(arm.alpha) if arm.alpha is not None else 1.0,
+                    float(arm.beta) if arm.beta is not None else 1.0,
+                    1000,
+                ).tolist()
                 for arm in experiment.arms
             ]
         elif (
@@ -48,13 +56,22 @@ def get_experiment_params(experiment: ExperimentSample) -> tuple[list, list]:
         ):
             prior_samples = [
                 np.random.normal(
-                    loc=arm.mu_init, scale=arm.sigma_init, size=1000
+                    loc=float(arm.mu_init) if arm.mu_init is not None else 0.0,
+                    scale=float(arm.sigma_init) if arm.sigma_init is not None else 1.0,
+                    size=1000,
                 ).tolist()
                 for arm in experiment.arms
             ]
             posterior_samples = [
                 np.random.normal(
-                    loc=arm.mu, scale=np.array(arm.covariance).ravel()[0], size=1000
+                    loc=(float(arm.mu[0]) if arm.mu and arm.mu[0] is not None else 0.0),
+                    scale=(
+                        float(np.array(arm.covariance).ravel()[0])
+                        if arm.covariance
+                        and np.array(arm.covariance).ravel()[0] is not None
+                        else 1.0
+                    ),
+                    size=1000,
                 ).tolist()
                 for arm in experiment.arms
             ]

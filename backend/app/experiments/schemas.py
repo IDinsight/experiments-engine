@@ -343,11 +343,11 @@ class DrawResponse(BaseModel):
     )
     current_mu: Optional[List[Union[float, None]]] = Field(
         description="Current mean value of the arm",
-        default=[None],
+        default=None,
     )
     current_covariance: Optional[List[List[Union[float, None]]]] = Field(
         description="Current covariance matrix of the arm",
-        default=[[None]],
+        default=None,
     )
     arm: ArmResponse
     client: Optional[Client] = None
