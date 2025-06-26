@@ -43,7 +43,6 @@ from .schemas import (
     DrawResponse,
     Experiment,
     ExperimentResponse,
-    ExperimentSample,
     ExperimentsEnum,
     ObservationType,
     Outcome,
@@ -508,12 +507,17 @@ async def get_plotting_data(
         raise HTTPException(
             status_code=404, detail=f"Experiment with id {experiment_id} not found"
         )
-
     draws = await get_draws_by_experiment_id(
         experiment_id=experiment_id, asession=asession
     )
 
-    experiment_data = ExperimentSample.model_validate(experiment.to_dict())
+    if not draws:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No draws found for experiment with id {experiment_id}",
+        )
+
+    experiment_data = ExperimentResponse.model_validate(experiment.to_dict())
     draw_data = [
         DrawResponse.model_validate(
             {
@@ -531,9 +535,16 @@ async def get_plotting_data(
         )
         for draw in draws
     ]
-    plotting_data = get_required_plotting_data(
-        experiment=experiment_data, draws=draw_data
-    )
+    try:
+        plotting_data = get_required_plotting_data(
+            experiment=experiment_data, draws=draw_data
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error retrieving plotting data: {str(e)}",
+        ) from e
+
     return PlottingData(
         prior_samples=plotting_data["prior_samples"],
         posterior_samples=plotting_data["posterior_samples"],

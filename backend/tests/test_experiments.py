@@ -535,6 +535,54 @@ class TestExperiment:
         assert response.status_code == 200
         assert len(response.json()) == n_draws
 
+    @mark.parametrize(
+        "create_experiment_payload, expected_response",
+        [
+            ("base_beta_binom", 200),
+            ("base_normal", 200),
+            ("bayes_ab_normal_binom", 200),
+            ("cmab_normal", 500),
+        ],
+        indirect=["create_experiment_payload"],
+    )
+    def test_get_plotting_data(
+        self,
+        client: TestClient,
+        create_experiments: list,
+        create_experiment_payload: dict,
+        expected_response: int,
+        workspace_api_key: str,
+    ) -> None:
+        id = create_experiments[0]["experiment_id"]
+        exp_type = create_experiments[0]["exp_type"]
+        contexts = None
+        if exp_type == "cmab":
+            contexts = [
+                {"context_id": context["context_id"], "context_value": 1}
+                for context in create_experiments[0]["contexts"]
+            ]
+
+        for _ in range(5):
+            response = client.put(
+                f"/experiment/{id}/draw",
+                headers={"Authorization": f"Bearer {workspace_api_key}"},
+                json=contexts,
+            )
+            draw_id = response.json()["draw_id"]
+            # put outcomes
+            response = client.put(
+                f"/experiment/{id}/{draw_id}/1",
+                headers={"Authorization": f"Bearer {workspace_api_key}"},
+            )
+
+        response = client.get(
+            f"/experiment/{id}/plotting",
+            headers={"Authorization": f"Bearer {workspace_api_key}"},
+        )
+        print(response.status_code)
+
+        assert response.status_code == expected_response
+
 
 class TestNotifications:
     @fixture()

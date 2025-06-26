@@ -530,23 +530,6 @@ class Experiment(ExperimentBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ExperimentSample(ExperimentBase):
-    """
-    Pydantic model for a response for experiment creation
-    """
-
-    experiment_id: int
-    n_trials: int
-    last_trial_datetime_utc: Optional[str] = None
-
-    arms: list[ArmResponse]
-    notifications: list[NotificationsResponse]
-    contexts: Optional[list[ContextResponse]] = None
-    clients: Optional[list[Client]] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class ExperimentResponse(ExperimentBase):
     """
     Pydantic model for experiments for drawing and updating arms.

@@ -1,15 +1,15 @@
 import numpy as np
 
-from .schemas import ArmPriors, DrawResponse, ExperimentSample, ExperimentsEnum
+from .schemas import ArmPriors, DrawResponse, ExperimentResponse, ExperimentsEnum
 
 
-def get_experiment_params(experiment: ExperimentSample) -> tuple[list, list]:
+def get_experiment_params(experiment: ExperimentResponse) -> tuple[list, list]:
     """
     Extracts and returns the parameters of the experiment by generating samples from
     prior and posterior distributions.
 
     Args:
-        experiment (ExperimentSample): Experiment object containing configuration
+        experiment (ExperimentResponse): Experiment object containing configuration
           and parameters for arms including prior and posterior distribution parameters
 
     Returns:
@@ -83,14 +83,14 @@ def get_experiment_params(experiment: ExperimentSample) -> tuple[list, list]:
 
 
 def get_posteriors_over_time(
-    experiment: ExperimentSample, draws: list[DrawResponse]
+    experiment: ExperimentResponse, draws: list[DrawResponse]
 ) -> tuple[list, list]:
     """
     Extracts and returns the posterior samples (means and standard deviations) over
     time for each arm in an experiment.
 
     Args:
-        experiment (ExperimentSample): Experiment data containing arms and prior
+        experiment (ExperimentResponse): Experiment data containing arms and prior
             type information
         draws (list[DrawResponse]): List of draw responses containing
             posterior distribution parameters
@@ -154,13 +154,13 @@ def get_posteriors_over_time(
 
 
 def get_volume_assigned_over_time(
-    experiment: ExperimentSample, draws: list[DrawResponse]
+    experiment: ExperimentResponse, draws: list[DrawResponse]
 ) -> list:
     """
     Extracts and returns the volume assigned to each arm over time.
 
     Args:
-        experiment (ExperimentSample): Experiment data containing arms and prior
+        experiment (ExperimentResponse): Experiment data containing arms and prior
             type information
         draws (list[DrawResponse]): List of draw responses containing arm assignments
     Returns:
@@ -182,7 +182,7 @@ def get_volume_assigned_over_time(
 
 
 def get_required_plotting_data(
-    experiment: ExperimentSample, draws: list[DrawResponse]
+    experiment: ExperimentResponse, draws: list[DrawResponse]
 ) -> dict:
     """
     Extracts and returns the data required for plotting.
