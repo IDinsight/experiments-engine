@@ -18,7 +18,7 @@ from .sampling_utils import update_arm
 from .schemas import (
     ArmPriors,
     ArmResponse,
-    ExperimentSample,
+    ExperimentResponse,
     ExperimentsEnum,
     NotificationsResponse,
     ObservationType,
@@ -30,7 +30,7 @@ from .schemas import (
 async def experiments_db_to_schema(
     experiments_db: list[ExperimentDB],
     asession: AsyncSession,
-) -> list[ExperimentSample]:
+) -> list[ExperimentResponse]:
     """
     Convert a list of ExperimentDB objects to a list of ExperimentResponse schemas.
     """
@@ -47,7 +47,7 @@ async def experiments_db_to_schema(
             )
         ]
         all_experiments.append(
-            ExperimentSample.model_validate(
+            ExperimentResponse.model_validate(
                 {
                     **exp_dict,
                     "notifications": [
@@ -269,7 +269,7 @@ async def update_arm_parameters(
     treatments: Union[list[float], None],
 ) -> None:
     """Update the arm parameters based on the reward type and outcome"""
-    experiment_data = ExperimentSample.model_validate(experiment.to_dict())
+    experiment_data = ExperimentResponse.model_validate(experiment.to_dict())
     if experiment_data.reward_type == RewardLikelihood.BERNOULLI:
         Outcome(rewards[0])  # Check if reward is 0 or 1
     params = update_arm(

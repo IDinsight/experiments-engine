@@ -333,6 +333,22 @@ class DrawResponse(BaseModel):
         description="Context values associated with the draw",
         default=None,
     )
+    current_alpha: Optional[Union[float, None]] = Field(
+        description="Current alpha value of the arm",
+        default=None,
+    )
+    current_beta: Optional[Union[float, None]] = Field(
+        description="Current beta value of the arm",
+        default=None,
+    )
+    current_mu: Optional[List[Union[float, None]]] = Field(
+        description="Current mean value of the arm",
+        default=[None],
+    )
+    current_covariance: Optional[List[List[Union[float, None]]]] = Field(
+        description="Current covariance matrix of the arm",
+        default=[[None]],
+    )
     arm: ArmResponse
     client: Optional[Client] = None
 
@@ -514,7 +530,7 @@ class Experiment(ExperimentBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ExperimentResponse(ExperimentBase):
+class ExperimentSample(ExperimentBase):
     """
     Pydantic model for a response for experiment creation
     """
@@ -531,7 +547,7 @@ class ExperimentResponse(ExperimentBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ExperimentSample(ExperimentBase):
+class ExperimentResponse(ExperimentBase):
     """
     Pydantic model for experiments for drawing and updating arms.
     """
@@ -544,5 +560,19 @@ class ExperimentSample(ExperimentBase):
     arms: list[ArmResponse]
     contexts: Optional[list[ContextResponse]] = None
     clients: Optional[list[Client]] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PlottingData(BaseModel):
+    """
+    Pydantic model for the data required for plotting.
+    """
+
+    posterior_means: list
+    posterior_stds: list
+    volumes: list
+    prior_samples: list
+    posterior_samples: list
 
     model_config = ConfigDict(from_attributes=True)
