@@ -73,6 +73,7 @@ export function WorkspaceSwitcher() {
     );
   }
 
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>

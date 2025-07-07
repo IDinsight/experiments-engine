@@ -15,14 +15,14 @@ import { Info } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 
-import { MABArmDetails } from "../types";
+import { ArmDetails } from "../types";
 
 export default function MABArmsProgress({
   armsData,
 }: {
-  armsData: MABArmDetails[];
+  armsData: ArmDetails[];
 }) {
-  const maxMu = Math.max(...armsData.map((arm) => arm.mu));
+  const maxMu = Math.max(...armsData.map((arm) => arm.mu ? arm.mu[0] : 0));
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -56,18 +56,18 @@ export default function MABArmsProgress({
                   <Badge variant="outline">{arm.n_outcomes}</Badge>
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {arm.beta
+                  {(arm.alpha && arm.beta)
                     ? `${((arm.alpha * 100) / (arm.alpha + arm.beta)).toFixed(
                         1
                       )}%`
-                    : `${arm.mu.toFixed(1)}`}
+                    : arm.mu ? (`${arm.mu[0].toFixed(1)}`) : (``)}
                 </span>
               </div>
               <Progress
                 value={
-                  arm.beta
+                  (arm.alpha && arm.beta)
                     ? (arm.alpha * 100) / (arm.alpha + arm.beta)
-                    : (arm.mu / (maxMu * 2)) * 100
+                    : (arm.mu ? (arm.mu[0] / (maxMu * 2)) * 100 : 0)
                 }
                 className="h-2"
               />

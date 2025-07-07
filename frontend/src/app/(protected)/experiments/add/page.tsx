@@ -29,7 +29,7 @@ export default function NewExperiment() {
   const { token } = useAuth();
   const router = useRouter();
 
-  const [steps, setSteps] = useState(AllSteps[experimentState.methodType]);
+  const [steps, setSteps] = useState(AllSteps(experimentState.exp_type));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { toast } = useToast();
@@ -39,9 +39,9 @@ export default function NewExperiment() {
   }, []);
 
   useEffect(() => {
-    setSteps(AllSteps[experimentState.methodType]);
+    setSteps(AllSteps(experimentState.exp_type));
     setCurrentStep(0);
-  }, [experimentState.methodType]);
+  }, [experimentState.exp_type]);
 
   const nextStep = useCallback(() => {
     const currentValidation = stepValidations[currentStep];

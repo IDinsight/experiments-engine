@@ -1,28 +1,29 @@
-interface MABExperimentDetails {
+interface SingleExperimentDetails {
   name: string;
   description: string;
-  reward: string;
+  reward_type: string;
   prior_type: string;
+  exp_type: string;
   is_active: boolean;
   experiment_id: number;
   created_datetime_utc: string;
   last_trial_datetime_utc: string;
   n_trials: number;
-  arms: MABArmDetails[];
+  arms: ArmDetails[];
   notifications: Notification[];
 }
 
-interface MABArmDetails {
+interface ArmDetails {
   name: string;
   description: string;
-  alpha_init: number;
-  beta_init: number;
-  mu_init: number;
-  sigma_init: number;
-  alpha: number;
-  beta: number;
-  mu: number;
-  sigma: number;
+  alpha_init?: number;
+  beta_init?: number;
+  mu_init?: number;
+  sigma_init?: number;
+  alpha?: number;
+  beta?: number;
+  mu?: number[];
+  covariance?: number[][];
   arm_id: number;
   n_outcomes: number;
 }
@@ -41,4 +42,4 @@ interface ExtraInfo {
   nTrials: number;
 }
 
-export type { MABExperimentDetails, MABArmDetails, Notification, ExtraInfo };
+export type { SingleExperimentDetails, ArmDetails, Notification, ExtraInfo };
