@@ -42,11 +42,13 @@ from .schemas import (
     ContextType,
     DrawResponse,
     Experiment,
-    ExperimentSample,
+    ExperimentResponse,
     ExperimentsEnum,
     ObservationType,
     Outcome,
+    PlottingData,
 )
+from .visualization_utils import get_required_plotting_data
 
 router = APIRouter(prefix="/experiment", tags=["Experiments"])
 
@@ -54,12 +56,12 @@ logger = setup_logger(__name__)
 
 
 # --- POST experiments routers ---
-@router.post("/", response_model=ExperimentSample)
+@router.post("/", response_model=ExperimentResponse)
 async def create_experiment(
     experiment: Experiment,
     user_db: Annotated[UserDB, Depends(require_admin_role)],
     asession: AsyncSession = Depends(get_async_session),
-) -> ExperimentSample:
+) -> ExperimentResponse:
     """
     Create a new experiment in the current user's workspace.
     """
@@ -87,15 +89,15 @@ async def create_experiment(
 
     experiment_dict = experiment_db.to_dict()
     experiment_dict["notifications"] = [n.to_dict() for n in notifications]
-    return ExperimentSample.model_validate(experiment_dict)
+    return ExperimentResponse.model_validate(experiment_dict)
 
 
 # -- GET experiment routers ---
-@router.get("/", response_model=list[ExperimentSample])
+@router.get("/", response_model=list[ExperimentResponse])
 async def get_all_experiments(
     user_db: Annotated[UserDB, Depends(get_verified_user)],
     asession: AsyncSession = Depends(get_async_session),
-) -> list[ExperimentSample]:
+) -> list[ExperimentResponse]:
     """
     Retrieve all experiments for the current user's workspace.
     """
@@ -119,12 +121,12 @@ async def get_all_experiments(
     return all_experiments
 
 
-@router.get("/type/{experiment_type}", response_model=list[ExperimentSample])
+@router.get("/type/{experiment_type}", response_model=list[ExperimentResponse])
 async def get_all_experiments_by_type(
     experiment_type: ExperimentsEnum,
     user_db: Annotated[UserDB, Depends(get_verified_user)],
     asession: AsyncSession = Depends(get_async_session),
-) -> list[ExperimentSample]:
+) -> list[ExperimentResponse]:
     """
     Retrieve all experiments for the current user's workspace.
     """
@@ -149,12 +151,12 @@ async def get_all_experiments_by_type(
     return all_experiments
 
 
-@router.get("/id/{experiment_id}", response_model=ExperimentSample)
+@router.get("/id/{experiment_id}", response_model=ExperimentResponse)
 async def get_experiment_by_id(
     experiment_id: int,
     user_db: Annotated[UserDB, Depends(get_verified_user)],
     asession: AsyncSession = Depends(get_async_session),
-) -> ExperimentSample:
+) -> ExperimentResponse:
     """
     Retrieve a specific experiment by ID for the current user's workspace.
     """
@@ -330,7 +332,7 @@ async def draw_experiment_arm(
         )
 
     # -- Perform the draw ---
-    experiment_data = ExperimentSample.model_validate(experiment.to_dict())
+    experiment_data = ExperimentResponse.model_validate(experiment.to_dict())
 
     # Validate contexts input
     if contexts:
@@ -476,7 +478,77 @@ async def get_rewards(
                 "arm": [arm for arm in experiment.arms if arm.arm_id == draw.arm_id][0],
                 "reward": draw.reward,
                 "context_val": draw.context_val,
+                "current_alpha": draw.current_alpha,
+                "current_beta": draw.current_beta,
+                "current_mu": draw.current_mu,
+                "current_covariance": draw.current_covariance,
             }
         )
         for draw in draws
     ]
+
+
+@router.get("/{experiment_id}/plotting", response_model=PlottingData)
+async def get_plotting_data(
+    experiment_id: int,
+    workspace_db: WorkspaceDB = Depends(authenticate_workspace_key),
+    asession: AsyncSession = Depends(get_async_session),
+) -> PlottingData:
+    """
+    Retrieve the data required for plotting.
+    """
+    experiment = await get_experiment_by_id_from_db(
+        workspace_id=workspace_db.workspace_id,
+        experiment_id=experiment_id,
+        asession=asession,
+    )
+
+    if not experiment:
+        raise HTTPException(
+            status_code=404, detail=f"Experiment with id {experiment_id} not found"
+        )
+    draws = await get_draws_by_experiment_id(
+        experiment_id=experiment_id, asession=asession
+    )
+
+    if not draws:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No draws found for experiment with id {experiment_id}",
+        )
+
+    experiment_data = ExperimentResponse.model_validate(experiment.to_dict())
+    draw_data = [
+        DrawResponse.model_validate(
+            {
+                "draw_id": draw.draw_id,
+                "draw_datetime_utc": str(draw.draw_datetime_utc),
+                "observed_datetime_utc": str(draw.observed_datetime_utc),
+                "arm": [arm for arm in experiment.arms if arm.arm_id == draw.arm_id][0],
+                "reward": draw.reward,
+                "context_val": draw.context_val,
+                "current_alpha": draw.current_alpha,
+                "current_beta": draw.current_beta,
+                "current_mu": draw.current_mu,
+                "current_covariance": draw.current_covariance,
+            }
+        )
+        for draw in draws
+    ]
+    try:
+        plotting_data = get_required_plotting_data(
+            experiment=experiment_data, draws=draw_data
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error retrieving plotting data: {str(e)}",
+        ) from e
+
+    return PlottingData(
+        prior_samples=plotting_data["prior_samples"],
+        posterior_samples=plotting_data["posterior_samples"],
+        volumes=plotting_data["volumes"],
+        posterior_means=plotting_data["posterior_means"],
+        posterior_stds=plotting_data["posterior_stds"],
+    )

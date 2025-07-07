@@ -262,6 +262,14 @@ class DrawDB(Base):
     context_val: Mapped[Optional[list[float]]] = mapped_column(
         ARRAY(Float), nullable=True
     )
+    current_alpha: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    current_beta: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    current_mu: Mapped[Optional[list[float]]] = mapped_column(
+        ARRAY(Float), nullable=True
+    )
+    current_covariance: Mapped[Optional[list[float]]] = mapped_column(
+        ARRAY(Float), nullable=True
+    )
 
     # Relationships
     arm: Mapped[ArmDB] = relationship("ArmDB", back_populates="draws", lazy="joined")
@@ -708,6 +716,10 @@ async def save_observation_to_db(
     draw.observed_datetime_utc = datetime.now(timezone.utc)
     draw.observation_type = observation_type
     draw.reward = reward
+    draw.current_alpha = draw.arm.alpha
+    draw.current_beta = draw.arm.beta
+    draw.current_mu = draw.arm.mu
+    draw.current_covariance = draw.arm.covariance
 
     await asession.commit()
     await asession.refresh(draw)

@@ -34,7 +34,7 @@ def downgrade() -> None:
     op.create_foreign_key(
         op.f("event_messages_experiment_id_fkey"),
         "event_messages",
-        "experiments_base",
+        "experiments",
         ["experiment_id"],
         ["experiment_id"],
     )

@@ -122,38 +122,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("experiment_id"),
     )
-    op.create_table(
-        "experiments_base",
-        sa.Column("experiment_id", sa.Integer(), nullable=False),
-        sa.Column("name", sa.String(length=150), nullable=False),
-        sa.Column("description", sa.String(length=500), nullable=False),
-        sa.Column("sticky_assignment", sa.Boolean(), nullable=False),
-        sa.Column("auto_fail", sa.Boolean(), nullable=False),
-        sa.Column("auto_fail_value", sa.Integer(), nullable=True),
-        sa.Column(
-            "auto_fail_unit",
-            sa.Enum("DAYS", "HOURS", name="autofailunittype"),
-            nullable=True,
-        ),
-        sa.Column("user_id", sa.Integer(), nullable=False),
-        sa.Column("workspace_id", sa.Integer(), nullable=False),
-        sa.Column("is_active", sa.Boolean(), nullable=False),
-        sa.Column("exp_type", sa.String(length=50), nullable=False),
-        sa.Column("prior_type", sa.String(length=50), nullable=False),
-        sa.Column("reward_type", sa.String(length=50), nullable=False),
-        sa.Column("created_datetime_utc", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("n_trials", sa.Integer(), nullable=False),
-        sa.Column("last_trial_datetime_utc", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["users.user_id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["workspace_id"],
-            ["workspace.workspace_id"],
-        ),
-        sa.PrimaryKeyConstraint("experiment_id"),
-    )
+
     op.create_table(
         "pending_invitations",
         sa.Column("invitation_id", sa.Integer(), nullable=False),
@@ -226,25 +195,6 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("arm_id"),
     )
     op.create_table(
-        "arms_base",
-        sa.Column("arm_id", sa.Integer(), nullable=False),
-        sa.Column("experiment_id", sa.Integer(), nullable=False),
-        sa.Column("user_id", sa.Integer(), nullable=False),
-        sa.Column("name", sa.String(length=150), nullable=False),
-        sa.Column("description", sa.String(length=500), nullable=False),
-        sa.Column("arm_type", sa.String(length=50), nullable=False),
-        sa.Column("n_outcomes", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["experiment_id"],
-            ["experiments_base.experiment_id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["users.user_id"],
-        ),
-        sa.PrimaryKeyConstraint("arm_id"),
-    )
-    op.create_table(
         "clients",
         sa.Column("client_id", sa.String(), nullable=False),
         sa.Column("experiment_id", sa.Integer(), nullable=False),
@@ -283,7 +233,7 @@ def upgrade() -> None:
         sa.Column("experiment_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
             ["experiment_id"],
-            ["experiments_base.experiment_id"],
+            ["experiments.experiment_id"],
         ),
         sa.ForeignKeyConstraint(
             ["message_id"], ["messages.message_id"], ondelete="CASCADE"
@@ -323,33 +273,6 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("notification_id"),
     )
     op.create_table(
-        "notifications_db",
-        sa.Column("notification_id", sa.Integer(), nullable=False),
-        sa.Column("experiment_id", sa.Integer(), nullable=False),
-        sa.Column("user_id", sa.Integer(), nullable=False),
-        sa.Column(
-            "notification_type",
-            sa.Enum(
-                "DAYS_ELAPSED",
-                "TRIALS_COMPLETED",
-                "PERCENTAGE_BETTER",
-                name="eventtype",
-            ),
-            nullable=False,
-        ),
-        sa.Column("notification_value", sa.Integer(), nullable=False),
-        sa.Column("is_active", sa.Boolean(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["experiment_id"],
-            ["experiments_base.experiment_id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["users.user_id"],
-        ),
-        sa.PrimaryKeyConstraint("notification_id"),
-    )
-    op.create_table(
         "draws",
         sa.Column("draw_id", sa.String(), nullable=False),
         sa.Column("arm_id", sa.Integer(), nullable=False),
@@ -383,53 +306,19 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("draw_id"),
     )
-    op.create_table(
-        "draws_base",
-        sa.Column("draw_id", sa.String(), nullable=False),
-        sa.Column("client_id", sa.String(), nullable=True),
-        sa.Column("arm_id", sa.Integer(), nullable=False),
-        sa.Column("experiment_id", sa.Integer(), nullable=False),
-        sa.Column("user_id", sa.Integer(), nullable=False),
-        sa.Column("draw_datetime_utc", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("observed_datetime_utc", sa.DateTime(timezone=True), nullable=True),
-        sa.Column(
-            "observation_type",
-            sa.Enum("USER", "AUTO", name="observationtype"),
-            nullable=True,
-        ),
-        sa.Column("draw_type", sa.String(length=50), nullable=False),
-        sa.Column("reward", sa.Float(), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["arm_id"],
-            ["arms_base.arm_id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["experiment_id"],
-            ["experiments_base.experiment_id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["users.user_id"],
-        ),
-        sa.PrimaryKeyConstraint("draw_id"),
-    )
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_table("draws_base")
     op.drop_table("draws")
-    op.drop_table("notifications_db")
     op.drop_table("notifications")
     op.drop_table("event_messages")
     op.drop_table("context")
     op.drop_table("clients")
-    op.drop_table("arms_base")
     op.drop_table("arms")
     op.drop_table("user_workspace")
     op.drop_table("pending_invitations")
-    op.drop_table("experiments_base")
     op.drop_table("experiments")
     op.drop_table("api_key_rotation_history")
     op.drop_table("workspace")
