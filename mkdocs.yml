@@ -50,6 +50,11 @@ nav:
   - Deploying: deploying.md
   - Getting Started:
     - Overview: getting-started/index.md
+    - Workspaces:
+        - Overview: getting-started/workspaces/index.md
+        - Personal vs Team: getting-started/workspaces/personal-vs-team.md
+        - Creating & Switching: getting-started/workspaces/creating-switching.md
+        - Managing Workspaces: getting-started/workspaces/managing.md
     - Setup your first experiment:
         - Overview: getting-started/first-experiment/index.md
         - Create an experiment: getting-started/first-experiment/create.md

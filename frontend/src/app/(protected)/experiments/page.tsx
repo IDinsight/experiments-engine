@@ -2,12 +2,10 @@
 import React, { useEffect } from "react";
 import EmptyPage from "./components/EmptyPage";
 import {
-  getAllMABExperiments,
-  getAllCMABExperiments,
-  getAllBayesianABExperiments,
+  getExperimentsByType,
 } from "./api";
-import { MABBeta, MABNormal, CMAB, BayesianAB, MethodType } from "./types";
-import ExperimentCard from "./components/ExperimentCard";
+import { ExperimentState, MethodType } from "./types";
+import { ExperimentCard } from "./components/ExperimentCard";
 import Hourglass from "@/components/Hourglass";
 import FloatingAddButton from "./components/FloatingAddButton";
 import Link from "next/link";
@@ -16,11 +14,9 @@ import { DividerWithTitle } from "@/components/Dividers";
 
 export default function Experiments() {
   const [haveExperiments, setHaveExperiments] = React.useState(false);
-  const [mabExperiments, setMABExperiments] = React.useState<MABBeta[]>([]);
-  const [cmabExperiments, setCMABExperiments] = React.useState<CMAB[]>([]);
-  const [bayesExperiments, setBayesExperiments] = React.useState<BayesianAB[]>(
-    []
-  );
+  const [mabExperiments, setMABExperiments] = React.useState<ExperimentState[]>([]);
+  const [cmabExperiments, setCMABExperiments] = React.useState<ExperimentState[]>([]);
+  const [bayesExperiments, setBayesExperiments] = React.useState<ExperimentState[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [loadingError, setLoadingError] = React.useState("");
 
@@ -33,9 +29,9 @@ export default function Experiments() {
     const fetchData = async () => {
       try {
         const [mabData, cmabData, bayesabData] = await Promise.all([
-          getAllMABExperiments(token),
-          getAllCMABExperiments(token),
-          getAllBayesianABExperiments(token),
+          getExperimentsByType(token, "mab"),
+          getExperimentsByType(token, "cmab"),
+          getExperimentsByType(token, "bayes_ab"),
         ]);
         setMABExperiments(mabData);
         setCMABExperiments(cmabData);
@@ -130,7 +126,7 @@ const ExperimentCardGrid = ({
   experiments,
   methodType,
 }: {
-  experiments: MABBeta[] | MABNormal[] | CMAB[] | BayesianAB[];
+  experiments: ExperimentState[];
   methodType: MethodType;
 }) => {
   return (
@@ -140,7 +136,7 @@ const ExperimentCardGrid = ({
     >
       {experiments.map((experiment) => (
         <li key={experiment.experiment_id}>
-          <ExperimentCard experiment={experiment} methodType={methodType} />
+          <ExperimentCard experiment={experiment} />
         </li>
       ))}
     </ul>

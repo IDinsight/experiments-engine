@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import MABChart from "./components/MABChart";
-import MABArmsProgress from "./components/MABArmsProgress";
+import MABChart from "./components/ExperimentChart";
+import MABArmsProgress from "./components/ArmsProgress";
 import NotificationDetails from "./components/Notifications";
 import ExtraInfo from "./components/ExtraInfo";
 
-import { getMABExperimentById } from "../api";
+import { getExperimentById } from "../api";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/utils/auth";
 import {
@@ -20,17 +20,17 @@ import {
 } from "@/components/ui/breadcrumb";
 
 import {
-  MABExperimentDetails,
-  MABArmDetails,
+  SingleExperimentDetails,
+  ArmDetails,
   Notification,
   ExtraInfo as ExtraInfoType,
 } from "./types";
 
 export default function ExperimentDetails() {
   const { experimentId } = useParams();
-  const [armsDetails, setArmsDetails] = useState<MABArmDetails[]>([]);
+  const [armsDetails, setArmsDetails] = useState<ArmDetails[]>([]);
   const [experimentDetails, setExperimentDetails] =
-    useState<MABExperimentDetails | null>(null);
+    useState<SingleExperimentDetails | null>(null);
   const [notificationData, setNotificationData] = useState<Notification[]>([]);
   const [extraInfo, setExtraInfo] = useState<ExtraInfoType | null>(null);
 
@@ -40,10 +40,13 @@ export default function ExperimentDetails() {
 
   useEffect(() => {
     if (!token) return;
-    getMABExperimentById(token, Number(experimentId)).then((data) => {
+    getExperimentById(token, Number(experimentId)).then((data) => {
       setArmsDetails(data.arms);
-      setExperimentDetails(data);
-      setNotificationData(data.notifications);
+      setExperimentDetails({
+        ...data,
+        notifications: Array.isArray(data.notifications) ? data.notifications : []
+      });
+      setNotificationData(Array.isArray(data.notifications) ? data.notifications : []);
       setExtraInfo({
         dateCreated: data.created_datetime_utc,
         lastTrialDate: data.last_trial_datetime_utc,
@@ -54,6 +57,7 @@ export default function ExperimentDetails() {
   }, [experimentId, token]);
 
   return (
+    experimentDetails?.exp_type == "mab" ? (
     <div className="container mx-auto p-6">
       <Breadcrumb className="mb-4 w-full">
         <BreadcrumbList>
@@ -113,5 +117,11 @@ export default function ExperimentDetails() {
         </div>
       </div>
     </div>
-  );
+) : (
+    <div className="container mx-auto p-6">
+      <p className="text-muted-foreground dark:text-gray-400">
+        We're working on visualizing details for {experimentDetails?.exp_type} experiments. Stay tuned!
+      </p>
+    </div>
+  ));
 }

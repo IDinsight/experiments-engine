@@ -19,7 +19,7 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from ..models import Base, ExperimentBaseDB
+from ..models import Base
 from ..users.exceptions import UserNotFoundError
 from ..users.schemas import UserCreate
 from .schemas import UserCreateWithCode, UserRoles
@@ -77,9 +77,6 @@ class WorkspaceDB(Base):
     workspace_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     workspace_name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    experiments: Mapped[list["ExperimentBaseDB"]] = relationship(
-        "ExperimentBaseDB", back_populates="workspace", cascade="all, delete-orphan"
-    )
 
     pending_invitations: Mapped[list["PendingInvitationDB"]] = relationship(
         "PendingInvitationDB", back_populates="workspace", cascade="all, delete-orphan"

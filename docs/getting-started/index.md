@@ -4,6 +4,14 @@ This guides you through the types of experiments available, setting up your firs
 
 <div class="grid cards" markdown>
 
+-   :octicons-organization-24:{ .lg .middle } __Workspaces__
+
+    ---
+
+    Learn about workspaces and how to organize your experiments.
+
+    [:octicons-arrow-right-24: Workspaces](./workspaces/index.md)
+
 -   :octicons-tools-24:{ .lg .middle } __Set up your first experiment__
 
     ---

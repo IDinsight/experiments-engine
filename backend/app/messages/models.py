@@ -102,7 +102,7 @@ class EventMessageDB(MessageDB):
         nullable=False,
     )
     experiment_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("experiments_base.experiment_id"), nullable=False
+        Integer, ForeignKey("experiments.experiment_id"), nullable=False
     )
 
     __mapper_args__ = {"polymorphic_identity": "event"}

@@ -3,17 +3,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useExperimentStore } from "../../../store/useExperimentStore";
+import { useExperimentStore } from "../../store/useExperimentStore";
 import type {
-  CMABExperimentState,
+  ExperimentState,
   StepComponentProps,
   ContextType,
-} from "../../../types";
+} from "../../types";
 import { Plus, Trash } from "lucide-react";
 import { DividerWithTitle } from "@/components/Dividers";
 import { useCallback, useEffect, useState } from "react";
 
-export default function AddCMABContext({ onValidate }: StepComponentProps) {
+export default function AddContext({ onValidate }: StepComponentProps) {
   const { experimentState, updateContext, addContext, removeContext } =
     useExperimentStore();
 
@@ -23,16 +23,17 @@ export default function AddCMABContext({ onValidate }: StepComponentProps) {
 
   const validateForm = useCallback(() => {
     let isValid = true;
-    const newErrors = (experimentState as CMABExperimentState).contexts.map(
-      () => ({
+    let newErrors = [{ name: "", description: "", value_type: "" }];
+    const contexts = (experimentState as ExperimentState).contexts;
+
+    if (contexts) {
+      newErrors = contexts.map(() => ({
         name: "",
         description: "",
         value_type: "",
-      })
-    );
+      }));
 
-    (experimentState as CMABExperimentState).contexts.forEach(
-      (context, index) => {
+      contexts.forEach((context, index) => {
         if (!context.name.trim()) {
           newErrors[index].name = "Context name is required";
           isValid = false;
@@ -47,8 +48,8 @@ export default function AddCMABContext({ onValidate }: StepComponentProps) {
           newErrors[index].value_type = "Context value type is required";
           isValid = false;
         }
-      }
-    );
+      });
+    }
 
     return { isValid, newErrors };
   }, [experimentState]);
@@ -68,11 +69,11 @@ export default function AddCMABContext({ onValidate }: StepComponentProps) {
     }
   }, [validateForm, onValidate, errors]);
 
-  return (
+  return experimentState.contexts ? (
     <div>
       <div className="pt-5 flex w-full flex-wrap items-end justify-between gap-4 border-b border-zinc-950/10 pb-6 dark:border-white/10">
         <h2 className="text-2xl font-semibold tracking-tight">
-          Add CMAB Contexts
+          Add Contexts
         </h2>
         <div className="flex gap-4">
           <Button className="mt-4" onClick={addContext}>
@@ -82,12 +83,12 @@ export default function AddCMABContext({ onValidate }: StepComponentProps) {
           <Button
             className="mt-4 mx-4"
             disabled={
-              (experimentState as CMABExperimentState).contexts.length <= 1
+              !experimentState.contexts || experimentState.contexts.length <= 1
             }
             variant="outline"
             onClick={() =>
-              removeContext(
-                (experimentState as CMABExperimentState).contexts.length - 1
+              experimentState.contexts && removeContext(
+                experimentState.contexts.length - 1
               )
             }
           >
@@ -97,7 +98,7 @@ export default function AddCMABContext({ onValidate }: StepComponentProps) {
         </div>
       </div>
       <div className="space-y-6" aria-label="Add Contexts">
-        {(experimentState as CMABExperimentState).contexts.map(
+        {experimentState.contexts.map(
           (context, index) => (
             <div key={index}>
               <DividerWithTitle title={`Context ${index + 1}`} />
@@ -232,6 +233,10 @@ export default function AddCMABContext({ onValidate }: StepComponentProps) {
           )
         )}
       </div>
+    </div>
+  ) : (
+    <div className="text-center text-gray-500">
+      No contexts available. Please add a context to proceed.
     </div>
   );
 }
