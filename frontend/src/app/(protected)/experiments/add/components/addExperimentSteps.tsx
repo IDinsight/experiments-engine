@@ -3,6 +3,8 @@ import PriorRewardSelection  from "./addPriorReward";
 import AddContext from "./addContext";
 import AddArms from "./addArms";
 import AddNotifications from "./addNotifications";
+import ExperimentSummary from "./summary";
+
 
 
 const AllSteps = (exp_type: MethodType): Step[] => {
@@ -15,8 +17,12 @@ const AllSteps = (exp_type: MethodType): Step[] => {
     component: AddArms,
   },
   { name: "Notifications",
-    component: AddNotifications }
-
+    component: AddNotifications
+  },
+    {
+    name: "Review & Create",
+    component: ExperimentSummary,
+  }
 ]
   if (exp_type === "cmab") {
     steps.splice(0, 0, {

@@ -35,10 +35,6 @@ export default function NewExperiment() {
   const { toast } = useToast();
 
   useEffect(() => {
-    resetState();
-  }, []);
-
-  useEffect(() => {
     setSteps(AllSteps(experimentState.exp_type));
     setCurrentStep(0);
   }, [experimentState.exp_type]);
@@ -212,11 +208,24 @@ export default function NewExperiment() {
           </motion.div>
         </AnimatePresence>
       </div>
-      <div className="flex justify-between max-w-4xl mx-auto mt-8">
-        <Button onClick={prevStep} disabled={currentStep === 0}>
-          <ChevronLeftIcon className="h-5 w-5" />
-          Previous
-        </Button>
+      <div className="flex flex-wrap gap-2 justify-between items-center max-w-4xl mx-auto mt-8 mb-8">
+        <div className="flex gap-2">
+          <Button onClick={prevStep} disabled={currentStep === 0}>
+            <ChevronLeftIcon className="h-5 w-5" />
+            Previous
+          </Button>
+          {/* Reset Button */}
+          <Button
+            onClick={() => {
+              resetState();
+              setCurrentStep(0);
+              setStepValidations([]);
+            }}
+            type="button"
+          >
+            Reset
+          </Button>
+        </div>
         {currentStep === steps.length ? (
           <button
             type="button"

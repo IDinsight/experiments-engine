@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from redis import asyncio as aioredis
 
 from . import auth, messages
+from .ai_helpers.routers import router as ai_helpers_router
 from .config import BACKEND_ROOT_PATH, DOMAIN, REDIS_HOST
 from .experiments.routers import router as experiments_router
 from .users.routers import (
@@ -62,5 +63,6 @@ def create_app() -> FastAPI:
     app.include_router(users_router)
     app.include_router(messages.router)
     app.include_router(workspaces_router)
+    app.include_router(ai_helpers_router)
 
     return app
