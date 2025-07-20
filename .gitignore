@@ -158,3 +158,9 @@ dmypy.json
 
 # PyCharm
 .idea/
+
+# pnpm
+pnpm-lock.yaml
+
+.yarn/*
+!.yarn/patches

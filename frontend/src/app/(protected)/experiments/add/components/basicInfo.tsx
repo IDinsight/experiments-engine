@@ -15,6 +15,9 @@ import type { AllSteps } from "./addExperimentSteps";
 import type { StepValidation } from "../../types";
 import { MethodCard } from "./methodCard";
 import { DividerWithTitle } from "@/components/Dividers";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Wand2 } from "lucide-react";
 
 type Methods = typeof AllSteps;
 
@@ -101,12 +104,24 @@ export default function AddBasicInfo({
     }
   }, [validateForm, onValidate, errors]);
 
+  useEffect(() => {
+    const { isValid, newErrors } = validateForm();
+    setErrors(newErrors);
+    onValidate({ isValid, errors: newErrors });
+  }, []);
+
   return (
     <div>
       <div className="pt-5 flex w-full flex-wrap items-end justify-between gap-4 border-b pb-6 ">
         <h2 className="text-2xl font-semibold tracking-tight">
           Start a new experiment
         </h2>
+        <Link href="/experiments/add/ai-wizard" passHref>
+          <Button variant="outline">
+            <Wand2 className="mr-2 h-4 w-4" />
+            Use AI Wizard
+          </Button>
+        </Link>
       </div>
       <div className="pt-6 space-y-6" aria-label="New MAB Experiment">
         <div className="space-y-4">

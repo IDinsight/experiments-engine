@@ -28,6 +28,19 @@ export const isBayesianABState = (experimentState: NewExperimentState) => {
 interface ExperimentStore {
   experimentState: NewExperimentState;
 
+  // AI Wizard state
+  aiWizardState: {
+    goal: string;
+    outcome: string;
+    numVariants: number;
+  };
+
+  // AI Wizard updates
+  updateAIGoal: (goal: string) => void;
+  updateAIOutcome: (outcome: string) => void;
+  updateAINumVariants: (numVariants: number) => void;
+  resetAIWizardState: () => void;
+
   // basicInfoPage
   updateName: (name: string) => void;
   updateDescription: (description: string) => void;
@@ -121,10 +134,18 @@ const createInitialState = (): NewExperimentState => {
   } as NewExperimentState;
 };
 
+const createInitialAIWizardState = () => ({
+  goal: "",
+  outcome: "",
+  numVariants: 2,
+});
+
+
 export const useExperimentStore = create<ExperimentStore>()(
   persist(
     (set) => ({
       experimentState: createInitialState(),
+      aiWizardState: createInitialAIWizardState(),
 
       // ------------ Basic info updates ------------
       updateName: (name: string) =>
@@ -135,6 +156,27 @@ export const useExperimentStore = create<ExperimentStore>()(
       updateDescription: (description: string) =>
         set((state) => ({
           experimentState: { ...state.experimentState, description },
+        })),
+
+      // Add the missing AI Wizard updates
+      updateAIGoal: (goal: string) =>
+        set((state) => ({
+          aiWizardState: { ...state.aiWizardState, goal },
+        })),
+
+      updateAIOutcome: (outcome: string) =>
+        set((state) => ({
+          aiWizardState: { ...state.aiWizardState, outcome },
+        })),
+
+      updateAINumVariants: (numVariants: number) =>
+        set((state) => ({
+          aiWizardState: { ...state.aiWizardState, numVariants },
+        })),
+
+      resetAIWizardState: () =>
+        set(() => ({
+          aiWizardState: createInitialAIWizardState(),
         })),
 
       updateStickyAssignment: (sticky_assignment: boolean) =>
@@ -490,7 +532,9 @@ export const useExperimentStore = create<ExperimentStore>()(
         })),
 
       // ---------------- Reset state ----------------
-      resetState: () => set({ experimentState: createInitialState() }),
+      resetState: () => set({
+        experimentState: createInitialState(),
+        aiWizardState: createInitialAIWizardState(), }),
     }),
     {
       name: "experiment-store", // unique name for localStorage

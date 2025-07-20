@@ -125,6 +125,19 @@ export default function AddMABArms({ onValidate }: StepComponentProps) {
     }
   }, [validateForm, onValidate, errors]);
 
+    useEffect(() => {
+    const { isValid, newErrors } = validateForm();
+    setErrors(newErrors);
+    onValidate({
+      isValid,
+      errors: newErrors.map((error) =>
+        Object.fromEntries(
+          Object.entries(error).map(([key, value]) => [key, value ?? ""])
+        )
+      ),
+    });
+  }, []);
+
   useEffect(() => {
     const newInputValues: Record<string, string> = {};
 
