@@ -3,7 +3,7 @@ import os
 from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException
-from google import genai
+from google import api_core, genai
 from google.genai import types
 
 from . import prompts
@@ -48,7 +48,7 @@ async def suggest_arms(
             ),
         )
         return json.loads(response.text)
-    except Exception as e:
+    except api_core.exceptions.GoogleAPICallError as e:
         raise HTTPException(status_code=500, detail=f"Gemini API error: {e}") from e
 
 
@@ -73,7 +73,7 @@ async def suggest_mab_arms(
         )
         print(response.text)
         return json.loads(response.text)
-    except Exception as e:
+    except api_core.exceptions.GoogleAPICallError as e:
         raise HTTPException(status_code=500, detail=f"Gemini API error: {e}") from e
 
 
@@ -98,7 +98,7 @@ async def suggest_cmab_contexts(
         )
         print(response.text)
         return json.loads(response.text)
-    except Exception as e:
+    except api_core.exceptions.GoogleAPICallError as e:
         raise HTTPException(status_code=500, detail=f"Gemini API error: {e}") from e
 
 
@@ -123,7 +123,7 @@ async def suggest_cmab_arms(
         )
         print(response.text)
         return json.loads(response.text)
-    except Exception as e:
+    except api_core.exceptions.GoogleAPICallError as e:
         raise HTTPException(status_code=500, detail=f"Gemini API error: {e}") from e
 
 
@@ -149,7 +149,7 @@ async def generate_experiment_fields_logic(
         response_data = json.loads(response.text)
         return ExperimentAIGenerateResponse(**response_data)
 
-    except Exception as e:
+    except api_core.exceptions.GoogleAPICallError as e:
         raise RuntimeError(f"Gemini API error: {e}") from e
 
 
@@ -229,7 +229,7 @@ async def generate_whole_experiment(
             contexts=contexts,
         )
 
-    except Exception as e:
+    except (RuntimeError, api_core.exceptions.GoogleAPICallError) as e:
         raise HTTPException(
             status_code=500, detail=f"Error generating complete experiment: {e}"
         ) from e
