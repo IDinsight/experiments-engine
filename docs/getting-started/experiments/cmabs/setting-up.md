@@ -39,4 +39,4 @@ The priors are defined through the `Mean` and `Standard Deviation` parameters of
 
 Click on the `Next` button to proceed.
 
-Once you've set up notfications and created the experiment, you can now [run the experiment](./run-experiment.md) with your users.
+Once you've set up notifications and created the experiment, you can now [run the experiment](./run-experiment.md) with your users.
