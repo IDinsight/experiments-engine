@@ -13,7 +13,7 @@ You can then use this ID to record the outcome of presenting the arm you drew to
 
 The `update_arm` endpoint updates the prior probability of the corresponding arm based on the observed outcome.
 
-As you observe more and more outcomes, you can track the experiment's progress using Experiment Cards and the notfications.
+As you observe more and more outcomes, you can track the experiment's progress using Experiment Cards and the notifications.
 
 ![Experiment card](./images/experiment_card.png)
 

@@ -1,6 +1,6 @@
 # Experiments
 
-Learn abouth the types of experiments we have implemented, and how to configure them.
+Learn about the types of experiments we have implemented, and how to configure them.
 
 <div class="grid cards" markdown>
 

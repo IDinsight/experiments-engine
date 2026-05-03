@@ -38,4 +38,4 @@ Similarly, for the Normal prior for the arms, the priors are defined through the
 
 Click on the `Next` button to proceed.
 
-Once you've set up notfications and created the experiment, you can now [run the experiment](./run-experiment.md) with your users.
+Once you've set up notifications and created the experiment, you can now [run the experiment](./run-experiment.md) with your users.
